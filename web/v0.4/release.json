@@ -1,0 +1,32 @@
+{
+    "format": "cadcraft-edition",
+    "version": 1,
+    "app": "markupcraft",
+    "name": "MarkupCraft",
+    "edition": "browser",
+    "release": "0.4",
+    "semver": "0.4.0",
+    "tag": "markupcraft-v0.4.0",
+    "zip": "markupcraft-browser-edition-v0.4.0.zip",
+    "packed_at": "2026-10-13T20:37:24Z",
+    "from": {
+        "build": "0.4",
+        "released_at": "2026-10-13 17:59 UTC",
+        "git": "20b9b74 (dev had uncommitted changes)"
+    },
+    "license": "Apache-2.0",
+    "libs": {
+        "pdf-lib": "1.17.1",
+        "pdfjs": "6.3.289",
+        "bootstrap": "5.3.8",
+        "bootstrap-icons": "1.13.2",
+        "archivo": "5.2.8"
+    },
+    "changes_to_copied_files": [
+        "Renamed pdf.worker.min.mjs, pdf.mjs, pdf.min.mjs, pdf.worker.mjs to .js (and every reference to them), so servers that do not know the .mjs type still serve them as JavaScript.",
+        "Library URLs written as /assets/vendor/<lib>/current/ are pinned to the versions listed in release.json."
+    ],
+    "files": 297,
+    "bytes_before_this_file": 13112200,
+    "notes": "Print with markups (Ctrl+P) and a Pages menu: rotate, move, insert, delete and extract pages, with markups moving along. Slip-sheet a revised set, find text across sheets (Ctrl+F), save a flattened copy, and recover your work after a crash. Layers, arcs and angles, pictures and signatures, area cut-outs, spaces, sketch to scale, photos on markups, sheet links and bookmarks. Compare by changed lines or a whole set, a live legend, custom columns, XLSX and PDF summaries, BCF import. Open in TakeoffCraft. Better touch. Every word in language files, with a draft Spanish (Mexico) translation not yet reviewed."
+}

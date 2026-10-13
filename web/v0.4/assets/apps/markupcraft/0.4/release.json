@@ -1,0 +1,11 @@
+{
+    "app": "markupcraft",
+    "version": "0.4",
+    "released_at": "2026-10-13 17:59 UTC",
+    "git": "20b9b74 (dev had uncommitted changes)",
+    "libs": {
+        "pdf-lib": "1.17.1",
+        "pdfjs": "6.3.289"
+    },
+    "notes": "Print with markups (Ctrl+P) and a Pages menu: rotate, move, insert, delete and extract pages, with markups moving along. Slip-sheet a revised set, find text across sheets (Ctrl+F), save a flattened copy, and recover your work after a crash. Layers, arcs and angles, pictures and signatures, area cut-outs, spaces, sketch to scale, photos on markups, sheet links and bookmarks. Compare by changed lines or a whole set, a live legend, custom columns, XLSX and PDF summaries, BCF import. Open in TakeoffCraft. Better touch. Every word in language files, with a draft Spanish (Mexico) translation not yet reviewed."
+}

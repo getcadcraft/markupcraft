@@ -1,0 +1,30 @@
+{
+    "format": "cadcraft-devshell",
+    "version": 1,
+    "app": {
+        "slug": "markupcraft",
+        "name": "MarkupCraft",
+        "layer": "magenta",
+        "role": "Drawing review & markup",
+        "tagline": "Red-pen the set without the red pen.",
+        "short": "Open a PDF plan set, mark it up from a saved tool chest, compare revisions and run punch lists with the whole team."
+    },
+    "others": {
+        "cadcraft": "CadCraft",
+        "bimcraft": "BimCraft",
+        "modelcraft": "ModelCraft",
+        "takeoffcraft": "TakeoffCraft",
+        "civilcraft": "CivilCraft",
+        "detailcraft": "DetailCraft",
+        "partcraft": "PartCraft"
+    },
+    "vendor": {
+        "pdf-lib": "1.17.1",
+        "pdfjs": "6.3.289"
+    },
+    "origin": "https://getcadcraft.com",
+    "packed": {
+        "at": "2026-10-13T20:37:24Z",
+        "build": "0.4"
+    }
+}

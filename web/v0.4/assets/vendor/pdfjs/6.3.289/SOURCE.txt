@@ -1,0 +1,5 @@
+pdfjs-dist 6.3.289 — Mozilla's PDF.js (PDF parsing and rendering in the browser).
+License: Apache License 2.0 (see LICENSE). Permissive: fine for every area.
+Source: https://github.com/mozilla/pdf.js  Package: https://www.npmjs.com/package/pdfjs-dist/v/6.3.289
+Kept: build/pdf(.min).mjs + build/pdf.worker(.min).mjs, cmaps/, standard_fonts/, wasm/ (image decoders), iccs/.
+Used by the MarkupCraft and TakeoffCraft builds to show PDF plan sets.
