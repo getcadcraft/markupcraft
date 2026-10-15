@@ -4,7 +4,9 @@
  * settings.inc — MarkupCraft's own panel of the Settings dialog (core/components/app-settings.inc includes it as the
  * "MarkupCraft" tab). markupcraft.js reads and stores the fields, fills them in whenever the dialog opens, and resets
  * them on "cc-settings-reset" (all but the name).
- *   mcAuthor    your name on new markups and replies (localStorage markupcraft.author; the status bar button sets it too)
+ *   mcAuthor    your name on new markups and replies (localStorage markupcraft.author; the status bar button sets it too).
+ *               Signed in (0.5 SI.9): [data-mc-author-account] says "From your account (<name>)" with "Use another name"; a
+ *               typed name wins until cleared ("Use my account name").
  *   mcColor     the color of new pens, lines, arrows, shapes, clouds, callouts and text (markupcraft.settings.markColor)
  *   mcWeight    thin / normal / heavy lines on new markups (× 0.5 / 1 / 1.5 of each tool's width)
  *   mcPaste     Ctrl+V pastes at the pointer (when it is on the sheet) or beside the copy (markupcraft.settings.pasteAt)
@@ -14,9 +16,14 @@
 ?>
 <fieldset class="shell-set" data-mc-settings>
   <legend><?= Lang::e('set.name.h') ?></legend>
-  <div class="shell-row">
+  <div data-mc-author-account hidden>
+    <p class="shell-hint-text" data-mc-author-from></p>
+    <p><button type="button" class="btn-line btn-sm-cc" data-mc-author-other><?= Lang::e('set.name.other') ?></button></p>
+  </div>
+  <div class="shell-row" data-mc-author-row>
     <label for="mc-set-author"><?= Lang::e('set.name.label') ?></label>
     <input type="text" id="mc-set-author" class="mc-set-input" name="mcAuthor" maxlength="80" autocomplete="name" placeholder="<?= Lang::e('set.name.placeholder') ?>">
+    <button type="button" class="btn-line btn-sm-cc" data-mc-author-mine hidden><?= Lang::e('set.name.mine') ?></button>
   </div>
   <p class="shell-hint-text"><?= Lang::e('set.name.hint') ?></p>
 </fieldset>

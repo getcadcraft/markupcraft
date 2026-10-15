@@ -1,9 +1,9 @@
 ---
 title: Open a plan set and move between sheets
-summary: Open one PDF or many, find sheets by number or name, zoom and pan, and rename a sheet when the file gets it wrong.
+summary: Open one PDF or many, or start with blank pages, find sheets by number or name, zoom and pan, and rename a sheet when the file gets it wrong.
 section: tasks
 order: 10
-keywords: open, plan set, sheets, pages, thumbnails, page labels, sheet number, title block, rename, navigate, zoom, pan, fit, search sheets
+keywords: open, new, blank page, blank sheet, sketch, grid, untitled, plan set, sheets, pages, thumbnails, page labels, sheet number, title block, rename, navigate, zoom, pan, fit, search sheets
 ---
 
 ## Open the set
@@ -16,6 +16,21 @@ keywords: open, plan set, sheets, pages, thumbnails, page labels, sheet number, 
 Result: the {{ui:Sheets}} list shows every page of every file, in the order you opened them, and the status bar says something like "Opened 3 files (42 sheets in the set)." If the files already had comments, it adds how many were read.
 
 To add more files to the set later, open them the same way. They join the end of the list.
+
+## Start with blank pages
+
+To sketch or take notes without a drawing, make blank pages instead of opening a PDF:
+
+1. Choose {{ui:New}} in the toolbar, or {{ui:Start with a blank page}} on the start screen, or press {{key:Mod+N}} where your browser lets the page have it (the desktop app and Studio always do).
+2. Pick the {{ui:Paper size}}: Letter, Tabloid or ANSI B, ARCH D, ARCH E, A4, A3 or A1, and {{ui:Portrait}} or {{ui:Landscape}}.
+3. Pick a {{ui:Grid}}: {{ui:None}}, {{ui:Dots}} or {{ui:Squares}}. The grid is every 1/4 in with a heavier line each inch on inch paper, and every 5 mm with a heavier line each 10 mm on metric paper. It is printed on the page.
+4. Type how many {{ui:Pages}} you want, from 1 to 20, then choose {{ui:Create}}.
+
+Result: a new PDF named "Untitled-1.pdf" (then "Untitled-2.pdf", and so on) opens like any other file, made here on this computer. Every tool works on it, and {{ui:Save}} downloads "Untitled-1 (marked up).pdf". MarkupCraft remembers your choices for next time.
+
+The pages have no scale: the status bar says "Not calibrated". The grid is not a scale. To measure, calibrate the sheet or pick a scale first; see [Calibrate and measure](topic:calibrate-and-measure).
+
+To add a page to a blank set, open one of its sheets and choose {{ui:Add a blank page}} under the {{ui:Sheets}} list. The new page has the same paper and grid and goes at the end. Like every page change, it cannot be undone; see [Print, and change the pages](topic:pages-and-printing).
 
 ## How sheets get their names
 

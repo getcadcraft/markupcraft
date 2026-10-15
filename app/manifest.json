@@ -5,19 +5,26 @@
   ],
   "module": "markupcraft.js",
   "imports": {
-    "pdfjs-dist": "/assets/vendor/pdfjs/6.3.289/build/pdf.min.mjs",
-    "pdf-lib": "/assets/vendor/pdf-lib/1.17.1/pdf-lib.esm.min.js"
+    "pdfjs-dist": "/assets/vendor/pdfjs/current/build/pdf.min.mjs",
+    "pdf-lib": "/assets/vendor/pdf-lib/current/pdf-lib.esm.min.js",
+    "@noble/curves/": "/assets/vendor/noble-curves/current/",
+    "@noble/hashes/": "/assets/vendor/noble-hashes/current/",
+    "@noble/ciphers/": "/assets/vendor/noble-ciphers/current/"
   },
-  "pdfWorker": "/assets/vendor/pdfjs/6.3.289/build/pdf.worker.min.mjs",
-  "pdfCmaps": "/assets/vendor/pdfjs/6.3.289/cmaps/",
-  "pdfFonts": "/assets/vendor/pdfjs/6.3.289/standard_fonts/",
-  "pdfWasm": "/assets/vendor/pdfjs/6.3.289/wasm/",
-  "pdfIcc": "/assets/vendor/pdfjs/6.3.289/iccs/",
+  "pdfWorker": "/assets/vendor/pdfjs/current/build/pdf.worker.min.mjs",
+  "pdfCmaps": "/assets/vendor/pdfjs/current/cmaps/",
+  "pdfFonts": "/assets/vendor/pdfjs/current/standard_fonts/",
+  "pdfWasm": "/assets/vendor/pdfjs/current/wasm/",
+  "pdfIcc": "/assets/vendor/pdfjs/current/iccs/",
+  "phone": true,
   "panels": [
     "move",
     "window"
   ],
   "accepts": [
-    "handoff"
-  ]
+    "handoff",
+    "live"
+  ],
+  "addons": "own",
+  "input": "input-markupcraft.js"
 }

@@ -46,7 +46,11 @@ Many one-letter keys are what you might expect, but check these before your fing
 - {{key:M}} is {{ui:Length}}, {{key:U}} is {{ui:Count}}, {{key:Y}} is {{ui:Polyline}}, {{key:G}} is {{ui:Polygon}}, {{key:I}} is {{ui:Highlight}}.
 - {{key:Mod+D}} duplicates the selection (instead of the browser's bookmark).
 - {{key:Mod+Plus}} and {{key:Mod+Minus}} zoom the sheet, not the browser page.
-- Keyboard shortcuts cannot be changed yet.
+- Any key can be changed: see below.
+
+:::tip
+If your fingers know Bluebeam Revu, pick the {{ui:PDF review}} menu style in {{ui:Settings}} › {{ui:MarkupCraft}} › {{ui:Menus, keys and mouse}}: a menu bar (File, Edit, View, Document, Markup, Measure, Window) over a row of review tools, {{key:Q}} for a callout, {{key:H}} for the highlighter, {{key:N}} for a polygon, and the measurements on {{key:Alt+Shift}} with a letter. Any key can be changed there too. See [Menus, keys and mouse](topic:menus-keys-and-mouse).
+:::
 
 The full list is in [Keyboard and mouse](topic:keyboard).
 

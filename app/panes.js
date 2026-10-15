@@ -21,7 +21,8 @@
  *                                      drawing area, y up from the bottom (DXF 10/20 lower left, 11/21 upper right)
  *   layoutFromCorners(list)            → { layout, fx, fy, order } back from those (order[i] = which record is pane i), or null
  *   cleanPanes(v)                      a file's / the clipboard's pane setup made safe: { layout, fx, fy, active, list:
- *                                      [{ cx, cy, h, sheet? }] } or null (h = the view height in drawing units)
+ *                                      [{ cx, cy, h, tw?, sheet? }] } or null (h = the view height in drawing units, tw = its
+ *                                      turn in radians)
  */
 
 export const LAYOUTS = ['single', '2v', '2h', '3r', '3l', '4'];
@@ -100,7 +101,8 @@ export function cleanPanes(v) {
   const n = paneCount(v.layout);
   const list = (Array.isArray(v.list) ? v.list : []).slice(0, n).map((p) => {
     const ok = p && [p.cx, p.cy, p.h].every(Number.isFinite) && p.h > 0 && Math.abs(p.cx) < 1e15 && Math.abs(p.cy) < 1e15 && p.h < 1e15;
-    return ok ? { cx: p.cx, cy: p.cy, h: p.h, ...(typeof p.sheet === 'string' && p.sheet ? { sheet: p.sheet.slice(0, 255) } : {}) } : null;
+    const tw = Number.isFinite(p?.tw) && Math.abs(p.tw) <= 100 ? p.tw : 0;   // the pane's view turn, radians (CadCraft 0.5 DR.8; the VPORT table's twist)
+    return ok ? { cx: p.cx, cy: p.cy, h: p.h, ...(tw ? { tw } : {}), ...(typeof p.sheet === 'string' && p.sheet ? { sheet: p.sheet.slice(0, 255) } : {}) } : null;
   });
   while (list.length < n) list.push(null);
   const active = Number.isInteger(v.active) && v.active >= 0 && v.active < n ? v.active : 0;

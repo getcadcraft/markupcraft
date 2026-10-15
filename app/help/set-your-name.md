@@ -1,16 +1,25 @@
 ---
 title: Set your author name
-summary: Give the name that goes on every markup, reply and stamp, and know where it is kept.
+summary: Give the name that goes on every markup, reply and stamp, or use your account's name, and know where it is kept.
 section: tasks
 order: 20
-keywords: author, name, user name, initials, identity, who made it, stamp name, reviewer
+keywords: author, name, account name, signed in, user name, initials, identity, who made it, stamp name, reviewer
 ---
 
 Every markup records who made it and when. Stamps print the name ("By Ana Ruiz, Oct 10, 2026"), replies show it, the markups list can filter by it, and other PDF viewers show it as the comment's author.
 
-## The first time
+## Signed in: your account's name
 
-The first time you pick a drawing tool, a box called "Your name on markups" opens.
+If you are signed in to your CadCraft account, MarkupCraft uses your account's name and never asks. Markups, replies, stamps and the status bar show it. In {{ui:Settings}} › {{ui:MarkupCraft}} › {{ui:Your name}} it reads "From your account (your name)".
+
+- To use another name, choose {{ui:Use another name}} and type it. A name you type wins from then on.
+- To go back to your account's name, choose {{ui:Use my account name}}.
+
+Only the name is used, never your email address. If you change your name on the site, MarkupCraft shows it the next time it opens.
+
+## The first time (signed out)
+
+When you are not signed in, the first time you pick a drawing tool, a box called "Your name on markups" opens.
 
 1. Type your name the way you want reviewers to see it (up to 80 characters).
 2. Choose {{ui:Save}}.

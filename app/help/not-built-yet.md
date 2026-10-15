@@ -12,7 +12,7 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 
 | Not built yet | Do this today |
 |---|---|
-| Shared review sessions (several people marking up the same set live) | Save the marked-up PDF and pass it on; each person replies and saves. See [Statuses and replies](topic:statuses-and-replies). |
+| Shared review sessions over the internet (invite links are not open yet) | Review live on your own network in CadCraft Studio with a short code, which is free: see [Review one plan set together, live](topic:work-live). Or save the marked-up PDF and pass it on; each person replies and saves. |
 | Cloud saving and sync between computers | Keep the PDFs with your project files. Cloud saving is not available yet. |
 | Merging two people's copies | Divide the sheets between reviewers, or copy a few markups across with {{key:Mod+C}} and {{key:Mod+V}}. |
 | Editing or deleting a reply once sent | Undo right away, or add a correcting reply. |

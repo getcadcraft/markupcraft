@@ -31,6 +31,7 @@ import { readTitleBlock } from './titleblock.js';
 import { cleanImage } from './imagestamp.js';
 import { cleanHoles } from './holes.js';
 import { readOutline } from './bookmarks.js';
+import { BLANK_KEY, blankInfo } from './blank.js';
 
 export const EDITABLE_SUBTYPES = new Set(['Square', 'Circle', 'Line', 'PolyLine', 'Polygon', 'Ink', 'FreeText', 'Text', 'Stamp']);
 const IGNORED_SUBTYPES = new Set(['Popup', 'Link', 'Widget']);
@@ -140,7 +141,7 @@ export function fromPrivate(json, a, sheet) {
     sheet, type: d.type, pts: d.pts || null, rect: d.rect || null, rot: [0, 90, 180, 270].includes(d.rot) ? d.rot : 0,
     style: clean, text: String(d.text ?? ''), label: String(d.label ?? ''), subject: String(d.subject ?? ''), comment: String(d.comment ?? ''),
     author: String(d.author ?? ''), created: String(d.created || ''), modified: String(d.modified || ''),
-    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined,
+    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd,
   });
   return geometryOk(mk) ? mk : null;
 }
@@ -273,6 +274,8 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   let columns = [];
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_COLUMNS_KEY) : custom?.[PRIVATE_COLUMNS_KEY]; columns = raw ? JSON.parse(String(raw)) : []; } catch { columns = []; }
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_LAYERS_KEY) : custom?.[PRIVATE_LAYERS_KEY]; const v = raw ? JSON.parse(String(raw)) : []; layers = Array.isArray(v) ? v.slice(0, 500).filter((l) => l && typeof l === 'object') : []; } catch { layers = []; }
+  // File › New (blank.js): the paper and grid of a blank set, so "Add a blank page" matches it
+  const blank = blankInfo(custom instanceof Map ? custom.get(BLANK_KEY) : custom?.[BLANK_KEY]);
   const pages = [];
   const raw = [];
   for (let i = 0; i < doc.numPages; i++) {
@@ -291,7 +294,7 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     onProgress?.(i + 1, doc.numPages);
   }
 
-  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
+  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, blank, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
   const needLib = ours || raw.some((list) => list.some((a) => EDITABLE_SUBTYPES.has(a.subtype)));
   if (!needLib) return record;
 

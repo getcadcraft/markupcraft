@@ -69,6 +69,7 @@ const colsM = await imp('columns.js');
 const vdM = await imp('vecdiff.js');
 const legM = await imp('legend.js');
 const bmM = await imp('bookmarks.js');
+const blankM = await imp('blank.js');
 const i18n = await imp('i18n.js');
 const EN = JSON.parse(fs.readFileSync(path.join(APP, 'lang/en.json'), 'utf8'));
 i18n.init({ locale: 'en', strings: EN });   // the language file (0.4 item 0.5): every module's words come from it
@@ -1251,6 +1252,89 @@ section('Bookmarks (0.4 K24)');
   await reader.closePdf(doc2);
   ok(JSON.stringify(bmM.fromSheets([{ index: 0, title: 'A-101 — Plan' }])) === '[{"title":"A-101 — Plan","page":0,"children":[]}]' && bmM.count(items) === 4, 'built from the sheets; counted with children');
   ok(bmM.cleanBookmarks([{ title: ' x\u0007 ', page: 'no' }, { title: '' }, 5]).length === 1 && bmM.cleanBookmarks([{ title: 'a', page: 2.5 }])[0].page === -1, 'bookmarks from data are checked');
+}
+
+section('Blank pages: File › New (owner, 2026-10-15)');
+{
+  // paper sizes in PDF points (72 per inch, 72/25.4 per mm), portrait
+  const want = { letter: [612, 792], tabloid: [792, 1224], 'arch-d': [1728, 2592], 'arch-e': [2592, 3456], a4: [595.28, 841.89], a3: [841.89, 1190.55], a1: [1683.78, 2383.94] };
+  ok(JSON.stringify(Object.keys(blankM.PAPERS)) === JSON.stringify(Object.keys(want)), 'seven papers: Letter, Tabloid/ANSI B, ARCH D, ARCH E, A4, A3, A1');
+  ok(Object.entries(want).every(([k, [w, h]]) => near(blankM.PAPERS[k].w, w, 0.01) && near(blankM.PAPERS[k].h, h, 0.01)), 'paper sizes in points', blankM.PAPERS);
+  const c = blankM.cleanBlank({ paper: 'zz', orient: 'up', grid: 'hex', pages: 99 });
+  ok(c.paper === 'letter' && c.orient === 'portrait' && c.grid === 'none' && c.pages === 20 && blankM.cleanBlank({ pages: 0 }).pages === 1 && blankM.cleanBlank(null).pages === 1 && blankM.cleanBlank({ pages: 'x' }).pages === 1, 'settings are checked: unknown paper/turn/grid fall back, pages 1 to 20', c);
+  // every paper, both turns: a real PDF of that size, read back by pdf.js
+  let sizes = true; const bad = [];
+  for (const paper of Object.keys(want)) for (const orient of ['portrait', 'landscape']) {
+    const b = await blankM.blankPdf(PDFLib, { paper, orient, grid: 'none', pages: 1 });
+    const rec = await open(b, 'Untitled-1.pdf', 'b');
+    const [w, h] = orient === 'landscape' ? [...want[paper]].reverse() : want[paper];
+    if (rec.pages.length !== 1 || !near(rec.pages[0].width, w, 0.01) || !near(rec.pages[0].height, h, 0.01) || rec.pages[0].rotate !== 0) { sizes = false; bad.push([paper, orient, rec.pages[0].width, rec.pages[0].height]); }
+    await reader.closePdf(rec.doc);
+  }
+  ok(sizes, 'each paper, portrait and landscape, opens at its size in points (landscape = turned media box, no /Rotate)', bad);
+  const many = await open(await blankM.blankPdf(PDFLib, { paper: 'a3', orient: 'landscape', grid: 'dot', pages: 20 }), 'Untitled-2.pdf', 'm');
+  ok(many.pages.length === 20 && many.pages.every((pg) => near(pg.width, 1190.55, 0.01)) && many.markups.length === 0 && !Object.keys(many.calibrations).length, '20 pages, every one the same size, no markups and no scale', many.pages.length);
+  ok(JSON.stringify(many.blank) === JSON.stringify({ paper: 'a3', orient: 'landscape', grid: 'dot', metric: true }) && many.pages[0].title === 'Untitled-2 — page 1', 'the file says it is a blank set (Info /MarkupCraftBlank); sheets named by file and page', { blank: many.blank, title: many.pages[0].title });
+  await reader.closePdf(many.doc);
+  ok(blankM.blankInfo('{"paper":"evil","grid":"square"}').paper === 'letter' && blankM.blankInfo('not json') === null && blankM.blankInfo('') === null && blankM.blankInfo('[1]').grid === 'none', 'the blank-set note read back is untrusted and cleaned');
+
+  // the grid is drawn into the page: count ink on a rendered Letter page
+  const inkOf = async (bytes, pageNo = 1) => {
+    const doc = await getDoc(bytes);
+    const pg = await doc.getPage(pageNo);
+    const vp = pg.getViewport({ scale: 1 });
+    const cv = createCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+    await pg.render({ canvasContext: cx, viewport: vp, annotationMode: pdfjs.AnnotationMode.ENABLE }).promise;
+    const px = cx.getImageData(0, 0, cv.width, cv.height).data;
+    let n = 0, red = 0; for (let i = 0; i < px.length; i += 4) { if (px[i] + px[i + 1] + px[i + 2] < 720) n++; if (px[i] > 150 && px[i + 1] < 90 && px[i + 2] < 90) red++; }
+    await reader.closePdf(doc);
+    return { n, red };
+  };
+  const letter = (grid) => blankM.blankPdf(PDFLib, { paper: 'letter', grid, pages: 1 });
+  const [none, dot, square] = [await inkOf(await letter('none')), await inkOf(await letter('dot')), await inkOf(await letter('square'))];
+  ok(none.n === 0 && dot.n > 2000 && square.n > dot.n, 'grid drawn: none is blank paper, dots mark the page, squares more', { none: none.n, dot: dot.n, square: square.n });
+  const gc = blankM.gridContent(612, 792, 'square');
+  // 1/4 in on a 1/2 in margin: 30 columns (7.5 in) and 40 rows (10 in) → 31 + 41 lines, 8 + 11 of them heavy (every inch)
+  ok((gc.match(/ m /g) || []).length === 72 && /0\.62 G 0\.5 w/.test(gc) && gc.includes('36 36 m 36 756 l') && gc.includes('36 756 m 576 756 l'), 'square grid: 1/4 in pitch on a 1/2 in margin, a heavier line each inch', (gc.match(/ m /g) || []).length);
+  const dc = blankM.gridContent(595.28, 841.89, 'dot', true);
+  ok((dc.match(/ re/g) || []).length === 39 * 56 && blankM.gridContent(612, 792, 'none') === '', 'metric dot grid: one dot every 5 mm inside a 10 mm margin (39 × 56 on A4)', (dc.match(/ re/g) || []).length);
+
+  // markups saved onto a blank page and reopened: everything comes back, the grid stays under them
+  const blankBytes = await blankM.blankPdf(PDFLib, { paper: 'tabloid', orient: 'landscape', grid: 'square', pages: 2 }, { title: 'Untitled-3' });
+  const rec = await open(blankBytes, 'Untitled-3.pdf', 'u');
+  const marks = [
+    model.makeMarkup({ sheet: 'u:0', type: 'cloudrect', rect: [200, 200, 500, 400], author, comment: 'on a blank sheet', style: { color: '#e02020', width: 3 } }),
+    model.makeMarkup({ sheet: 'u:0', type: 'text', rect: [600, 300, 900, 360], text: 'Sketch: new door here', author }),
+    model.makeMarkup({ sheet: 'u:1', type: 'measure', pts: [[100, 100], [388, 100]], author }),
+  ];
+  const { bytes: saved, report } = await writer.writeMarkedUp(PDFLib, blankBytes, { pages: [
+    { index: 0, markups: marks.slice(0, 2), cal: null },
+    { index: 1, markups: marks.slice(2), cal: quarter },
+  ] });
+  const back = await open(saved, 'Untitled-3 (marked up).pdf', 'u');
+  const same = marks.every((m) => { const r = back.markups.find((x) => x.id === m.id); return r && r.type === m.type && r.sheet === m.sheet && JSON.stringify(r.rect) === JSON.stringify(m.rect) && JSON.stringify(r.pts) === JSON.stringify(m.pts) && r.text === m.text && r.comment === m.comment; });
+  ok(report.written === 3 && back.markups.length === 3 && same, 'markups saved onto the blank pages reopen editable and equal', { written: report.written, back: back.markups.length });
+  ok(!!back.calibrations['u:1'] && !back.calibrations['u:0'] && back.blank?.grid === 'square' && near(back.pages[0].width, 1224, 0.01), 'the scale set on page 2 is kept, page 1 stays uncalibrated, the blank-set note survives the save');
+  const sv = await inkOf(saved);
+  ok(sv.red > 500 && sv.n > square.n, 'the saved page paints the grid and the red cloud on it', sv);
+  await reader.closePdf(rec.doc); await reader.closePdf(back.doc);
+  // "Add a blank page" on the saved copy: one more page, same size, the grid drawn on it too, markups untouched
+  const added = await pagesM.insertBlank(PDFLib, saved, 2, { grid: back.blank });
+  const addR = await open(added, 'Untitled-3 (marked up).pdf', 'u');
+  ok(addR.pages.length === 3 && near(addR.pages[2].width, 1224, 0.01) && near(addR.pages[2].height, 792, 0.01) && addR.markups.length === 3 && addR.blank?.grid === 'square', 'add a blank page: the third page is the set\'s paper, the markups stay', addR.pages.length);
+  ok((await inkOf(added, 3)).n > 2000 && (await inkOf(await pagesM.insertBlank(PDFLib, saved, 2), 3)).n === 0, 'its grid is drawn like the others (and a plain inserted page has none)');
+  await reader.closePdf(addR.doc);
+
+  // names: Untitled-1, -2 … above any open Untitled-n (a saved copy counts) and above the session's own count
+  ok(blankM.untitledName([]).name === 'Untitled-1.pdf' && blankM.untitledName(['Untitled-1.pdf', 'plans.pdf']).name === 'Untitled-2.pdf'
+    && blankM.untitledName(['Untitled-4 (marked up).pdf'], 2).name === 'Untitled-5.pdf' && blankM.untitledName([], 3).name === 'Untitled-4.pdf', 'Untitled-1.pdf, Untitled-2.pdf … never reusing a number this session');
+  // every word the dialog builds at run time is in both language files
+  const ES = JSON.parse(fs.readFileSync(path.join(APP, 'lang/es-MX.json'), 'utf8'));
+  const keys = [...Object.keys(blankM.PAPERS).map((k) => 'new.paper.' + k), ...blankM.ORIENTS.map((k) => 'new.orient.' + k), ...blankM.GRIDS.map((k) => 'new.grid.' + k),
+    'new.title', 'new.text', 'new.paper', 'new.paper.inch', 'new.paper.metric', 'new.orient', 'new.grid', 'new.grid.hint', 'new.pages', 'new.err.pages', 'new.ok', 'new.making', 'new.done', 'new.failed',
+    'tool.new', 'tool.new.title', 'hint.new', 'hint.button.new', 'sheets.add_blank', 'sheets.add_blank.title', 'pages.done.add_blank'];
+  ok(keys.every((k) => Object.hasOwn(EN, k) && Object.hasOwn(ES, k)), 'the New dialog\'s words are in lang/en.json and the es-MX draft', keys.filter((k) => !Object.hasOwn(EN, k) || !Object.hasOwn(ES, k)));
 }
 
 section('Language files (0.4 item 0.5)');

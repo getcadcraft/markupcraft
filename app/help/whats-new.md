@@ -1,70 +1,60 @@
 ---
-title: What's new in 0.4
-summary: Print, page changes, slip-sheeting, find text, layers, sheet links, compare by lines, recovery after a crash and much more.
+title: What's new in 0.5
+summary: Start with blank pages, your account's name on markups, review one set together live in CadCraft Studio, menu styles with your own keys, add-ons of MarkupCraft's own, and a layout for phones.
 section: start
 order: 5
-keywords: whats new, what's new, release notes, changelog, changes, 0.4, version, new features, print, pages, slip sheet, find text, layers, links, bookmarks, recover, autosave, language, spanish
+keywords: whats new, what's new, release notes, changelog, changes, 0.5, version, new features, blank page, new, account name, author, live, studio, together, menu style, pdf review, keys, mouse, add-ons, phone, fold phone, tablet, settings
 ---
 
-This is what changed in MarkupCraft 0.4, compared with 0.3, the version Try ran before. It is a big release: most of the items on the old "not built yet" list are built now. Your markups, measuring, compare and the lists work as they did, with more on top.
+This is what changed in MarkupCraft 0.5, compared with 0.4. It is a smaller release than 0.4: your markups, measuring, compare and the lists work as they did.
 
 ## New
 
-### Pages, printing and files
+### Start with blank pages
 
-- **Print with markups.** Press {{key:Mod+P}}, or choose {{ui:Pages}}, then {{ui:Print…}} in the {{ui:File}} group. Print this sheet, this file, the whole set or the pages you type. See [Print, and change the pages of a PDF](topic:pages-and-printing).
-- **Change the pages.** The {{ui:Pages}} menu turns, moves, inserts (from a PDF, or blank), deletes and extracts pages. Markups, scales and sheet numbers move with their pages.
-- **Slip-sheet a revised set.** {{ui:Slip-sheet a revised set…}} opens the new issue and moves every open markup to the new sheet with the same number. Old sheets can be stamped "Superseded". See [Slip-sheet a revised set](topic:slip-sheet-a-revised-set).
-- **Save a flattened copy.** The markups are drawn into the pages, for a final issue nobody can change. See [Save a flattened copy](topic:flatten).
-- **Recover your work.** If the tab closes or the browser crashes before you save, MarkupCraft asks {{ui:Recover your work?}} the next time it opens, and puts the PDF and your markups back. See [Recover unsaved work](common:recover).
-- **Open in TakeoffCraft.** The bar under the sheet can hand the open PDF to TakeoffCraft in a new tab, and TakeoffCraft's PDFs open here the same way. The button shows when TakeoffCraft is open in the same place. See [Take the PDF to TakeoffCraft](topic:open-a-plan-set#take-the-pdf-to-takeoffcraft-or-bring-it-here).
-- **Recent files.** The start screen lists the PDFs you opened lately, in Chrome and Edge. Click one to open it again.
+- **File › New.** {{ui:New}} in the {{ui:File}} group, or {{ui:Start with a blank page}} on the start screen, makes a set of blank pages to sketch on. Pick the paper (Letter, Tabloid, ARCH D, ARCH E, A4, A3 or A1), portrait or landscape, a grid (none, dots or squares) and 1 to 20 pages. The set saves, autosaves and recovers like any PDF. See [Start with blank pages](topic:open-a-plan-set#start-with-blank-pages).
+- **Add a blank page.** A blank set has {{ui:Add a blank page}} under its sheets, and {{ui:Insert a blank page}} draws the set's grid too. See [Print, and change the pages of a PDF](topic:pages-and-printing).
+- {{key:Mod+N}} opens the same dialog where the browser lets the page have the key: the desktop app and CadCraft Studio always do, a normal Chrome tab keeps it for a new window.
+- A blank set has no scale until you calibrate or pick one. See [Calibrate a sheet and measure](topic:calibrate-and-measure).
 
-### Finding and moving around
+### Your name from your account
 
-- **Find text.** Press {{key:Mod+F}} to search the words on every sheet, jump to each hit, and cloud them all in one step. See [Find text in the drawings](topic:find-text).
-- **Sheet links.** Any markup can link to another sheet: hold {{key:Mod}} and click it to go there, and {{key:Alt+Left}} comes back. {{ui:Link sheet callouts…}} links every callout like `3/A-501` in one pass. See [Sheet links](topic:sheet-links).
-- **Bookmarks.** Follow, rename and remove a PDF's bookmarks, or build them from the sheet names. They are saved in the PDF. See [Bookmarks](topic:open-a-plan-set#bookmarks).
-- **Turn the view.** Two buttons under the sheet turn it a quarter turn, for a sheet drawn sideways. The PDF does not change. See [Turn the view](topic:open-a-plan-set#turn-the-view).
+- **Signed in, MarkupCraft no longer asks for your name.** Markups, replies, stamps and the status bar use your account's name. {{ui:Settings}} › {{ui:MarkupCraft}} › {{ui:Your name}} shows "From your account" with the name, and {{ui:Use another name}}; a name you type wins until you choose {{ui:Use my account name}}. Signed out, it asks as before. See [Set your author name](topic:set-your-name).
 
-### Drawing and measuring
+### Review one plan set together, live
 
-- **Layers.** Put markups on named layers, then show, hide or lock each layer. Other PDF viewers can switch the layers too. See [Markup layers](topic:layers).
-- **Arcs and angles.** {{ui:Arc}} ({{key:O}}) draws an arc through three points. {{ui:Angle}} ({{key:X}}) measures an angle in degrees, with no scale needed. See [Measure an angle](topic:calibrate-and-measure#measure-an-angle).
-- **Area cut-outs.** Leave columns, shafts and courtyards out of an area. The perimeter goes round them too. See [Cut-outs](topic:calibrate-and-measure#cut-outs).
-- **Sketch to scale.** On a calibrated sheet, type a length, and an angle if you want one, while you draw. See [Sketch to scale](topic:calibrate-and-measure#sketch-to-scale).
-- **Pictures and signatures.** Stamp a logo or a seal with {{ui:Picture…}}, or sign once with {{ui:My signature…}} and place it like any stamp. See [Stamp a picture or your signature](topic:stamps-and-notes#stamp-a-picture-or-your-signature).
-- **Spaces.** Name the rooms and zones of a sheet, then filter and export markups by the space they are in. See [Spaces](topic:spaces).
-- **Photos on markups.** Add a photo to a markup's thread, or take one on a tablet. It travels in the PDF. See [Add a photo](topic:statuses-and-replies#add-a-photo).
-- **Copy to other sheets.** {{ui:Copy to other sheets…}} in {{ui:Properties}} copies a stamp, or any markups, to the same place on the sheets you tick. See [Copy markups to other sheets](topic:select-and-edit#copy-markups-to-other-sheets).
+- **In CadCraft Studio,** everyone in a session works on the same plan set at once. The host's PDFs come to each person who joins, replies from several people stay on one thread, and punch numbers never repeat. Undo undoes your own last change only. See [Review one plan set together, live](topic:work-live).
 
-### Lists, reports and compare
+### Menus, keys and mouse
 
-- **A legend** that counts each kind of markup on the sheet as you work. See [A legend on the sheet](topic:markups-list-and-export#a-legend-on-the-sheet).
-- **Your own columns.** Add text, choice, number and date columns to markups, and sort the list by any column. See [Your own columns, and sorting](topic:markups-list-and-export#your-own-columns-and-sorting).
-- **Markup summary** as a spreadsheet workbook ({{ui:XLSX}}) or a PDF report ({{ui:PDF}}). See [Export a summary](topic:markups-list-and-export#export-a-summary-workbook-or-pdf).
-- **Import BCF.** Replies and statuses from BIM tools come back onto your markups, and their other issues arrive as notes. See [Import BCF](topic:markups-list-and-export#import-bcf).
-- **Compare by changed lines.** {{ui:Changed lines}} compares the sheets' own lines, not just their pictures, and {{ui:Cloud the changes}} clouds every change in one step. See [Changed lines only](topic:compare-revisions#changed-lines-only).
-- **Compare a whole set.** {{ui:Compare two sets}} pairs the sheets of two PDFs by number and lists the most changed first. See [Compare a whole set](topic:compare-revisions#compare-a-whole-set).
+- **Two menu styles.** {{ui:MarkupCraft}} is the toolbar you know. {{ui:PDF review}} is a menu bar (File, Edit, View, Document, Markup, Measure, Window) over a row of tools, with the key pattern of PDF review programs. See [Menus, keys and mouse](topic:menus-keys-and-mouse).
 
-## Improved
+### Add-ons
 
-- **Touch.** Touch and hold finishes a polyline or opens a markup's text. Buttons, menus and grips are bigger for fingers. See [Review on an iPad or touch screen](topic:review-on-a-tablet).
-- **More panels windows.** Each panel can have a window of its own, up to four. Drag a panel from one window to another, and resize a floating panel with a finger or a pen. See [More than one panels window](common:arrange-panels#more-than-one-panels-window).
-- **Find a tool or setting.** Press {{key:Mod+K}}, or {{ui:Find}} in the bar at the top, to run a tool, jump to a setting or open a help topic. See [Find a tool or setting](common:find-tools).
-- **Language.** Every word in MarkupCraft now comes from a language file. {{ui:Settings}} › {{ui:General}} › {{ui:Language}} offers English and "Español (México)". The Spanish is a machine-made draft that has not been reviewed yet, and help topics are still in English.
-- **Save for offline** says how much it keeps before you click.
+- **MarkupCraft runs add-ons of its own.** An add-on can add markup types drawn with MarkupCraft's tools and saved in the PDF, keep its own data on markups, add columns to the markups list, the CSV and the summary, and add a tab to the right panel. A PDF opened and saved without the add-on keeps the add-on's data. No add-on comes with MarkupCraft yet.
 
-## Files and compatibility
+## Fixed
 
-- MarkupCraft still saves a copy, "<name> (marked up).pdf". Your original PDF is never changed.
-- The new things are saved as standard PDF parts, so other PDF viewers show them: layers, sheet links, bookmarks, pictures and photo attachments. See [What is saved in the PDF](topic:what-the-pdf-keeps).
-- The PDF engine is the same version as in 0.3.
+- On a phone, opening a file scrolled the whole page down to the sheets list. It now only brings the sheet into view in its panel.
+- On a 360 px wide screen, the app bar ran past the right edge.
+
+## In every app
+
+- **CadCraft Studio is the desktop app.** From 0.5 the desktop download is CadCraft Studio: all eight apps in one install. The separate installer for each app stops. MarkupCraft still runs in the browser, and as a browser edition you can download.
+- **Installers are not signed yet.** Code signing comes with 0.6. On Windows, if SmartScreen stops the installer, choose {{ui:More info}}, then {{ui:Run anyway}}. The macOS disk image (Apple silicon and Intel, macOS 13 or later) is not signed or notarized: the first time, right-click the app and choose {{ui:Open}}. iPad, Android and iPhone come with 0.6.
+- **Work together live.** In CadCraft Studio, {{ui:Live}} shares the file you have open: teammates on the same network join with a short code and edit with you, each with their own undo. Sessions on your own network are free, for everyone. Invite links over the internet aren't open yet. See [Work together live](common:work-together-live) and [Review one plan set together, live](topic:work-live).
+- **Menus, keys and mouse.** In {{ui:Settings}} › {{ui:MarkupCraft}} › {{ui:Menus, keys and mouse}}, pick a menu style ({{ui:MarkupCraft}} or {{ui:PDF review}}), give any command your own key, move commands between menus, set the wheel and the mouse buttons, and export or import a style as a `.ccinput.json` file. {{ui:Use this style in every app}} opens every app in its matching style. See [Menus, keys and mouse](topic:menus-keys-and-mouse).
+- **A wider Settings dialog,** in two columns, so more fits without scrolling. See [MarkupCraft settings](topic:settings).
+- **Floating and bottom panels fit the window.** A floating panel keeps above the status bar and shrinks with a small window, and a panel docked at the bottom never takes the whole drawing. See [Arrange the panels and use a second monitor](common:arrange-panels).
+- **Phones and fold phones.** On a screen up to 760 px wide, or a phone held sideways, the sheet keeps the screen: panels open as sheets from a bar at the bottom, and the toolbar is one row that scrolls sideways. {{ui:Tools}} hides the toolbar and {{ui:Move}} puts it at the bottom. Turning the phone, or opening and closing a fold phone, keeps your work, the selection and an open dialog. The app bar's {{ui:More}} menu holds the version, Find and the links. Phones work, but MarkupCraft is made for larger screens.
+- **Touch tablets.** On a touch screen each toolbar is one row that scrolls sideways instead of wrapping onto several lines. See [Review on an iPad or touch screen](topic:review-on-a-tablet).
+- **Spanish** stays a machine-made draft that has not been reviewed yet. Help topics are in English.
 
 ## Not in this version yet
 
-- Undoing a page change. Close without saving and open the original PDF again.
-- Reading text from scanned sheets. A test misread sheet numbers, so it is not built.
-- {{ui:Settings}} has an {{ui:Assistants}} section, but an assistant can only connect through CadCraft Studio, which is not available yet.
-- {{ui:Settings}} › {{ui:General}} › {{ui:Add-ons}} is there, but no add-ons come with MarkupCraft yet.
+- Undoing a page change, including {{ui:Add a blank page}}. Close without saving and open the original PDF again.
+- In a live session: PDFs opened after joining stay on your own screen, page changes are not shared, and there are no cursors or "is editing" labels yet. BCF export does not work in a browser that joined from a page Studio serves on the network.
+- Invite links over the internet for live sessions.
+- Reading text from scanned sheets.
+- An assistant can connect only through CadCraft Studio. See [Use MarkupCraft with an AI assistant](topic:use-with-ai-assistants).
 - Everything else is in [What is not built yet](topic:not-built-yet).

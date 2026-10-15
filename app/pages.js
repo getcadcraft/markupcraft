@@ -13,7 +13,8 @@
  *                                                   (an index into the pages that are left)
  *   insertPages(lib, bytes, srcBytes, at, {indices, labels})  pages of another PDF (all, or `indices`) inserted before
  *                                                   page `at` → { bytes, count }
- *   insertBlank(lib, bytes, at, {size, labels})    a blank page (default: the size and turn of the page before it)
+ *   insertBlank(lib, bytes, at, {size, labels, grid})  a blank page (default: the size and turn of the page before it;
+ *                                                   grid {grid, metric} = a blank set's grid drawn on it, blank.js)
  *   extractPages(lib, bytes, indices)              a new PDF of those pages, in that order
  *   order*(n, …)                                   the same operations on page numbers only: new index → old index
  *                                                   (null = inserted), so the page can say what goes where
@@ -26,6 +27,7 @@
  */
 
 import { t } from './i18n.js';
+import { drawGrid } from './blank.js';
 
 export const ROTATIONS = [90, 180, 270];
 
@@ -114,7 +116,7 @@ export async function insertPages(lib, bytes, srcBytes, at, { indices = null, la
   return { bytes: await save(doc), count: copies.length };
 }
 
-export async function insertBlank(lib, bytes, at, { size = null, labels = null } = {}) {
+export async function insertBlank(lib, bytes, at, { size = null, labels = null, grid = null } = {}) {
   const doc = await load(lib, bytes);
   const n = doc.getPageCount();
   const a = Math.max(0, Math.min(n, at));
@@ -122,6 +124,7 @@ export async function insertBlank(lib, bytes, at, { size = null, labels = null }
   const wh = size || (ref ? [ref.getWidth(), ref.getHeight()] : [612, 792]);
   const pg = doc.insertPage(a, wh);
   if (ref && !size) pg.setRotation(lib.degrees(norm(ref.getRotation().angle || 0)));
+  if (grid) drawGrid(lib, doc, pg, grid.grid, !!grid.metric);   // a blank set's grid (blank.js), on the new page too
   relabel(lib, doc, labels, orderInsert(n, a, 1));
   return save(doc);
 }

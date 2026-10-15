@@ -31,7 +31,8 @@ Choose {{ui:Pages}}, then {{ui:Move page earlier}} or {{ui:Move page later}}. Th
 ## Insert pages
 
 - {{ui:Insert pages from a PDF…}} puts every page of another PDF after the open sheet.
-- {{ui:Insert a blank page}} adds an empty page of the same size after the open sheet, for sketches and notes.
+- {{ui:Insert a blank page}} adds an empty page of the same size after the open sheet, for sketches and notes. In a set made with {{ui:New}}, it has the set's grid too.
+- In a set made with {{ui:New}}, {{ui:Add a blank page}} under the {{ui:Sheets}} list adds one more page like the others at the end. See [Start with blank pages](topic:open-a-plan-set#start-with-blank-pages).
 
 Inserted pages get their page number as their label until you rename them. See [Rename a sheet](topic:open-a-plan-set#rename-a-sheet).
 

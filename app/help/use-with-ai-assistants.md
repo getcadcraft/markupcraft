@@ -3,14 +3,14 @@ title: Use MarkupCraft with an AI assistant
 summary: Let your own AI assistant or script list the markups of a set and add simple ones: permissions, connecting through CadCraft Studio, and the activity log.
 section: tasks
 order: 135
-keywords: ai, assistant, agent, mcp, model context protocol, claude, claude code, claude desktop, script, automation, markups, review, permissions, disconnect, activity
+keywords: ai, assistant, agent, mcp, model context protocol, script, automation, markups, review, permissions, disconnect, activity
 ---
 
 ## What you will learn
 
 How to let an AI assistant (or a script you wrote) work with MarkupCraft, and how to decide what it is allowed to touch.
 
-MarkupCraft has **no AI of its own** and sends nothing anywhere. You bring the assistant: Claude Desktop, Claude Code or any program that speaks the Model Context Protocol (MCP). MarkupCraft only gives it tools, and you choose which.
+MarkupCraft has **no AI of its own** and sends nothing anywhere. You bring the assistant: any program that speaks the Model Context Protocol (MCP). MarkupCraft only gives it tools, and you choose which.
 
 ## Turn it on
 
@@ -22,7 +22,7 @@ Tools outside the permissions you ticked are not offered to the assistant, and i
 
 ## Connect your assistant
 
-Assistants connect through **CadCraft Studio** on your computer: Studio runs a small server only this computer can reach, protected by a token it makes each time it starts. In Studio, choose {{ui:Connect an assistant}} and copy the address and the token into your assistant (Studio shows the exact settings for Claude Code, Claude Desktop and other MCP clients). Never share the token.
+Assistants connect through **CadCraft Studio** on your computer: Studio runs a small server only this computer can reach, protected by a token it makes each time it starts. In Studio, choose {{ui:Connect an assistant}} and copy the address and the token into your assistant (Studio shows the exact settings to paste). Never share the token.
 
 :::note
 A browser tab can't open a connection for an assistant: in the browser apps the switch has no effect until you use CadCraft Studio on your computer.
@@ -42,7 +42,7 @@ A browser tab can't open a connection for an assistant: in the browser apps the 
 | `markups_list` | Read | The markups with type, sheet, text, comment, measurement, status, author and replies, filtered by sheet, status, type or author |
 | `markup_add` | Edit | Adds a rectangle, cloud, ellipse, text box, note, line or arrow to a sheet |
 
-A markup an assistant adds names it as the author (for example "Claude Code (assistant)") unless you set your reviewer name, and it is one undo step. Saving the marked-up PDF stays with you: use {{ui:Save}} as usual.
+A markup an assistant adds names it as the author (the name the assistant program gives itself, followed by "(assistant)") unless you set your reviewer name, and it is one undo step. Saving the marked-up PDF stays with you: use {{ui:Save}} as usual.
 
 Without opening MarkupCraft, the CadCraft MCP server lists the markups of a PDF in a folder you name (`markups_list`), and `cadcraft info Set.pdf` prints them on the command line.
 

@@ -50,6 +50,7 @@ import { summarySheets, summaryPdf } from './summary.js';
 import { readBcf, planImport } from './bcf-read.js';
 import { writeXlsx } from './xlsx.js';
 import { rotatePages, deletePages, movePages, insertPages, insertBlank, extractPages, parsePageList, orderDelete } from './pages.js';
+import { PAPERS, ORIENTS, GRIDS, MAX_PAGES, cleanBlank, blankPdf, untitledName } from './blank.js';
 import { measure, measureArea, parseLength, calibrationFrom, presetCalibration, SCALE_PRESETS, UNITS } from './units.js';
 import { buildBcf, guidFor } from './bcf.js';
 import { DEFAULT_CHEST, parseChest, mergeChest, exportChest, toolFromMarkup, cleanTool } from './chest.js';
@@ -58,6 +59,8 @@ import { alignment } from './compare.js';
 import { CLIP_KEY, makeClip, cleanClip, clipBounds, placeClip } from './clip.js';
 import { t } from './i18n.js';
 import { installAgents } from './agents.js';
+import { startAddons, columnsNow } from './addons/markupcraft-api.js';
+import { panButton, wheelFactor } from './input-mouse.js';   // 0.5 IP.3: the menu style's wheel and pan buttons (input-markupcraft.js)
 
 const DRAW_TOOLS = new Set(['pen', 'highlight', 'line', 'arrow', 'arc', 'angle', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text', 'note', 'stamp', 'measure', 'area', 'count']);
 const NEEDS_SCALE = new Set(['measure', 'area']);
@@ -137,7 +140,12 @@ function init(root) {
     if (!out.styles || typeof out.styles !== 'object') out.styles = {};
     return out;
   })();
-  let author = String(lsGet(LS.author, '') || '');
+  // Your name on markups (0.5 SI.9): signed in, it is your account's (host.account(), wired after Settings below) with no
+  // dialog; a name typed here (Settings, or the name dialog) wins until it is cleared. Signed out: the dialog, as before.
+  let typedAuthor = String(lsGet(LS.author, '') || '');
+  let accountName = '';
+  let author = typedAuthor;
+  let authorOther = false;   // Settings: "Use another name" opened the name box while signed in
   let askedAuthor = false;
   let chest = (() => { const c = lsGet(LS.chest, null); return Array.isArray(c) ? c.map(cleanTool).filter(Boolean) : DEFAULT_CHEST.slice(); })();
   const cmp = { mode: 'picture', vec: null, on: false, oldKey: '', newKey: '', dx: 0, dy: 0, fit: null, balance: 0.5, aligning: null };
@@ -147,7 +155,10 @@ function init(root) {
     markColor: settings.markColor, weight: settings.weight, pasteAt: settings.pasteAt, unit: settings.unit, posUnit: settings.posUnit });
   let afterCalibrate = 'measure';
 
-  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t) };
+  // the menu styles (0.5 IP.3, input-markupcraft.js + the shell's app-input-ui.js): messages to the status bar; letters stay
+  // the text box's while a markup's text is being typed
+  window.ccInputHooks = { status: (text) => status(text || ''), busy: () => !!editing };
+  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t), status: (s) => status(s) };
 
   // ---- helpers ----
   const curSheet = () => sheets[cur] || null;
@@ -240,7 +251,7 @@ function init(root) {
       check: () => (input.value.trim() ? '' : t('dlg.author.need')),
     });
     askedAuthor = true;
-    if (r.key === 'save') { author = input.value.trim().slice(0, 80); lsSet(LS.author, author); renderAuthor(); syncSettingsForm(); }
+    if (r.key === 'save') { typedAuthor = input.value.trim().slice(0, 80); author = typedAuthor || accountName; lsSet(LS.author, typedAuthor); renderAuthor(); syncSettingsForm(); }
     return author;
   }
   function renderAuthor() { ui.author.textContent = author || t('status.author.none'); }
@@ -260,7 +271,8 @@ function init(root) {
   // ---- files ----
   ui.file.addEventListener('change', () => { const list = [...ui.file.files]; ui.file.value = ''; if (list.length) openFiles(list); });
 
-  async function openFiles(list) {
+  /** opts (Studio Live, live.js): ids = the host's file ids, in order; keepMarkups = the markups came with the session. */
+  async function openFiles(list, opts = {}) {
     const pdfs = list.filter((f) => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
     const skipped = list.length - pdfs.length;
     if (!pdfs.length) { status(list[0]?.name ? t('open.not_pdf.named', { file: list[0].name }) : t('open.not_pdf')); return; }
@@ -274,13 +286,16 @@ function init(root) {
       await frame();
       try {
         const data = new Uint8Array(await f.arrayBuffer());
-        const id = 'f' + (++fileSeq);
+        const want = opts.ids && opts.ids[pdfs.indexOf(f)];
+        const id = typeof want === 'string' && /^f\d+$/.test(want) ? want : 'f' + (++fileSeq);
+        fileSeq = Math.max(fileSeq, +id.slice(1));
         const rec = await openPdf({ pdfjs: libs.pdfjs, pdfLib: () => pdfLib(), docOptions: libs.docOptions }, data, {
           fileId: id, name: f.name,
           onProgress: (i, nPages) => { if (nPages > 4 && i % 5 === 0) ui.busyText.textContent = t('open.opening.progress', { file: f.name, i, n: nPages }); },
         });
         files.push(rec);
-        store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
+        if (opts.keepMarkups) store.load([], {}, {}, rec.layers, rec.columns);
+        else store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
         read += rec.markups.length;
         opened++;
         for (const n of rec.notes) errors.push(t('open.note', { file: f.name, note: n }));
@@ -466,9 +481,14 @@ function init(root) {
         break;
       }
       case 'page-insert-blank':
-        run = (lib, b) => insertBlank(lib, b, i + 1, { labels });
+        run = (lib, b) => insertBlank(lib, b, i + 1, { labels, grid: f.blank });
         show = i + 1;
         done = t('pages.done.blank', { after: s.page.title });
+        break;
+      case 'page-add-blank':   // a blank set (File › New): one more page like the others, at its end
+        run = (lib, b) => insertBlank(lib, b, n, { labels, grid: f.blank });
+        show = n;
+        done = t('pages.done.add_blank', { name: f.name, n: n + 1 });
         break;
       case 'page-delete': {
         const idx = await askPages(f, t('pages.delete.title'), t('pages.delete.text'), t('pages.delete.ok'), true);
@@ -541,6 +561,68 @@ function init(root) {
     }
     busy('');
   }
+  // ---- File › New (owner, 2026-10-15): blank pages made here as a real PDF with pdf-lib, then opened like any file ----
+  // Untitled-1.pdf, Untitled-2.pdf … so every tool, calibration (none until the person sets one), save, autosave and the
+  // desktop host treat it exactly as an opened PDF. The last choices are kept in localStorage "markupcraft.blank".
+  let untitledSeq = 0;
+  const LS_BLANK = 'markupcraft.blank';
+  async function askBlank() {
+    const last = cleanBlank(lsGet(LS_BLANK, {}));
+    const opt = (v, label, on) => el('option', { value: v, selected: v === on }, label);
+    const paper = el('select', { id: 'mc-dlg-paper', className: 'mc-select' },
+      el('optgroup', { label: t('new.paper.inch') }, ...Object.keys(PAPERS).filter((k) => !PAPERS[k].metric).map((k) => opt(k, t('new.paper.' + k), last.paper))),
+      el('optgroup', { label: t('new.paper.metric') }, ...Object.keys(PAPERS).filter((k) => PAPERS[k].metric).map((k) => opt(k, t('new.paper.' + k), last.paper))));
+    const radios = (name, list, on, label) => el('div', { className: 'mc-radios', role: 'radiogroup', 'aria-label': label }, ...list.map((v) =>
+      el('label', { className: 'mc-radio' }, el('input', { type: 'radio', name, value: v, checked: v === on }), ' ', t(name.replace('mc-new-', 'new.') + '.' + v))));
+    const orient = radios('mc-new-orient', ORIENTS, last.orient, t('new.orient'));
+    const grid = radios('mc-new-grid', GRIDS, last.grid, t('new.grid'));
+    const pages = el('input', { type: 'text', id: 'mc-dlg-blank-pages', className: 'mc-input', inputmode: 'numeric', autocomplete: 'off', value: String(last.pages) });
+    let spec = null;
+    const r = await dialog({
+      title: t('new.title'), text: t('new.text'),
+      body: [el('div', { className: 'mc-props mc-new-blank' },
+        el('label', { className: 'mc-k', for: 'mc-dlg-paper' }, t('new.paper')), paper,
+        el('span', { className: 'mc-k' }, t('new.orient')), orient,
+        el('span', { className: 'mc-k' }, t('new.grid')), grid,
+        el('label', { className: 'mc-k', for: 'mc-dlg-blank-pages' }, t('new.pages', { max: MAX_PAGES })), pages),
+      el('p', { className: 'mc-muted' }, t('new.grid.hint'))],
+      buttons: [['cancel', t('dlg.cancel')], ['ok', t('new.ok'), 'btn-plot']], submit: 'ok',
+      check: () => {
+        const n = Number(pages.value);
+        if (!Number.isInteger(n) || n < 1 || n > MAX_PAGES) return t('new.err.pages', { max: MAX_PAGES });
+        spec = cleanBlank({ paper: paper.value, orient: orient.querySelector('input:checked')?.value, grid: grid.querySelector('input:checked')?.value, pages: n });
+        return '';
+      },
+    });
+    return r.key === 'ok' ? spec : null;
+  }
+  /** File › New: ask (or take `given`, for tests and scripts), make the PDF, open it. → the new file record, or null. */
+  async function newBlank(given = null) {
+    commitEdit(); cancelOps();
+    const spec = given ? cleanBlank(given) : await askBlank();
+    if (!spec) return null;
+    lsSet(LS_BLANK, spec);
+    busy(t('new.making'));
+    await frame();
+    try {
+      const lib = await pdfLib();
+      const { name, seq } = untitledName(files.map((f) => f.name), untitledSeq);
+      untitledSeq = seq;
+      const bytes = await blankPdf(lib, spec, { title: name.replace(/\.pdf$/i, '') });
+      const n0 = files.length;
+      busy('');
+      if (!await openFiles([new File([bytes], name, { type: 'application/pdf' })])) return null;
+      const f = files[n0];
+      status(t('new.done', { name, n: spec.pages, paper: t('new.paper.' + spec.paper), orient: t('new.orient.' + spec.orient).toLocaleLowerCase(document.documentElement.lang || undefined) }));
+      return f;
+    } catch (e) {
+      busy('');
+      await ask(t('new.failed'), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
+      return null;
+    }
+  }
+  window.markupcraft.newBlank = newBlank;
+
   /** [0,1,2,4] → "1-3, 5" */
   function rangeText(idx) {
     const v = [...idx].sort((a, b) => a - b).map((k) => k + 1), out = [];
@@ -1083,7 +1165,19 @@ function init(root) {
     for (const b of ui.sheets.querySelectorAll('.mc-sheet')) {
       const on = +b.dataset.i === cur;
       b.setAttribute('aria-current', on ? 'true' : 'false');
-      if (on) b.scrollIntoView({ block: 'nearest' });
+      if (on) revealInPanel(b);
+    }
+  }
+  /** Scroll the panel's own list so `b` shows — never the page (on a phone the panels stack under the sheet and the
+   *  page scrolls; scrollIntoView would jump away from the sheet that just opened). */
+  function revealInPanel(b) {
+    for (let q = b.parentElement; q && q !== document.body; q = q.parentElement) {
+      if (/(auto|scroll)/.test(getComputedStyle(q).overflowY) && q.scrollHeight > q.clientHeight) {
+        const r = b.getBoundingClientRect(), qr = q.getBoundingClientRect();
+        if (r.top < qr.top) q.scrollTop -= qr.top - r.top; else if (r.bottom > qr.bottom) q.scrollTop += r.bottom - qr.bottom;
+        return;
+      }
+      if (q.tagName === 'ASIDE') return;
     }
   }
   function refreshSheetCounts() {
@@ -1149,7 +1243,18 @@ function init(root) {
   // the toolbar's More menu: closes on a choice, a click elsewhere or Esc
   function closeMenus() { for (const d of root.querySelectorAll('details.mc-menu[open]')) d.open = false; }
   document.addEventListener('click', (e) => { for (const d of root.querySelectorAll('details.mc-menu[open]')) if (!d.contains(e.target)) d.open = false; });
+  // A menu hangs from its button's right edge; near the window's left edge (File › Pages, or wherever Arrange put it)
+  // that runs off screen, so it hangs from the left edge instead. Phones (fixed, full width) are left alone.
+  function keepMenuOnScreen(d) {
+    const list = d.querySelector('.mc-menu-list');
+    if (!list) return;
+    list.style.left = list.style.right = '';
+    if (!d.open || getComputedStyle(list).position === 'fixed') return;
+    const r = list.getBoundingClientRect();
+    if (r.left < 8) { list.style.left = '0'; list.style.right = 'auto'; }
+  }
   for (const d of root.querySelectorAll('details.mc-menu')) {
+    d.addEventListener('toggle', () => keepMenuOnScreen(d));
     d.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && d.open) { e.preventDefault(); e.stopPropagation(); d.open = false; d.querySelector('summary').focus(); }
       if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && d.open) {
@@ -1163,6 +1268,7 @@ function init(root) {
   }
   async function act(a) {
     switch (a) {
+      case 'new': newBlank(); break;
       case 'open': if (host.kind === 'desktop') host.openFile({ types: PDF_TYPES, multiple: true }).then(openHostFiles); else ui.file.click(); break;
       case 'save': saveFiles('ask'); break;
       case 'close': closeSet(); break;
@@ -1173,7 +1279,7 @@ function init(root) {
       case 'save-flat': saveFlat(); break;
       case 'slip-sheet': if (files.length) ui.slipFile.click(); else status(t('slip.need_old')); break;
       case 'page-rotate-cw': case 'page-rotate-ccw': case 'page-move-up': case 'page-move-down':
-      case 'page-insert-pdf': case 'page-insert-blank': case 'page-delete': case 'page-extract': pagesOp(a); break;
+      case 'page-insert-pdf': case 'page-insert-blank': case 'page-add-blank': case 'page-delete': case 'page-extract': pagesOp(a); break;
       case 'undo': undo(); break;
       case 'redo': redo(); break;
       case 'delete': deleteSelection(); break;
@@ -1346,6 +1452,7 @@ function init(root) {
       sheet: s.page.key, type, rot: view.seenRotate, style, author, label, layer: curLayer && store.open({ layer: curLayer }) ? curLayer : '',
       subject: toolPreset?.subject || TYPES[type].subject,
       text: TEXT_TYPES.has(type) ? (toolPreset?.text || '') : '',
+      ...(toolPreset?.xd && toolPreset.type === type ? { xd: toolPreset.xd } : {}),   // an add-on's markup type (0.5 AO.6)
       ...geom, ...extra,
     });
   }
@@ -1478,7 +1585,7 @@ function init(root) {
     over.focus({ preventScroll: true });
     const [sx, sy] = localXY(e);
     const p = view.toUser(sx, sy);
-    if (e.button === 1 || (e.button === 0 && (spaceDown || tool === 'pan')) || (e.button === 2 && !pending)) {
+    if ((e.button === 1 && panButton(1)) || (e.button === 0 && (spaceDown || tool === 'pan')) || (e.button === 2 && !pending && panButton(2))) {   // IP.3: middle / right pan as the style says
       e.preventDefault();
       over.setPointerCapture(e.pointerId);
       drag = { kind: 'pan', sx, sy };
@@ -1603,7 +1710,7 @@ function init(root) {
     const [sx, sy] = localXY(e);
     let dy = e.deltaY;
     if (e.deltaMode === 1) dy *= 16; else if (e.deltaMode === 2) dy *= 400;
-    view.zoomAt(Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0018)), sx, sy);
+    view.zoomAt(Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0018 * wheelFactor())), sx, sy);   // IP.3: the style's wheel (a pinch stays as it is)
   }, { passive: false });
 
   function constrain(from, p, e) { return e.shiftKey ? snap45(from, p) : p; }
@@ -2152,6 +2259,7 @@ function init(root) {
       else if (lk === 'y' || (lk === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
       else if (lk === 's') { e.preventDefault(); saveFiles('ask'); }
       else if (lk === 'o') { e.preventDefault(); act('open'); }
+      else if (lk === 'n' && !e.shiftKey && !e.altKey) { e.preventDefault(); act('new'); }   // when the browser hands it over (Chrome keeps it in a tab; the desktop app and Studio pass it)
       else if (lk === 'p') { if (files.length) { e.preventDefault(); printSheets(); } }
       else if (lk === 'f' && findUi.box) { e.preventDefault(); findUi.box.open = true; findUi.q.focus(); findUi.q.select(); }
       else if (lk === 'a' && curSheet()) { e.preventDefault(); selectAll(); }
@@ -2221,27 +2329,30 @@ function init(root) {
   });
 
   // ---- tabs ----
-  const tabs = [...root.querySelectorAll('[data-tab]')];
+  // read live: add-ons add tabs of their own (0.5 AO.6, ui.panelTab), which hear 'cc-tab-shown' when shown
+  const allTabs = () => findAll('[data-tab]');
   function tabTo(k) {
-    for (const t of tabs) {
+    for (const t of allTabs()) {
       const on = t.dataset.tab === k;
       t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1;
-      find('[data-pane="' + t.dataset.tab + '"]').hidden = !on;
+      const pane = find('[data-pane="' + t.dataset.tab + '"]');
+      if (pane) { pane.hidden = !on; if (on && pane.dataset.addon) pane.dispatchEvent(new CustomEvent('cc-tab-shown')); }
     }
     if (k === 'list') renderList();
     if (k === 'punch') renderPunch();
     if (k === 'chest') renderChest();
     if (k === 'compare') renderCompareSelects();
   }
-  for (const t of tabs) {
-    t.addEventListener('click', () => tabTo(t.dataset.tab));
-    t.addEventListener('keydown', (e) => {
-      const i = tabs.indexOf(t);
-      const j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : -1;
-      if (j >= 0) { e.preventDefault(); tabs[j].focus(); tabTo(tabs[j].dataset.tab); }
-    });
-  }
-  const activeTab = () => tabs.find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.tab;
+  const tabList = find('.mc-right [role="tablist"]');
+  tabList?.addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) tabTo(b.dataset.tab); });
+  tabList?.addEventListener('keydown', (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (!b) return;
+    const tabs = allTabs(), i = tabs.indexOf(b);
+    const j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : -1;
+    if (j >= 0) { e.preventDefault(); tabs[j].focus(); tabTo(tabs[j].dataset.tab); }
+  });
+  const activeTab = () => allTabs().find((t) => t.getAttribute('aria-selected') === 'true')?.dataset.tab;
 
   // ---- properties ----
   function field(label, input, id) { return [el('label', { for: id, className: 'mc-k' }, label), input]; }
@@ -2762,7 +2873,7 @@ function init(root) {
     const list = filteredMarkups().sort((a, b) => sheetOrder(a) - sheetOrder(b));
     if (!list.length) { status(t('export.none')); return; }
     const rows = markupRows(list, (m) => { const s = sheetByKey(m.sheet); return s ? { title: s.page.title, file: s.file.name, page: s.page.index + 1 } : null; },
-      (m) => valueOf(m), hasSpaces() ? markupSpace : null, store.columns);
+      (m) => valueOf(m), hasSpaces() ? markupSpace : null, [...store.columns, ...columnsNow()]);
     dl(toCsv(rows), t('export.list.file', { set: setName() }) + '.csv', 'text/csv');
     status(t('export.csv.done', { n: list.length }));
   }
@@ -2814,7 +2925,7 @@ function init(root) {
     const name = t('sum.file', { set: setName() });
     try {
       if (kind === 'xlsx') {
-        const bytes = await writeXlsx(summarySheets(list, { sheetOf: listSheetOf, measureOf: valueOf, spaceOf: hasSpaces() ? markupSpace : null, columns: store.columns }), { title: name });
+        const bytes = await writeXlsx(summarySheets(list, { sheetOf: listSheetOf, measureOf: valueOf, spaceOf: hasSpaces() ? markupSpace : null, columns: [...store.columns, ...columnsNow()] }), { title: name });
         dl(bytes, name + '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         status(t('sum.saved.xlsx', { n: list.length, file: name + '.xlsx' }));
       } else {
@@ -3260,6 +3371,8 @@ function init(root) {
     all('slip-sheet', !files.length);
     for (const a of ['print-pages', 'save-flat', 'page-rotate-cw', 'page-rotate-ccw', 'page-insert-pdf', 'page-insert-blank', 'page-delete', 'page-extract']) all(a, !curSheet());
     all('page-move-up', !curSheet() || curSheet().page.index === 0);
+    const blankFile = curSheet()?.file.blank ? curSheet().file : null;   // "Add a blank page" under the sheets: blank sets only
+    for (const b of findAll('[data-add-blank]')) { b.hidden = !blankFile; b.disabled = !blankFile; }
     all('page-move-down', !curSheet() || curSheet().page.index >= curSheet().file.pages.length - 1);
     q('prev').disabled = cur <= 0;
     q('next').disabled = cur < 0 || cur >= sheets.length - 1;
@@ -3272,6 +3385,14 @@ function init(root) {
     sheets: () => sheets.map((x) => ({ key: x.page.key, title: x.page.title, width: x.page.width, height: x.page.height, view: x.page.view, file: x.file?.name || null })),
     current: () => curSheet()?.page.key || null,
     goTo: (key) => { const i = sheets.findIndex((x) => x.page.key === key); return i >= 0 ? goTo(i) : null; } });
+
+  // ---- add-ons (0.5 AO.6, session addons; docs/ADDONS-SPEC.md §5.5): MarkupCraft's own loader and API 1.0 (manifest "addons": "own") ----
+  startAddons({ store, root, find, author: () => author, status, tabTo,
+    currentSheet: () => (curSheet() ? { key: curSheet().page.key, title: curSheet().page.title } : null),
+    sheets: () => sheets.map((x) => ({ key: x.page.key, title: x.page.title })),
+    selection: () => [...sel], select: (ids) => { sel = new Set(ids.filter((id) => store.get(id))); refreshSelection(); },
+    refresh: () => refreshAll(), setTool: (type, preset) => setTool(type, preset),
+  }).catch((err) => console.warn('add-ons did not start:', err));   // i18n-ignore (developer message)
 
   // thumbnails follow the theme too (Model space draws sheets ink-on-dark)
   new MutationObserver(() => setTimeout(renderSheets, 0)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-space'] });
@@ -3299,7 +3420,21 @@ function init(root) {
     if (!settingsDlg) return;
     const f = (n) => settingsDlg.querySelector('[name="' + n + '"]');
     const radios = (n, v) => settingsDlg.querySelectorAll('input[name="' + n + '"]').forEach((r) => { r.checked = r.value === v; });
-    if (f('mcAuthor') && document.activeElement !== f('mcAuthor')) f('mcAuthor').value = author;
+    if (f('mcAuthor') && document.activeElement !== f('mcAuthor')) f('mcAuthor').value = typedAuthor;
+    // SI.9: signed in — "From your account (<name>)" and "Use another name", or the typed name with "Use my account name"
+    const acc = settingsDlg.querySelector('[data-mc-author-account]');
+    if (acc) {
+      const other = !!typedAuthor || authorOther;
+      acc.hidden = !accountName;
+      const line = acc.querySelector('[data-mc-author-from]');
+      if (line) line.textContent = accountName ? t('set.name.account', { name: accountName }) : '';
+      const ob = acc.querySelector('[data-mc-author-other]');
+      if (ob) ob.hidden = other;
+      const row = settingsDlg.querySelector('[data-mc-author-row]');
+      if (row) row.hidden = !!accountName && !other;
+      const mine = settingsDlg.querySelector('[data-mc-author-mine]');
+      if (mine) mine.hidden = !accountName || !other;
+    }
     if (f('mcColor')) f('mcColor').value = settings.markColor || '#d0021b';
     radios('mcWeight', settings.weight);
     radios('mcPaste', settings.pasteAt);
@@ -3317,11 +3452,12 @@ function init(root) {
       const tg = e.target;
       switch (tg.name) {
         case 'mcAuthor':
-          author = tg.value.trim().slice(0, 80);
+          typedAuthor = tg.value.trim().slice(0, 80);
+          author = typedAuthor || accountName;
           askedAuthor = true;
-          lsSet(LS.author, author);
+          lsSet(LS.author, typedAuthor);
           renderAuthor();
-          status(author ? t('set.author.done', { author }) : t('set.author.cleared'));
+          status(typedAuthor ? t('set.author.done', { author }) : accountName ? t('set.author.account', { author: accountName }) : t('set.author.cleared'));
           break;
         case 'mcColor': settings.markColor = /^#[0-9a-f]{6}$/i.test(tg.value) && tg.value.toLowerCase() !== '#d0021b' ? tg.value.toLowerCase() : ''; settingsChanged(t('set.color.done')); break;
         case 'mcWeight': if (Object.hasOwn(WEIGHTS, tg.value)) { settings.weight = tg.value; settingsChanged(); } break;
@@ -3334,9 +3470,27 @@ function init(root) {
     // Reset: everything here but the name (it is who you are, not a preference). Colors picked in a tool's own panel stay too.
     settingsDlg.addEventListener('cc-settings-reset', () => { Object.assign(settings, SET_DEFAULTS); settingsChanged(); });
     // fill the fields in whenever the dialog opens (the status bar's name button may have changed the name meanwhile)
-    new MutationObserver(() => { if (settingsDlg.open) syncSettingsForm(); }).observe(settingsDlg, { attributes: true, attributeFilter: ['open'] });
+    new MutationObserver(() => { if (settingsDlg.open) { authorOther = false; syncSettingsForm(); } }).observe(settingsDlg, { attributes: true, attributeFilter: ['open'] });
+    // SI.9: "Use another name" opens the name box; "Use my account name" clears the typed name
+    settingsDlg.addEventListener('click', (e) => {
+      if (e.target.closest('[data-mc-author-other]')) { authorOther = true; syncSettingsForm(); settingsDlg.querySelector('[name="mcAuthor"]')?.focus(); }
+      else if (e.target.closest('[data-mc-author-mine]')) {
+        typedAuthor = ''; authorOther = false; author = accountName; lsSet(LS.author, '');
+        renderAuthor(); syncSettingsForm();
+        status(t('set.author.account', { author: accountName }));
+      }
+    });
     syncSettingsForm();
   }
+  // SI.9: who is signed in (host.js: the site's page, or Studio's account); a name change shows on the next open / Refresh.
+  // Markups already made keep the name they were made with.
+  function useAccount(a) {
+    accountName = a && typeof a.name === 'string' ? a.name.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 80) : '';
+    author = typedAuthor || accountName;
+    renderAuthor(); syncSettingsForm();
+  }
+  host.on('account', useAccount);
+  useAccount(host.account());
 
   // ---- autosave and recovery (0.4 item 1.2; shell's app-autosave.js) ----
   // One autosave document per open PDF: its bytes (as opened, or as the page changes left them) and its markups,
@@ -3398,6 +3552,8 @@ function init(root) {
     window.markupcraft.orphans = list.length;   // tests wait for this before looking for the dialog
     if (list.length) await autosave.offer({ list, onRecover: recover });
     await openHostFiles(await host.launchFiles().catch(() => []));   // the desktop app: a PDF double-clicked to start it
+    // Studio Live from a link (#live=<code> on a host's LAN page, ?live=<ROOM>#<secret> from an invite): join; the plan set comes from the host
+    if (/[#&]live=|[?&]live=/.test(location.hash + location.search)) import('./live.js').then((m) => m.joinFromPage(window.markupcraft, host), (err) => status(err.message));
   }
   const takeoffBtn = $('[data-handoff-pdf]');
   takeoffBtn?.addEventListener('click', () => {

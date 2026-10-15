@@ -140,7 +140,7 @@ export function privateData(m, rect) {
   return JSON.stringify({
     v: 1, id: m.id, type: m.type, pts: m.pts, rect: m.rect, rot: m.rot, style: m.style, text: m.text, label: m.label,
     subject: m.subject, comment: m.comment, author: m.author, created: m.created, modified: m.modified, status: m.status,
-    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
+    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, xd: m.xd || undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
   });
 }
 

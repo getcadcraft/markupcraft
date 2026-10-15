@@ -21,7 +21,7 @@ $__lx = static function (string $key, array $html): string {
 /* Toolbar: group key (English, kept in data-tb-key so the shell's saved arrangement survives a language change) →
    [tool key, icon]; the label is lang key tool.<key>, the title tool.<key>.title. */
 $__tools = [
-    'File' => [['act:open', 'folder2-open'], ['act:save', 'download'], ['act:close', 'x-square']],   // i18n-ignore
+    'File' => [['act:new', 'file-plus'], ['act:open', 'folder2-open'], ['act:save', 'download'], ['act:close', 'x-square']],   // i18n-ignore
     'Select' => [['select', 'cursor'], ['pan', 'hand-index-thumb']],                                                     // i18n-ignore
     'Draw' => [['pen', 'pencil'], ['highlight', 'highlighter'], ['line', 'slash-lg'], ['arrow', 'arrow-up-right'], ['arc', 'bezier2'],   // i18n-ignore
                ['rect', 'square'], ['ellipse', 'circle'], ['polyline', 'activity'], ['polygon', 'pentagon']],
@@ -159,6 +159,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <input type="search" id="mc-sheet-search" class="mc-input" placeholder="<?= Lang::e('sheets.search') ?>" autocomplete="off" data-sheet-search>
       <ol class="mc-sheets" data-sheets></ol>
       <p class="mc-note" data-sheets-empty><?= Lang::e('sheets.empty') ?></p>
+      <div class="mc-actions"><button type="button" class="btn-line btn-sm-cc" data-act="page-add-blank" data-add-blank hidden title="<?= Lang::e('sheets.add_blank.title') ?>"><i class="bi bi-plus-lg" aria-hidden="true"></i> <?= Lang::e('sheets.add_blank') ?></button></div>
     </section>
   </aside>
 
@@ -172,12 +173,16 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <p class="mc-hint-h"><?= Lang::e('hint.h') ?></p>
       <ul>
         <li><?= $__lx('hint.open', ['open' => '<strong>' . Lang::e('tool.open') . '</strong>']) ?></li>
+        <li><?= $__lx('hint.new', ['new' => '<strong>' . Lang::e('tool.new') . '</strong>']) ?></li>
         <li><?= Lang::e('hint.draw') ?></li>
         <li><?= $__lx('hint.zoom', ['space' => '<kbd>Space</kbd>', 'pgup' => '<kbd>Page Up</kbd>', 'pgdn' => '<kbd>Page Down</kbd>']) ?></li>
         <li><?= $__lx('hint.save', ['save' => '<strong>' . Lang::e('tool.save') . '</strong>']) ?></li>
       </ul>
       <div class="mc-hint-recent" data-recent-files data-max="6"></div>
-      <button type="button" class="btn-plot btn-sm-cc mc-hint-btn" data-act="open"><i class="bi bi-folder2-open" aria-hidden="true"></i> <?= Lang::e('hint.button') ?></button>
+      <div class="mc-hint-btns">
+        <button type="button" class="btn-plot btn-sm-cc mc-hint-btn" data-act="open"><i class="bi bi-folder2-open" aria-hidden="true"></i> <?= Lang::e('hint.button') ?></button>
+        <button type="button" class="btn-line btn-sm-cc mc-hint-btn" data-act="new"><i class="bi bi-file-plus" aria-hidden="true"></i> <?= Lang::e('hint.button.new') ?></button>
+      </div>
     </div>
     <div class="mc-drop" data-drop hidden><span><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('stage.drop') ?></span></div>
     <div class="mc-busy" data-busy hidden><span data-busy-text><?= Lang::e('stage.busy') ?></span></div>

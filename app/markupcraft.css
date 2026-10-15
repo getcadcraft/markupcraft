@@ -189,6 +189,9 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-hint-h { margin: 0 0 .35rem; font-weight: 700; font-stretch: 112%; }
 .mc-hint ul { margin: 0 0 .75rem; padding-left: 1.1rem; }
 .mc-hint li + li { margin-top: .2rem; }
+.mc-hint-btns { display: flex; flex-wrap: wrap; gap: .5rem; }
+/* File › New (blank pages): orientation and grid side by side */
+.mc-new-blank .mc-radios { grid-auto-flow: column; justify-content: start; gap: .35rem 1rem; }
 .mc kbd { font-family: inherit; font-size: .75rem; font-weight: 700; padding: 0 .3rem; color: var(--ink); background: var(--sheet); border: var(--pen-1) solid var(--line); border-radius: var(--radius); }
 .mc-drop, .mc-busy {
   position: absolute;
@@ -391,9 +394,9 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-dlg-body .mc-props { font-size: .875rem; }
 
 /* keep the toolbar on one row down to about 1280 px wide */
-@media (max-width: 1340px) {
-  .mc-tool-group { padding-left: .2rem; padding-right: .2rem; }
-  .mc-tool { min-width: 2.3rem; }
+@media (max-width: 1400px) {
+  .mc-tool-group { padding-left: .15rem; padding-right: .15rem; }
+  .mc-tool { min-width: 2.2rem; padding-left: .05rem; padding-right: .05rem; }   /* room for File › New (2026-10-15) */
   .mc-tool span { font-size: .625rem; }
 }
 @media (max-width: 1180px) {
@@ -416,6 +419,11 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
   .mc-status { flex-wrap: wrap; gap: .5rem; }
   .mc-coords { min-width: 0; }
   .mc-hint { font-size: .8125rem; }
+  /* phones (2026-10-15): the sheet bar scrolls sideways instead of squeezing its buttons on top of each other */
+  .mc-nav { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .mc-nav > * { flex-shrink: 0; }
+  .mc-nav .mc-navlabel { flex: 0 1 auto; min-width: 6rem; max-width: 12rem; }
+  .mc-hint-btns .mc-hint-btn { min-height: 2.75rem; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .mc-thumb { transition: opacity .15s; }
@@ -450,6 +458,7 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
   .mc-tool .bi { font-size: 1.3rem; }
   .mc-menu-list button { padding: .65rem 1rem; min-height: 2.75rem; }
   .mc-navbtn { min-width: 2.75rem; min-height: 2.75rem; }
+  .mc { --mc-nav-h: 3rem; }   /* the sheet bar holds the finger-sized buttons */
   .mc-tab { padding-top: .6rem; padding-bottom: .6rem; }
   .mc-sheet, .mc-list > li > button, .mc-find-list button { min-height: 2.75rem; }
   .mc-statbtn { min-height: 2.5rem; }

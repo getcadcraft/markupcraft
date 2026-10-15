@@ -93,6 +93,7 @@ On most Mac keyboards, press {{key:F1}} with **fn** (or the globe key), or use {
 
 | Key | What it does |
 |---|---|
+| {{key:Mod+N}} | New blank pages (when the browser lets the page have the key; see [Start with blank pages](topic:open-a-plan-set#start-with-blank-pages)) |
 | {{key:Mod+O}} | Open PDFs |
 | {{key:Mod+P}} | Print (see [Print, and change the pages](topic:pages-and-printing)) |
 | {{key:Mod+F}} | Find text in the drawings (see [Find text](topic:find-text)) |
@@ -137,6 +138,7 @@ Count dots, notes, polyline points and the second point of a two-point tool are 
 ## Shortcuts the browser keeps
 
 - {{key:Mod+W}}, {{key:Mod+T}}, {{key:Mod+N}} and {{key:Mod+Q}} belong to the browser. Closing the tab or window with unsaved markups loses them, after the browser's "Leave site?" question on a computer.
+- Most browsers keep {{key:Mod+N}} for a new window, so in a browser tab use {{ui:New}} in the toolbar; the desktop app and Studio pass the key to MarkupCraft.
 - MarkupCraft takes {{key:Mod+O}}, {{key:Mod+S}}, {{key:Mod+D}}, {{key:Mod+A}}, {{key:Mod+V}}, {{key:Mod+Shift+V}}, {{key:Mod+0}}, {{key:Mod+Plus}} and {{key:Mod+Minus}} away from the browser while the app has the keyboard, and {{key:Mod+C}} and {{key:Mod+X}} while markups are selected. {{key:Mod+,}} opens {{ui:Settings}}. To zoom the whole browser page instead, use the browser's menu.
 - {{key:Mod+9}} jumps to the last browser tab in some browsers before MarkupCraft sees it. If that happens, use {{ui:Fit width}} under the sheet.
 - {{key:Esc}} in full screen also leaves full screen.

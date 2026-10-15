@@ -21,6 +21,7 @@
 import { t } from './i18n.js';
 import { cleanFields, cleanColumns } from './columns.js';
 import { cleanImage } from './imagestamp.js';
+import { cleanAddonData } from './addons.js';
 
 /** Markup types. `name` (what the UI calls it) and `subject` (the default PDF /Subj) come from the language file:
  *  type.<type> and subject.<type>. */
@@ -85,6 +86,9 @@ export function newId() {
 export const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 export const nowIso = () => new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
+/** Add-on data on a markup (0.5 AO.6; docs/ADDONS-SPEC.md §5.5): the shared loader's rule (addons.js cleanAddonData). */
+export const cleanXd = cleanAddonData;
+
 /** A new markup with every field present. */
 export function makeMarkup(fields) {
   const t = fields.type;
@@ -104,6 +108,7 @@ export function makeMarkup(fields) {
     holes: t === 'area' && Array.isArray(fields.holes) ? fields.holes.map((h) => h.map((p) => [+p[0], +p[1]])) : undefined,
     layer: cleanLayerName(fields.layer),
     fields: cleanFields(fields.fields),   // custom column values (0.4 K19)
+    xd: cleanXd(fields.xd),               // add-ons' own data, by add-on id (0.5 AO.6); kept untouched without the add-on
     link: String(fields.link ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60),   // the sheet it jumps to (0.4 K9)
     subject: fields.subject ?? (TYPES[t]?.subject || ''),
     comment: fields.comment ?? '',
