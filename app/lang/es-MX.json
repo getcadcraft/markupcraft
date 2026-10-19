@@ -1052,7 +1052,7 @@
     "other": "{date}, {n} marcas"
   },
   "sum.replies": {
-    "one": "{n} respuesta. {last}",
+    "one": "{n} respuesta. Última: {last}",
     "other": "{n} respuestas. Última: {last}"
   },
   "sum.empty": "No hay marcas en la lista.",
@@ -1435,5 +1435,134 @@
   "input.style.markupcraft": "MarkupCraft",
   "input.style.review": "Revisión de PDF",
   "input.style.markupcraft.hint": "La barra de herramientas propia de MarkupCraft y sus teclas de una letra: todo a un clic.",
-  "input.style.review.hint": "Una barra de menús (Archivo, Edición, Vista, Documento, Marcas, Medir, Ventana) sobre una fila de herramientas de revisión, con las teclas organizadas como en los programas de revisión de PDF: H resaltador, Q llamada, N polígono, Shift+T nota, y las mediciones con Alt+Shift (L longitud, A área, C conteo, K calibrar). El botón central hace encuadre; Espacio y arrastrar también."
+  "input.style.review.hint": "Una barra de menús (Archivo, Edición, Vista, Documento, Marcas, Medir, Ventana) sobre una fila de herramientas de revisión, con las teclas organizadas como en los programas de revisión de PDF: H resaltador, Q llamada, N polígono, Shift+T nota, y las mediciones con Alt+Shift (L longitud, A área, C conteo, K calibrar). El botón central hace encuadre; Espacio y arrastrar también.",
+  "calc.err.char": "No se puede leer \"{text}\" ahí (carácter {pos}).",
+  "calc.err.end": "El cálculo termina antes de tiempo (carácter {pos}): falta un valor.",
+  "calc.err.paren": "Un paréntesis no está cerrado (carácter {pos}).",
+  "calc.err.extra": "Hay algo después del final del cálculo en el carácter {pos}: \"{text}\".",
+  "calc.err.length": "\"{text}\" no es una longitud aquí (carácter {pos}).",
+  "calc.err.divide": "División entre cero (carácter {pos}).",
+  "calc.err.deep": "Demasiados paréntesis uno dentro de otro (carácter {pos}).",
+  "calc.err.long": "Es demasiado largo para leerlo (más de {pos} caracteres).",
+  "calc.err.area": "Dos longitudes multiplicadas dan un área, no una longitud (carácter {pos}).",
+  "calc.err.ratio": "Un número dividido entre una longitud no es una longitud (carácter {pos}).",
+  "calc.err.function": "No hay ninguna función llamada \"{text}\" (carácter {pos}). Use abs, round, ceil o floor.",
+  "calc.err.not_positive": "La longitud debe ser mayor que cero.",
+  "calc.err.number": "El resultado no es un número (carácter {pos}).",
+  "tool.content": "Contenido",
+  "tool.content.title": "Contenido de la página: seleccionar y cambiar las líneas, imágenes y texto propios de la página, no las marcas (B)",
+  "base.h": "Contenido de la página",
+  "base.h.sel": {
+    "one": "1 objeto de la página",
+    "other": "{n} objetos de la página"
+  },
+  "base.loading": "Leyendo el contenido de la página…",
+  "base.blocked.encrypted": "Este PDF está cifrado, así que aquí no se puede cambiar el contenido de sus páginas. Las marcas siguen funcionando.",
+  "base.blocked.signed": "Este PDF está firmado. Cambiar el contenido de sus páginas rompería la firma, así que MarkupCraft lo deja como está. Las marcas siguen funcionando.",
+  "base.blocked.unreadable": "MarkupCraft no puede leer el contenido de esta página ({why}). Las marcas siguen funcionando.",
+  "base.hint": "Contenido de la página: haga clic en una línea, imagen o línea de texto para seleccionarla, arrástrela para moverla, arrastre una esquina para cambiar su tamaño. Haga doble clic en una línea para mover sus puntos, o en una línea de texto para cambiar sus palabras.",
+  "base.scan": "Esta página es una sola imagen (un escaneo): puede mover, cambiar de tamaño o borrar la imagen, pero no tiene líneas ni palabras que editar.",
+  "base.empty": "No hay nada en esta página que se pueda seleccionar con estos tipos activados.",
+  "base.pick": "Seleccionar",
+  "base.kind.shape": "Formas",
+  "base.kind.picture": "Imágenes",
+  "base.kind.text": "Texto",
+  "base.sel": "Seleccionado: {list}.",
+  "base.stroke": "Color de línea",
+  "base.fill": "Color de relleno",
+  "base.width": "Grosor de línea (pt)",
+  "base.points": "Editar puntos",
+  "base.points.title": "Mover los puntos y las manijas de curva de la línea (o haga doble clic en la línea)",
+  "base.points.hint": "Arrastre un punto o una manija de curva. Esc, o un clic fuera de la línea, termina la edición de puntos.",
+  "base.points.none": "Este no tiene puntos que mover aquí: cambie su tamaño con las esquinas de su cuadro.",
+  "base.reset": "Dejarlo como estaba",
+  "base.reset.sheet": "Dejar esta página como estaba",
+  "base.delete": "Borrar de la página",
+  "base.changes": {
+    "one": "1 cambio en el contenido propio de esta página.",
+    "other": "{n} cambios en el contenido propio de esta página."
+  },
+  "base.note": "Estas ediciones cambian la página misma en la copia que guarda; las marcas siguen aparte. Las líneas, imágenes y líneas de texto que dibuja el PDF se pueden mover, cambiar de tamaño, recolorear o borrar. Una página escaneada es una sola imagen: lo que hay dentro de la imagen no se puede editar.",
+  "base.undo.move": {
+    "one": "Mover objeto de la página",
+    "other": "Mover {n} objetos de la página"
+  },
+  "base.undo.scale": {
+    "one": "Cambiar tamaño de objeto de la página",
+    "other": "Cambiar tamaño de {n} objetos de la página"
+  },
+  "base.undo.delete": {
+    "one": "Borrar objeto de la página",
+    "other": "Borrar {n} objetos de la página"
+  },
+  "base.undo.style": {
+    "one": "Cambiar objeto de la página",
+    "other": "Cambiar {n} objetos de la página"
+  },
+  "base.undo.points": "Mover puntos",
+  "base.undo.reset": "Restaurar contenido de la página",
+  "base.undo.into": {
+    "one": "Poner marca en la página",
+    "other": "Poner {n} marcas en la página"
+  },
+  "base.selected": {
+    "one": "1 objeto de la página seleccionado.",
+    "other": "{n} objetos de la página seleccionados."
+  },
+  "base.none": "No hay nada ahí que seleccionar (los tipos en Seleccionar deciden qué se puede seleccionar).",
+  "base.refused.clip": "Esa línea recorta otro contenido: moverla cambiaría lo que muestra, así que se queda como está.",
+  "base.refused.across-streams": "Ese objeto está dividido entre dos partes del contenido de la página, así que MarkupCraft lo deja como está.",
+  "base.refused.text": "El color y el grosor no se pueden cambiar en líneas dibujadas dentro de un texto.",
+  "base.refused.flat": "Ese objeto está aplastado en el archivo, así que no se puede mover ni cambiar de tamaño.",
+  "base.refused.font": "No se puede escribir en la fuente de ese texto aquí.",
+  "base.refused.gone": "Ese objeto ya no está en la página.",
+  "base.refused.shading": "Una mezcla de color llena toda su área, así que no se puede mover sola.",
+  "base.refused.other": "Esa edición no se puede escribir en esta página ({why}).",
+  "base.save.refused": {
+    "one": "1 edición de página no se pudo escribir y se dejó fuera.",
+    "other": "{n} ediciones de página no se pudieron escribir y se dejaron fuera."
+  },
+  "base.rebuild.failed": "No se pudo volver a dibujar la página con sus ediciones: {error}",
+  "base.into": "Poner en la página",
+  "base.into.title": "Hacer que estas marcas sean parte del contenido propio de la página (solo líneas: sin texto, imágenes ni color transparente)",
+  "base.into.cant": "Solo las líneas pueden ir a la página: el texto, las imágenes, los sellos y los colores transparentes siguen siendo marcas.",
+  "base.into.done": {
+    "one": "1 marca ya es parte de la página (Ctrl+Z la regresa).",
+    "other": "{n} marcas ya son parte de la página (Ctrl+Z las regresa)."
+  },
+  "input.cmd.tool.content": "Contenido de la página",
+  "base.sel.shape": {
+    "one": "1 forma",
+    "other": "{n} formas"
+  },
+  "base.sel.picture": {
+    "one": "1 imagen",
+    "other": "{n} imágenes"
+  },
+  "base.sel.text": {
+    "one": "1 línea de texto",
+    "other": "{n} líneas de texto"
+  },
+  "base.picture.replace": "Reemplazar imagen…",
+  "base.picture.replace.title": "Poner otra imagen (PNG o JPEG) en el lugar de esta; sus proporciones se conservan dentro del mismo cuadro",
+  "base.picture.bad": "Ese archivo no es una imagen PNG o JPEG que MarkupCraft pueda usar.",
+  "base.picture.done": "Imagen reemplazada.",
+  "base.undo.picture": "Reemplazar imagen",
+  "base.refused.picture": "Esa imagen no se pudo reemplazar en este archivo.",
+  "base.words": "Palabras",
+  "base.undo.words": "Cambiar palabras",
+  "base.text.done": "Palabras cambiadas, en la fuente propia de la línea.",
+  "base.text.fallback": "Palabras cambiadas. La copia de {font} en el archivo no tiene {letters}, así que esas letras se imprimen en Helvetica.",
+  "base.text.font": "Fuente: {font}.",
+  "base.text.font.subset": "Fuente: {font}. El archivo solo lleva algunas de sus letras ({letters}); las demás se imprimen en Helvetica.",
+  "base.refused.metrics": "MarkupCraft no tiene los anchos de letra de esta fuente (una fuente estándar que el archivo no describe), así que no puede colocar palabras nuevas en ella.",
+  "menu.paste_picture": "Pegar una imagen",
+  "pic.paste.label": "Imagen pegada",
+  "pic.paste.undo": "Pegar una imagen",
+  "pic.paste.done": "Imagen pegada como marca: arrástrela a su lugar o cambie su tamaño por las esquinas.",
+  "pic.paste.bad": "Esa imagen del portapapeles no es un PNG o JPEG que MarkupCraft pueda usar.",
+  "pic.paste.none": "No hay ninguna imagen en el portapapeles.",
+  "pic.paste.denied": "El navegador no dejó que MarkupCraft leyera el portapapeles. Presione Ctrl+V (⌘V en una Mac).",
+  "pic.paste.no_api": "Este navegador no puede leer imágenes del portapapeles desde un menú. Presione Ctrl+V (⌘V en una Mac).",
+  "input.cmd.edit.paste-picture": "Pegar una imagen"
 }

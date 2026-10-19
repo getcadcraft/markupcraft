@@ -30,6 +30,16 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 | Pressure-sensitive pen strokes | Set the line width. |
 | Changing keyboard shortcuts | See [Keyboard and mouse](topic:keyboard) for the fixed keys. |
 
+## The page's own content
+
+| Not built yet | Do this today |
+|---|---|
+| Drawing new shapes straight into the page | Draw them as markups, then {{ui:Put into the page}}. See [Change the page's own content](topic:page-content). |
+| Turning page objects to any angle | Move and resize them; turn the whole page with {{ui:Pages}}. |
+| Changing a line of text's font or size, or text that flows over several lines | Change the words one line at a time; for new wording in another font, add a text markup. |
+| Editing what is inside a scanned picture | Replace the picture, or mark it up. |
+| Editing encrypted or signed PDFs | Ask for an unsigned copy; markups work on any PDF. |
+
 ## Measuring
 
 | Not built yet | Do this today |
@@ -75,5 +85,5 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 
 ## Platforms
 
-- **Desktop builds** are not available yet. MarkupCraft runs in the browser on Mac, Windows, Linux and iPad.
+- **Desktop:** MarkupCraft runs in the browser on Mac, Windows, Linux and iPad, and in CadCraft Studio, the desktop app with all eight apps in one install.
 - MarkupCraft is in development. Labels and behavior may still change, and this help changes with them.

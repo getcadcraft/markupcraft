@@ -3,7 +3,7 @@ title: Calibrate a sheet and measure
 summary: Set each sheet's scale from a preset or a known dimension, then measure lengths, areas with perimeters, and counts.
 section: tasks
 order: 60
-keywords: calibrate, scale, set scale, measure, length, distance, dimension, area, square feet, perimeter, count, takeoff, quantity, ruler
+keywords: calibrate, scale, set scale, measure, length, distance, dimension, area, square feet, perimeter, count, takeoff, quantity, ruler, arithmetic, calculation, plus, fraction
 ---
 
 Lengths and areas need to know the sheet's scale. MarkupCraft keeps a scale **per sheet**: calibrate each sheet you measure on. Counts need no scale.
@@ -37,7 +37,9 @@ Use this for half-size sets, scanned sheets, details at odd scales, or to check 
 
 Result: the status bar shows "Calibrated: 24'-0" over 1.00 in" (the real length and the paper length), and the tool you were going to measure with comes back on. Every way of typing a length is in [Units and lengths](topic:units-and-scales).
 
-If MarkupCraft cannot read what you typed, the box says so: 'That is not a length MarkupCraft understands. Try 24'-0", 12' 6 1/2", 7.2 m or 900 mm.'
+The real distance can also be a small calculation: `12'6"+3/4"`, `(24'-0")/3` or `2*450mm`. Use `+ - * /` and brackets; a number with no unit counts in the unit under {{ui:Show lengths in}} (feet for {{ui:Feet and inches}}). {{ui:Set scale}} uses the result.
+
+If MarkupCraft cannot read what you typed, the box says so: 'That is not a length MarkupCraft understands. Try 24'-0", 12' 6 1/2", 7.2 m or 900 mm.' A calculation it cannot work out says why and where, for example "A bracket is not closed (character 5)."
 
 ## Measure a length
 

@@ -259,6 +259,7 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 }
 .mc-navbtn:hover { border-color: var(--line); background: var(--sheet); }
 .mc-navbtn:disabled { opacity: .4; cursor: default; }
+.mc-statbtn:disabled { opacity: .4; cursor: default; }
 .mc-navbtn:focus-visible { outline: var(--pen-2) solid var(--action); outline-offset: 0; }
 .mc-navtext { font-size: .8125rem; }
 .mc-navlabel { min-width: 0; flex: 1 1 auto; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 .25rem; }
@@ -396,7 +397,7 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 /* keep the toolbar on one row down to about 1280 px wide */
 @media (max-width: 1400px) {
   .mc-tool-group { padding-left: .15rem; padding-right: .15rem; }
-  .mc-tool { min-width: 2.2rem; padding-left: .05rem; padding-right: .05rem; }   /* room for File › New (2026-10-15) */
+  .mc-tool { min-width: 2.1rem; padding-left: .05rem; padding-right: .05rem; }   /* room for File › New (2026-10-15) and Content (0.6 DF.14) */
   .mc-tool span { font-size: .625rem; }
 }
 @media (max-width: 1180px) {
@@ -434,6 +435,9 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-dialog .btn-danger { background: var(--layer-red); border: var(--pen-1) solid var(--layer-red); color: var(--sheet); }
 .mc-radios { display: grid; gap: .35rem; }
 .mc-radio { display: flex; align-items: center; gap: .4rem; }
+/* Page content (0.6 DF.14): what can be picked, in one row */
+.mc-base-kinds { border: 0; margin: 0 0 .5rem; padding: 0; grid-auto-flow: column; justify-content: start; gap: .35rem 1rem; font-size: .8125rem; }
+.mc-base-kinds legend { padding: 0; margin-bottom: .25rem; }
 .mc-print-frame { position: fixed; left: -10000px; top: 0; width: 1px; height: 1px; border: 0; opacity: 0; pointer-events: none; }
 /* Slip-sheet dialog (0.4 K13) */
 .mc-slip-list { margin: 0; padding-left: 1.25rem; display: grid; gap: .3rem; max-height: 40vh; overflow: auto; }

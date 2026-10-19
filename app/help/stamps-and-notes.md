@@ -3,7 +3,7 @@ title: Stamps and sticky notes
 summary: Stamp a sheet Approved, Revise and resubmit or your own wording, and leave sticky notes that open as pop-up comments.
 section: tasks
 order: 50
-keywords: stamp, picture, image, logo, photo stamp, signature, sign, approved, approved as noted, revise and resubmit, rejected, reviewed, void, custom stamp, sticky note, note, comment, pop-up
+keywords: stamp, picture, image, paste picture, screenshot, clipboard, logo, photo stamp, signature, sign, approved, approved as noted, revise and resubmit, rejected, reviewed, void, custom stamp, sticky note, note, comment, pop-up
 ---
 
 ## Stamp a sheet
@@ -53,6 +53,12 @@ Then click the sheet to place it (a picture 3 in wide, a signature 2 in wide), o
 The last picture and your signature are kept in this browser, so they are ready next time; {{ui:Choose another picture…}} and {{ui:Sign again…}} replace them. See [What stays in this browser](topic:browser-storage).
 
 In the saved PDF a picture is a stamp comment showing the image, so any PDF viewer shows and prints it. A signature drawn here is a picture of your signature, not a certified digital signature.
+
+## Paste a picture from the clipboard
+
+Copy a picture in another program, or take a screenshot to the clipboard, then press {{key:Mod+V}} over the sheet. It lands where the pointer is, at most 3 in wide or tall with its proportions kept, as a picture markup you can move and resize. In the saved PDF it is a stamp comment showing the image, like the pictures above.
+
+{{ui:More}} › {{ui:Paste a picture}} in the {{ui:Edit}} group does the same from the menu; the browser may ask first. When the clipboard holds no picture, {{key:Mod+V}} pastes copied markups as before.
 
 ## Sticky notes
 

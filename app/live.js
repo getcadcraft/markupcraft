@@ -253,6 +253,8 @@ export function createLiveAdapter({ host } = {}) {
   const app = globalThis.markupcraft;
   if (!app || !app.store) return null;
   const a = createLive(app.store, { files: () => app.files });
+  // The edit log (0.6 DC.23): Studio's Live panel asks who changed the selected markups last.
+  a.selectionKeys = () => [...(app.sel || [])].slice(0, 500).map((id) => 'e:' + id);
   a.onFiles = (list) => {
     if (!list.length || !app.openFiles) return;
     const fs = list.map((f) => new File([f.bytes], f.name, { type: 'application/pdf' }));

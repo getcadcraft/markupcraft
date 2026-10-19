@@ -8,6 +8,7 @@
  */
 
 import { t } from './i18n.js';
+import { calc, hasArithmetic } from './lencalc.js';
 
 export const MM_PER_IN = 25.4;
 export const MM_PER_PT = MM_PER_IN / 72;
@@ -64,6 +65,29 @@ function num(s) {
  * number means.
  */
 export function parseLength(text, unit = 'ft-in') {
+  return parseLengthCalc(text, unit).value;
+}
+
+/**
+ * A typed length with arithmetic (0.6 DF.3: 4+7/16, 12'6" + 3/4", (24'-0")/3, 2*450mm) → {value (mm) | null, error, pos}.
+ * lencalc.js is a byte-identical copy of CadCraft's (tools/lencalc/sync.mjs): its own parser, never eval. A bare number
+ * stays a factor in 2*450mm and becomes `unit` when it is the length itself.
+ */
+export function parseLengthCalc(text, unit = 'ft-in') {
+  const s = String(text ?? '').trim().toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').replace(/''/g, '"').replace(/[−–—]/g, '-');
+  if (hasArithmetic(s)) {
+    const r = calc(s, (x) => {
+      const bare = /^[\d.,\s/-]+$/.test(x);
+      const v = one(x, bare ? 'mm' : unit);
+      return v === null ? null : { value: v, unit: !bare };
+    }, { plain: UNIT_MM[unit] || 1 });
+    if (r.ok && r.value > 0) return { value: r.value, error: null, pos: -1 };
+    return { value: null, error: r.ok ? 'calc.err.not_positive' : 'calc.err.' + r.code, pos: r.ok ? -1 : r.pos, text: r.text || '' };
+  }
+  return { value: one(s, unit), error: null, pos: -1 };
+}
+
+function one(text, unit) {
   let s = String(text ?? '').trim().toLowerCase().replace(/[’′]/g, "'").replace(/[”″]/g, '"').replace(/''/g, '"').replace(/,/g, '.');
   if (!s) return null;
   // metric with a suffix

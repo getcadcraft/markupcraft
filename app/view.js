@@ -132,13 +132,14 @@ export class View {
   }
   get seenRotate() { return (((this.page?.rotate || 0) + (this.extraRot || 0)) % 360 + 360) % 360; }
 
-  async setPage(page, proxy, { keepView = false, extraRot = 0 } = {}) {
+  /** keepPicture: the same sheet drawn again (its own content was edited, 0.6 DF.14): the old picture stays until the new one is ready. */
+  async setPage(page, proxy, { keepView = false, extraRot = 0, keepPicture = false } = {}) {
     this.cancelRender();
     this.page = page; this.proxy = proxy;
     this.extraRot = extraRot;
     this.vp1 = this.vpOf(proxy, 1);
     this.T1 = this.vp1.transform.slice();
-    this.low = null; this.crisp = null;
+    if (!keepPicture) { this.low = null; this.crisp = null; }
     if (!keepView) this.fit('page'); else this.update();
     await this.reloadLow();
     this.scheduleCrisp(0);

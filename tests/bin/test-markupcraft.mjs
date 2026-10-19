@@ -112,6 +112,11 @@ ok(ft(`12' 6 1/2"`) === +(12 + 6.5 / 12).toFixed(6), `12' 6 1/2"`);
 ok(ft(`6"`) === 0.5 && ft(`1/2"`) === +(0.5 / 12).toFixed(6), '6" and 1/2"');
 ok(ft(`12.5'`) === 12.5 && ft('12.5 ft') === 12.5 && ft('3 ft 6 in') === 3.5, "12.5', 12.5 ft, 3 ft 6 in");
 ok(ft(`12'6`) === 12.5, "12'6 (no inch mark)");
+// 0.6 DF.3: arithmetic in a typed length (lencalc.js, CadCraft's parser copied byte for byte)
+ok(near(units.parseLength(`12'6" + 3/4"`), 3829.05, 1e-6) && near(units.parseLength(`(24'-0")/3`), 2438.4, 1e-6), `12'6" + 3/4" and (24'-0")/3`);
+ok(near(units.parseLength('4+7/16', 'in'), 112.7125, 1e-6) && near(units.parseLength('2*450mm'), 900, 1e-6), '4+7/16 in inches, 2*450mm');
+ok(units.parseLength('4+') === null && units.parseLengthCalc('4+').error === 'calc.err.end', '4+ refuses and says why', units.parseLengthCalc('4+'));
+ok(near(units.parseLength(`24'-0"`), 24 * 304.8, 1e-6) && near(units.parseLength(`12'-6 1/2"`), 12 * 304.8 + 6.5 * 25.4, 1e-6), `24'-0" and 12'-6 1/2" are still one length each, not a subtraction`);
 ok(units.parseLength('3.5 m') === 3500 && units.parseLength('900 mm') === 900 && units.parseLength('90 cm') === 900, 'metric with units');
 ok(units.parseLength('16', 'ft-in') === 16 * 304.8 && units.parseLength('16', 'm') === 16000, 'bare number takes the chosen unit');
 ok(units.parseLength('abc') === null && units.parseLength('') === null && units.parseLength('-3') === null && units.parseLength('0') === null, 'rejects nonsense, zero and negatives');
@@ -1335,6 +1340,274 @@ section('Blank pages: File › New (owner, 2026-10-15)');
     'new.title', 'new.text', 'new.paper', 'new.paper.inch', 'new.paper.metric', 'new.orient', 'new.grid', 'new.grid.hint', 'new.pages', 'new.err.pages', 'new.ok', 'new.making', 'new.done', 'new.failed',
     'tool.new', 'tool.new.title', 'hint.new', 'hint.button.new', 'sheets.add_blank', 'sheets.add_blank.title', 'pages.done.add_blank'];
   ok(keys.every((k) => Object.hasOwn(EN, k) && Object.hasOwn(ES, k)), 'the New dialog\'s words are in lang/en.json and the es-MX draft', keys.filter((k) => !Object.hasOwn(EN, k) || !Object.hasOwn(ES, k)));
+}
+
+// ------------------------------------------------------------------------------------------------
+section('Base content: the page\'s own content (0.6 DF.14; spike docs/spikes/pdf-base-content.md)');
+{
+  const lex = await imp('base-lex.js');
+  const bc = await imp('base-content.js');
+  const corpusM = await import(pathToFileURL(path.join(ROOT, 'tools/markupcraft-test/base-corpus.mjs')).href);
+  const { spawnSync } = await import('node:child_process');
+  const eqB = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+  const enc = (s) => new TextEncoder().encode(s);
+  const dec = (b) => new TextDecoder('latin1').decode(b);
+
+  // the lexer on its own
+  const src = enc('% c\n(a \\(b\\) \\101\\\n c)Tj <48 65 6C>Tj [(x)-20(y)]TJ /Na#6De 1 Tf 0 0 m 10 .5 l -3. 4 l S BI /W 4 /H 1 /CS /G /BPC 8 ID  EI  EI\nQ');
+  const { ops, problems } = lex.parseOps(src);
+  ok(ops.map((o) => o.op).join(' ') === 'Tj Tj TJ Tf m l l S BI Q' && !problems.length, 'operators in order, nothing odd', ops.map((o) => o.op));
+  ok(dec(ops[0].args[0].v) === 'a (b) A c' && dec(ops[1].args[0].v) === 'Hel' && ops[3].args[0].v === 'Name', 'escapes, octal, line continuation, hex, #xx names');
+  ok(ops[2].args[0].items.map((t) => t.v).length === 3 && ops[6].args[1].v === 4 && ops[6].args[0].v === -3, 'arrays and odd numbers (-3., .5)');
+  ok(ops[8].data.e - ops[8].data.s === 4 && dec(src.subarray(ops[8].data.s, ops[8].data.e)) === ' EI ', 'an inline image read by its size, though its bytes are " EI "');
+  ok(eqB(lex.writeOps(src, ops), src), 'written back from the op list: identical');
+  const bad = enc('q (unclosed BT ] >> 1 2');
+  const pb = lex.parseOps(bad);
+  ok(pb.problems.length >= 1 && eqB(lex.writeOps(bad, pb.ops), bad), 'a damaged stream: problems listed, bytes still identical', pb.problems);
+  ok(lex.num(1 / 3) === '0.3333' && lex.num(-0.00001) === '0' && lex.num(12) === '12', 'numbers written without exponents');
+
+  // the corpus: the hand-written file and the public fixture always; the rest when testfiles/ is here
+  const awk = new Uint8Array(corpusM.awkward());
+  const files = [{ name: 'awkward', bytes: awk }, { name: 'kitchen', bytes: new Uint8Array(fs.readFileSync(PLAN)) }];
+  for (const c of corpusM.CORPUS) if (!c.blocked && !files.some((f) => f.name === c.name) && fs.existsSync(c.file)) files.push({ name: c.name, bytes: new Uint8Array(fs.readFileSync(c.file)) });
+  if (files.length < 4) console.log('  (testfiles/generated/pdf-base not here: round trip on the two built-in files only — node tools/markupcraft-test/base-corpus.mjs makes the rest)');
+  let contents = 0, opsN = 0;
+  const differs = [];
+  for (const f of files) {
+    const d = await PDFLib.PDFDocument.load(f.bytes, { ignoreEncryption: true, updateMetadata: false });
+    for (let p = 0; p < d.getPageCount(); p++) {
+      const pc = bc.readPage(PDFLib, d, p);
+      for (const c of pc.contents.values()) { contents++; opsN += c.ops.length; if (!eqB(lex.writeOps(c.bytes, c.ops), c.bytes)) differs.push(f.name + ' p' + (p + 1) + ' ' + c.key); }
+    }
+  }
+  ok(!differs.length, `round trip byte for byte: ${files.length} files, ${contents} contents, ${opsN} ops`, differs);
+
+  // the hand-written page: what is on it
+  const doc = await PDFLib.PDFDocument.load(awk);
+  const pc = bc.readPage(PDFLib, doc, 0);
+  const kinds = {};
+  for (const o of pc.objects) kinds[o.kind] = (kinds[o.kind] || 0) + 1;
+  ok(JSON.stringify(kinds) === JSON.stringify({ path: 7, clip: 2, text: 7, image: 2, form: 4, shading: 1 }), 'objects found: paths, clips, text, pictures (one inline), forms (nested, used twice), a shading', kinds);
+  const texts = pc.objects.filter((o) => o.kind === 'text').map((o) => o.text);
+  ok(texts[0] === 'Hello (world) \\ AB' && texts[1] === 'Kerned Text' && texts.includes('inner'), 'text decoded through the font', texts);
+  const kern = pc.objects.find((o) => o.text === 'Kerned Text');
+  ok(near(kern.bbox[0], 50, 0.01) && kern.bbox[2] > 140 && kern.bbox[2] < 160, 'a run\'s box from its widths (Helvetica, no /Widths: built-in metrics)', kern.bbox);
+  ok(bc.objectsOfKind(pc, ['picture']).length === 2 && bc.objectsOfKind(pc, ['shape']).length === 7, 'pick by kind (shapes, pictures, text)');
+  ok(bc.objectsIn(pc, [190, 690, 310, 760]).some((o) => o.kind === 'path' && o.paint === 'f'), 'marquee: the blue box is under it');
+
+  // refusals
+  const paths = pc.objects.filter((o) => o.kind === 'path');
+  const page = pc.contents.get('page');
+  const cross = paths.find((o) => o.where === 'page' && !page.segments.some((g) => page.ops[o.first].s >= g.s && page.ops[o.last].e <= g.e));
+  ok(cross && bc.applyEdits(PDFLib, doc, pc, bc.transformEdits(pc, cross, bc.translate(5, 5)).edits).refused === 'across-streams', 'a path split over two streams refuses');
+  ok(bc.transformEdits(pc, { ...pc.objects.find((o) => o.kind === 'clip'), kind: 'path' }, bc.translate(5, 5)).refused === 'clip', 'a clip path refuses');
+  ok(bc.editBlocker(PDFLib, doc) === null, 'a plain file can be edited');
+  const signed = await PDFLib.PDFDocument.load(await corpusM.signedFrom(await (async () => { const d0 = await PDFLib.PDFDocument.create(); d0.addPage(); return d0.save(); })()));
+  ok(bc.editBlocker(PDFLib, signed) === 'signed', 'a signed file refuses');
+  const encDoc = await PDFLib.PDFDocument.create(); encDoc.addPage(); encDoc.context.trailerInfo.Encrypt = encDoc.context.obj({ Filter: 'Standard' });
+  ok(bc.editBlocker(PDFLib, encDoc) === 'encrypted', 'an encrypted file refuses');
+  const encFile = corpusM.CORPUS.find((c) => c.name === 'encrypted').file;
+  if (fs.existsSync(encFile)) ok(bc.editBlocker(PDFLib, await PDFLib.PDFDocument.load(fs.readFileSync(encFile), { ignoreEncryption: true })) === 'encrypted', 'Ghostscript\'s encrypted copy refuses');
+
+  // one path moved, one text run rewritten, one picture moved → saved → read back by pdf.js and poppler
+  const tri = paths.find((o) => o.where === 'page' && o.paint === 'S' && near(o.bbox[0], 50) && near(o.bbox[3], 750));
+  const run = pc.objects.find((o) => o.text === 'Kerned Text');
+  const pic = pc.objects.find((o) => o.kind === 'image' && !o.inline);
+  const T = bc.translate(36, -24);
+  const e1 = bc.transformEdits(pc, tri, T), e2 = bc.textEdits(pc, run, 'Darned Text'), e3 = bc.transformEdits(pc, pic, bc.translate(0, -100));
+  ok(!e1.refused && !e2.refused && !e2.missing.length && !e3.refused, 'edits made: move a path, new words in the run\'s own font, move a picture');
+  ok(/\[\(Darned Text\) -?[\d.]+\] TJ/.test(dec(e2.edits[0].bytes)), 'the run keeps its advance (TJ with the difference)', dec(e2.edits[0].bytes));
+  const before = new Map([...pc.contents].map(([k, c]) => [k, c.key === 'page' ? c.segments.map((s) => s.raw.contents) : [c.raw.contents]]));
+  const res = bc.applyEdits(PDFLib, doc, pc, [...e1.edits, ...e2.edits, ...e3.edits]);
+  ok(!res.refused && res.changed.join() === 'page', 'written back into the page content', res);
+  const out = await doc.save({ useObjectStreams: false });
+  const back = await PDFLib.PDFDocument.load(out);
+  const pc2 = bc.readPage(PDFLib, back, 0);
+  const segs2 = pc2.contents.get('page').segments.map((s) => s.raw.contents);
+  ok(eqB(segs2[1], before.get('page')[1]) && !eqB(segs2[0], before.get('page')[0]), 'only the stream holding the edits changed; the second stream kept its bytes');
+  ok([...pc2.contents].filter(([k]) => k !== 'page').every(([k, c]) => eqB(c.raw.contents, before.get(k)[0])), 'the forms kept their bytes');
+  const tri2 = pc2.objects.find((o) => o.kind === 'path' && o.paint === 'S' && near(o.bbox[0], 86) && near(o.bbox[3], 726));
+  ok(!!tri2 && eqB(lex.writeOps(pc2.contents.get('page').bytes, pc2.contents.get('page').ops), pc2.contents.get('page').bytes), 'read again: the path is at its new place, and the edited stream round-trips too');
+  // pdf.js
+  const render = async (bytes) => {
+    const d = await getDoc(bytes); const pg = await d.getPage(1); const vp = pg.getViewport({ scale: 1 });
+    const c = createCanvas(612, 792); const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 612, 792);
+    await quiet(() => pg.render({ canvasContext: g, viewport: vp }).promise);
+    const txt = (await quiet(() => pg.getTextContent())).items.map((i) => i.str).join(' ');
+    return { px: g.getImageData(0, 0, 612, 792).data, txt };
+  };
+  const r0 = await render(awk), r1 = await render(out);
+  const boxes = [tri.bbox, [tri.bbox[0] + 36, tri.bbox[1] - 24, tri.bbox[2] + 36, tri.bbox[3] - 24], run.bbox, pic.bbox, [pic.bbox[0], pic.bbox[1] - 100, pic.bbox[2], pic.bbox[3] - 100]].map((b) => [b[0] - 4, b[1] - 4, b[2] + 4, b[3] + 4]);
+  let changed = 0, outside = 0;
+  for (let y = 0; y < 792; y++) for (let x = 0; x < 612; x++) {
+    const i = (y * 612 + x) * 4;
+    if (Math.abs(r0.px[i] - r1.px[i]) + Math.abs(r0.px[i + 1] - r1.px[i + 1]) + Math.abs(r0.px[i + 2] - r1.px[i + 2]) <= 12) continue;
+    changed++;
+    const px = x + 0.5, py = 792 - y - 0.5;
+    if (!boxes.some((b) => px >= b[0] && px <= b[2] && py >= b[1] && py <= b[3])) outside++;
+  }
+  ok(changed > 200 && outside === 0, `pdf.js: ${changed} pixels changed, all inside the edited objects`, { changed, outside });
+  ok(r1.txt.includes('Darned Text') && !r1.txt.includes('Kerned Text') && r1.txt.includes('Hello (world)'), 'pdf.js reads the new words and the rest as before');
+  // poppler
+  const tmpPdf = path.join(OUTDIR, 'base-edited.pdf');
+  fs.writeFileSync(tmpPdf, out);
+  const pt = spawnSync('pdftotext', [tmpPdf, '-'], { encoding: 'utf8' });
+  if (pt.error) console.log('  (poppler not installed: skipped)');
+  else {
+    ok(pt.status === 0 && pt.stdout.includes('Darned Text') && !pt.stdout.includes('Kerned'), 'poppler reads the new words', pt.stderr);
+    const tmpOrig = path.join(OUTDIR, 'base-orig.pdf');
+    fs.writeFileSync(tmpOrig, awk);
+    const ppm = (f, b) => { spawnSync('pdftoppm', ['-r', '72', '-gray', '-singlefile', f, path.join(OUTDIR, b)]); return fs.readFileSync(path.join(OUTDIR, b + '.pgm')); };
+    const p0 = ppm(tmpOrig, 'base-o'), p1 = ppm(tmpPdf, 'base-e');
+    const head = p0.length - 612 * 792;
+    let pc_ = 0, po = 0;
+    for (let k = 0; k < 612 * 792; k++) {
+      if (Math.abs(p0[head + k] - p1[head + k]) <= 4) continue;
+      pc_++;
+      const px = (k % 612) + 0.5, py = 792 - Math.floor(k / 612) - 0.5;
+      if (!boxes.some((b) => px >= b[0] && px <= b[2] && py >= b[1] && py <= b[3])) po++;
+    }
+    ok(p0.length === p1.length && pc_ > 200 && po === 0, `poppler: ${pc_} pixels changed, all inside the edited objects`, { pc_, po });
+  }
+
+  // turning a rectangle, recolouring, deleting
+  const d3 = await PDFLib.PDFDocument.load(awk);
+  const pc3 = bc.readPage(PDFLib, d3, 0);
+  const box = pc3.objects.find((o) => o.kind === 'path' && o.paint === 'f' && near(o.bbox[0], 200) && near(o.bbox[3], 750));
+  const turn = bc.transformEdits(pc3, box, bc.mul(bc.mul(bc.translate(-250, -725), [0, 1, -1, 0, 0, 0]), bc.translate(250, 725)));
+  ok(/m .* l .* l .* l h/.test(dec(turn.edits[0].bytes)), 'a turned rectangle is written as a closed path', dec(turn.edits[0].bytes));
+  const sc = bc.transformEdits(pc3, box, bc.scaleAbout(2, 0.5, 200, 700));
+  ok(dec(sc.edits[0].bytes) === '200 700 200 25 re', 'a scaled rectangle stays a rectangle', dec(sc.edits[0].bytes));
+  const rc = bc.recolorEdits(pc3, box, { fill: '#ff8800', lw: 2 });
+  ok(dec(rc.edits[0].bytes) === 'q 1 0.5333 0 rg 2 w ' && dec(rc.edits[1].bytes) === ' Q', 'recolour: wrapped in q … Q so nothing after it changes');
+  const del = bc.deleteEdits(pc3, box);
+  bc.applyEdits(PDFLib, d3, pc3, del.edits);
+  const pc4 = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(await d3.save()), 0);
+  ok(pc4.objects.filter((o) => o.kind === 'path').length === 6, 'deleted: one path fewer');
+
+  // the edits as data (base-edit.js): the Store keeps them, the working copy is rebuilt from the original each time
+  {
+    const be = await imp('base-edit.js');
+    const d0 = await PDFLib.PDFDocument.load(awk);
+    const p0 = bc.readPage(PDFLib, d0, 0);
+    const list0 = be.shown(p0, null);
+    ok(list0.filter((x) => x.kind === 'shape').length === 7 && list0.filter((x) => x.kind === 'text').length === 7 && list0.filter((x) => x.kind === 'picture').length === 2, 'pickable: 7 shapes, 7 text runs, 2 pictures (clips and forms are not picked themselves)', list0.map((x) => x.kind));
+    const gray = list0.find((x) => x.kind === 'shape' && x.obj.fillRgb === '#cccccc');
+    ok(gray && nearArr(gray.box, [220, 600, 300, 680]) && !be.hitTest(list0, [205, 595], 1), 'a shape inside a clip is picked only where it shows', gray && gray.box);
+    const blue = be.hitTest(list0, [250, 725], 2);
+    ok(blue && blue.obj.paint === 'f' && near(blue.box[0], 200), 'a click inside the blue box picks it (filled: inside counts)', blue && blue.key);
+    const triHit = be.hitTest(list0, [100, 700.2], 2), triMiss = be.hitTest(list0, [100, 720], 2);
+    ok(triHit && triHit.obj.paint === 'S' && !triMiss, 'a stroked path is picked on its line, not inside it', [triHit && triHit.key, triMiss && triMiss.key]);
+    ok(be.inRect(list0, [40, 690, 160, 760], false).length === 1 && be.inRect(list0, [140, 695, 210, 760], true).length === 2, 'marquee: window takes what is inside, crossing what it touches');
+    const formPaths = list0.filter((x) => x.kind === 'shape' && x.key.includes('/'));
+    ok(formPaths.length === 2 && formPaths[0].key !== formPaths[1].key, 'the shared form\'s path shows twice (once per use), with different keys', formPaths.map((x) => x.key));
+    const formPath = formPaths[0];
+    let st = be.withMove(null, [triHit.key], bc.translate(10, 0));
+    st = be.withMove(st, [triHit.key], bc.translate(0, -5));
+    ok(nearArr(st.o[triHit.key].T, [1, 0, 0, 1, 10, -5]), 'moves add up');
+    st = be.withPatch(st, [blue.key], { fill: '#ff8800' });
+    const run = list0.find((x) => x.kind === 'text' && x.obj.text === 'Scaled');
+    st = be.withDelete(st, [run.key]);
+    st = be.withMove(st, [formPath.key], bc.translate(0, 30));
+    const nd = be.nodesOf(p0, triHit.obj, st.o[triHit.key]);
+    ok(nd.length === 3 && nd.every((n) => n.kind === 'anchor') && near(nd[0].x, 60) && near(nd[0].y, 695), 'its points as shown (after the move)', nd);
+    st = be.withNodes(st, triHit.key, be.moveNode(p0, triHit.obj, st.o[triHit.key], nd[1], [170, 680]));
+    const lineMk = { k: 'path', d: [['M', 400, 100], ['L', 500, 150]], stroke: '#d0021b', w: 2, alpha: 1, fill: null, falpha: 0 };
+    const added = be.contentFromList([lineMk], '#ffffff', () => 'x1');
+    ok(added && added[0].stroke === '#d0021b' && added[0].lw === 2, 'a drawn line can go into the page');
+    ok(be.contentFromList([{ ...lineMk, alpha: 0.5 }]) === null && be.contentFromList([{ k: 'text', s: 'x' }]) === null, 'see-through colour and text can\'t');
+    st = be.withAdded(st, added);
+    const sorted = (v) => JSON.stringify(v, (k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : x));
+    ok(sorted(be.cleanBase(JSON.parse(JSON.stringify(st)))) === sorted(st), 'the state survives cleanBase (autosave, files) unchanged');
+    ok(JSON.stringify(be.cleanBase({ o: { 'x;rm': { del: true }, 5: { T: [0, 0, 0, 0, 0, 0], stroke: 'red', text: 'a\u0001b' } }, add: [{ d: [['L', 1, 2]], stroke: '#000000' }, { d: [['M', 1, 2]], stroke: '#000000' }] })) === '{"o":{"5":{"text":"ab"}},"add":[{"id":"a0","d":[["M",1,2]],"stroke":"#000000","lw":1}]}', 'cleanBase drops bad keys, flat matrices, bad colours, control characters, paths not starting with M', be.cleanBase({ o: { 'x;rm': { del: true }, 5: { T: [0, 0, 0, 0, 0, 0], stroke: 'red', text: 'a\u0001b' } }, add: [{ d: [['L', 1, 2]], stroke: '#000000' }, { d: [['M', 1, 2]], stroke: '#000000' }] }));
+    const sto = new model.Store();
+    sto.change('Move page content', (tx) => tx.setBase('f1:0', st));
+    ok(sto.base.get('f1:0') && sto.dirtySheets.has('f1:0'), 'the Store keeps the sheet\'s edits (unsaved)');
+    sto.undo();
+    ok(!sto.base.has('f1:0'), 'undo takes them back');
+    sto.redo();
+    ok(JSON.stringify(sto.base.get('f1:0')) === JSON.stringify(st), 'redo puts them back');
+    const w = await be.buildWorking(PDFLib, awk, new Map([[0, st]]));
+    ok(!w.refused.length && !w.missing.length && w.pages === 1, 'working copy built, nothing refused', w.refused);
+    const wd = await PDFLib.PDFDocument.load(w.bytes);
+    const p1 = bc.readPage(PDFLib, wd, 0);
+    const tri1 = p1.objects.find((o) => o.kind === 'path' && o.paint === 'S' && o.bbox[0] > 55 && o.bbox[0] < 65);
+    ok(tri1 && near(tri1.bbox[0], 60, 0.01) && near(tri1.bbox[2], 170, 0.01) && near(tri1.bbox[1], 680, 0.01), 'the path moved and its point went where it was dragged', tri1 && tri1.bbox);
+    ok(p1.objects.filter((o) => o.kind === 'text').every((o) => o.text !== 'Scaled'), 'the deleted run is gone');
+    ok(p1.objects.find((o) => o.kind === 'path' && o.fillRgb === '#ff8800'), 'the blue box is orange now');
+    const forms = p1.objects.filter((o) => o.kind === 'form' && o.parent == null);
+    ok(forms.length === 2 && forms[0].name !== forms[1].name && forms.some((f) => f.name === 'Fm1'), 'the shared form was copied for the edited use; the other use keeps Fm1', forms.map((f) => f.name));
+    const fpaths = p1.objects.filter((o) => o.kind === 'path' && o.where !== 'page');
+    ok(fpaths.length === 2 && near(Math.abs(fpaths[0].bbox[1] - fpaths[1].bbox[1]), 30, 0.01), 'and only that use\'s path moved (30 pt; both uses sit at the same height in the file)', fpaths.map((f) => f.bbox));
+    const fm1 = [...p0.contents.values()].find((c) => c.key !== 'page' && c.uses === 2);
+    ok(fm1 && eqB(bc.streamBytes(PDFLib, wd.context.lookup(fm1.ref)), fm1.bytes), 'the original form object keeps its bytes');
+    ok(p1.objects.some((o) => o.kind === 'path' && o.strokeRgb === '#d0021b' && near(o.bbox[0], 400, 0.01)), 'the drawn line is part of the page now');
+    const r2 = await render(w.bytes);
+    ok(!r2.txt.includes('Scaled') && r2.txt.replace(/\s/g, '').includes('KernedText'), 'pdf.js agrees: the run is gone, the rest is there');
+    // pictures (DF.14 b): replace an image XObject and an inline image; the new one keeps its proportions in the old box
+    {
+      const cv = createCanvas(40, 20); const g = cv.getContext('2d'); g.fillStyle = '#d0021b'; g.fillRect(0, 0, 40, 20);
+      const png = 'data:image/png;base64,' + cv.toBuffer('image/png').toString('base64');
+      const xo = list0.find((x) => x.kind === 'picture' && !x.obj.inline), inl = list0.find((x) => x.kind === 'picture' && x.obj.inline);
+      let ps = be.withPicture(null, xo.key, png);
+      ps = be.withPicture(ps, inl.key, png);
+      ok(be.withPicture(null, xo.key, 'data:image/gif;base64,R0lGOD') === null || !be.withPicture(null, xo.key, 'data:image/gif;base64,R0lGOD')?.o?.[xo.key], 'only PNG or JPEG is taken');
+      ok(be.cleanBase(JSON.parse(JSON.stringify(ps))).o[xo.key].img === png && !be.cleanBase({ o: { 5: { img: 'data:text/html;base64,PGI+' } } }).o['5'], 'cleanBase keeps a checked picture, drops anything else');
+      const wp = await be.buildWorking(PDFLib, awk, new Map([[0, ps]]));
+      ok(!wp.refused.length, 'both pictures replaced, nothing refused', wp.refused);
+      const pp = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(wp.bytes), 0);
+      const pics = pp.objects.filter((o) => o.kind === 'image');
+      ok(pics.length === 2 && pics.every((o) => /^McPic\d+$/.test(o.name)), 'the page now draws the new pictures (inline one too)', pics.map((o) => o.name));
+      const sq = pics.find((o) => near(o.bbox[0], 400, 0.01));   // the 30 x 30 box at 400,650: a 2:1 picture → 30 x 15, centred
+      ok(sq && nearArr(sq.bbox, [400, 657.5, 430, 672.5], 0.01), 'a 2:1 picture in a square box: full width, centred, proportions kept', sq && sq.bbox);
+      const rp = await render(wp.bytes);
+      const px = (x, y) => { const i = ((792 - y) * 612 + x) * 4; return [rp.px[i], rp.px[i + 1], rp.px[i + 2]]; };
+      ok(px(415, 665)[0] > 180 && px(415, 665)[1] < 60, 'pdf.js paints the new (red) picture there', px(415, 665));
+    }
+    let threw = '';
+    try { await be.buildWorking(PDFLib, await corpusM.signedFrom(awk), new Map([[0, st]])); } catch (e) { threw = e.code; }
+    ok(threw === 'signed', 'a signed file: buildWorking refuses with code "signed"');
+  }
+
+  // a standard font the file gives no widths for (other than Helvetica / Courier): words refuse, never guessed
+  {
+    const td = await PDFLib.PDFDocument.create();
+    const tp = td.addPage([300, 200]);
+    const ref = td.context.register(td.context.obj({ Type: 'Font', Subtype: 'Type1', BaseFont: 'Times-Roman', Encoding: 'WinAnsiEncoding' }));
+    tp.node.setFontDictionary(PDFLib.PDFName.of('F9'), ref);
+    tp.pushOperators(PDFLib.beginText(), PDFLib.setFontAndSize('F9', 12), PDFLib.moveText(20, 100), PDFLib.showText(PDFLib.PDFHexString.fromText('x')), PDFLib.endText());
+    const tpc = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(await td.save()), 0);
+    const run = tpc.objects.find((o) => o.kind === 'text');
+    ok(run && bc.objectEdits(tpc, run, { text: 'Hello' }).refused === 'metrics', 'Times with no /Widths: new words refuse (metrics)', run && bc.objectEdits(tpc, run, { text: 'Hello' }));
+    ok(!bc.objectEdits(tpc, run, { T: bc.translate(5, 0) }).refused, 'but the line can still be moved');
+  }
+
+  // a subset font lacks letters: they come back as missing, never printed blank
+  const chrome = corpusM.CORPUS.find((c) => c.name === 'chromium').file;
+  if (fs.existsSync(chrome)) {
+    const dc = await PDFLib.PDFDocument.load(fs.readFileSync(chrome));
+    const pcc = bc.readPage(PDFLib, dc, 0);
+    const head = pcc.objects.find((o) => o.kind === 'text');
+    const m1 = bc.textEdits(pcc, head, 'Boiler room'), m2 = bc.textEdits(pcc, head, 'Mechanical area');
+    ok(head.info.twoByte && m1.missing.join('') === 'B' && !m2.missing.length && m2.edits[0].bytes.length > 10, 'Type0 subset font: "B" is missing, "Mechanical area" encodes in 2-byte codes', { m1: m1.missing, have: [...head.info.have().keys()].join('') });
+    // DF.14 (c): new words in a subset Type0 font; the missing "B" prints in Helvetica; the line keeps its length
+    const be = await imp('base-edit.js');
+    const cb = new Uint8Array(fs.readFileSync(chrome));
+    const st = be.withPatch(null, [head.key], { text: 'Boiler room' });
+    const w = await be.buildWorking(PDFLib, cb, new Map([[0, st]]));
+    const pw = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(w.bytes), 0);
+    const runs = pw.objects.filter((o) => o.kind === 'text' && o.bbox[1] > head.bbox[1] - 1 && o.bbox[3] < head.bbox[3] + 1);
+    ok(runs.some((o) => o.info?.base === 'Helvetica' && o.text === 'B') && runs.some((o) => o.text === 'oiler room'), 'the B in Helvetica, the rest in the file\'s own font', runs.map((o) => [o.info?.base, o.text]));
+    const all = pw.objects.filter((o) => o.kind === 'text').map((o) => o.text).join('|');
+    ok(all.includes('Pump P|-1 r') || all.includes('ump P'), 'the next lines are untouched', all.slice(0, 120));
+    const tmpC = path.join(OUTDIR, 'base-chromium.pdf');
+    fs.writeFileSync(tmpC, w.bytes);
+    const ptc = spawnSync('pdftotext', [tmpC, '-'], { encoding: 'utf8' });
+    if (!ptc.error) ok(/Boiler room/.test(ptc.stdout) && !/Mechanical room/.test(ptc.stdout), 'poppler reads "Boiler room"', ptc.stdout.slice(0, 80));
+    const d2 = await getDoc(w.bytes); const pg2 = await d2.getPage(1);
+    const items = (await quiet(() => pg2.getTextContent())).items.map((i) => i.str).join('');
+    ok(items.replace(/\s/g, '').includes('Boilerroom'), 'pdf.js reads "Boiler room" too', items.slice(0, 80));
+  } else console.log('  (chromium.pdf not made: the subset-font check is skipped)');
 }
 
 section('Language files (0.4 item 0.5)');

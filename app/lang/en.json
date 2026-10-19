@@ -2,6 +2,8 @@
   "@locale": "en",
   "@name": "English",
   "@context": {
+    "calc.err.char": "Refusing a typed calculation such as 4+7/16 (0.6 DF.3). {text} = the character typed, {pos} = its place, 1 = first.",
+    "calc.err.function": "abs, round, ceil, floor are the function names to type: keep them as they are.",
     "subject.pen": "Default PDF annotation subject (/Subj) of a new pen markup; other PDF programs show and filter by it.",
     "stamp.approved_as_noted": "Printed on the sheet as the stamp's words.",
     "reply.status.by": "A status entry in a markup's comment thread; also saved as the PDF reply's text.",
@@ -1069,7 +1071,7 @@
     "other": "{date}, {n} markups"
   },
   "sum.replies": {
-    "one": "{n} reply. {last}",
+    "one": "{n} reply. Last: {last}",
     "other": "{n} replies. Last: {last}"
   },
   "sum.empty": "No markups in the list.",
@@ -1452,5 +1454,134 @@
   "input.style.markupcraft": "MarkupCraft",
   "input.style.review": "PDF review",
   "input.style.markupcraft.hint": "MarkupCraft's own toolbar and single-letter tool keys: everything one click away.",
-  "input.style.review.hint": "A menu bar (File, Edit, View, Document, Markup, Measure, Window) over a row of review tools, with tool keys set out the way PDF review programs set theirs: H highlighter, Q callout, N polygon, Shift+T note, and the measurements on Alt+Shift (L length, A area, C count, K calibrate). The middle button pans; Space and drag still pans."
+  "input.style.review.hint": "A menu bar (File, Edit, View, Document, Markup, Measure, Window) over a row of review tools, with tool keys set out the way PDF review programs set theirs: H highlighter, Q callout, N polygon, Shift+T note, and the measurements on Alt+Shift (L length, A area, C count, K calibrate). The middle button pans; Space and drag still pans.",
+  "calc.err.char": "Can't read \"{text}\" there (character {pos}).",
+  "calc.err.end": "The calculation ends too soon (character {pos}): a value is missing.",
+  "calc.err.paren": "A bracket is not closed (character {pos}).",
+  "calc.err.extra": "Something follows the end of the calculation at character {pos}: \"{text}\".",
+  "calc.err.length": "\"{text}\" is not a length here (character {pos}).",
+  "calc.err.divide": "Division by zero (character {pos}).",
+  "calc.err.deep": "Too many brackets inside each other (character {pos}).",
+  "calc.err.long": "That is too long to read (over {pos} characters).",
+  "calc.err.area": "Two lengths multiplied make an area, not a length (character {pos}).",
+  "calc.err.ratio": "A plain number divided by a length is not a length (character {pos}).",
+  "calc.err.function": "No function called \"{text}\" (character {pos}). Use abs, round, ceil or floor.",
+  "calc.err.not_positive": "The length must be more than zero.",
+  "calc.err.number": "The result is not a number (character {pos}).",
+  "tool.content": "Content",
+  "tool.content.title": "Page content: select and change the page's own lines, pictures and text, not markups (B)",
+  "base.h": "Page content",
+  "base.h.sel": {
+    "one": "1 object on the page",
+    "other": "{n} objects on the page"
+  },
+  "base.loading": "Reading the page's content…",
+  "base.blocked.encrypted": "This PDF is encrypted, so its page content can't be changed here. Markups still work.",
+  "base.blocked.signed": "This PDF is signed. Changing its page content would break the signature, so MarkupCraft leaves it as it is. Markups still work.",
+  "base.blocked.unreadable": "MarkupCraft can't read this page's content ({why}). Markups still work.",
+  "base.hint": "Page content: click a line, picture or line of text to select it, drag it to move it, drag a corner to resize it. Double-click a line to move its points, or a line of text to change its words.",
+  "base.scan": "This page is one picture (a scan): you can move, resize or delete the picture, but there are no lines or words in it to edit.",
+  "base.empty": "Nothing on this page can be picked with these kinds turned on.",
+  "base.pick": "Pick",
+  "base.kind.shape": "Shapes",
+  "base.kind.picture": "Pictures",
+  "base.kind.text": "Text",
+  "base.sel": "Selected: {list}.",
+  "base.stroke": "Line color",
+  "base.fill": "Fill color",
+  "base.width": "Line width (pt)",
+  "base.points": "Edit points",
+  "base.points.title": "Move the line's points and curve handles (or double-click the line)",
+  "base.points.hint": "Drag a point or a curve handle. Esc, or a click away from the line, ends point editing.",
+  "base.points.none": "This one has no points to move here: resize it with the corners of its box.",
+  "base.reset": "Put back as it was",
+  "base.reset.sheet": "Put this page back as it was",
+  "base.delete": "Delete from the page",
+  "base.changes": {
+    "one": "1 change to this page's own content.",
+    "other": "{n} changes to this page's own content."
+  },
+  "base.note": "These edits change the page itself in the copy you save; markups stay separate. Lines, pictures and lines of text the PDF draws can be moved, resized, recolored or deleted. A scanned page is one picture: what is in the picture can't be edited.",
+  "base.undo.move": {
+    "one": "Move page object",
+    "other": "Move {n} page objects"
+  },
+  "base.undo.scale": {
+    "one": "Resize page object",
+    "other": "Resize {n} page objects"
+  },
+  "base.undo.delete": {
+    "one": "Delete page object",
+    "other": "Delete {n} page objects"
+  },
+  "base.undo.style": {
+    "one": "Change page object",
+    "other": "Change {n} page objects"
+  },
+  "base.undo.points": "Move points",
+  "base.undo.reset": "Put page content back",
+  "base.undo.into": {
+    "one": "Put markup into the page",
+    "other": "Put {n} markups into the page"
+  },
+  "base.selected": {
+    "one": "1 page object selected.",
+    "other": "{n} page objects selected."
+  },
+  "base.none": "Nothing there to pick (the kinds under Pick decide what can be picked).",
+  "base.refused.clip": "That line clips other content: moving it would change what they show, so it stays as it is.",
+  "base.refused.across-streams": "That object is split between two parts of the page's content, so MarkupCraft leaves it as it is.",
+  "base.refused.text": "Color and line width can't be changed on lines drawn inside text.",
+  "base.refused.flat": "That object is squashed flat in the file, so it can't be moved or resized.",
+  "base.refused.font": "That text's font can't be written to here.",
+  "base.refused.gone": "That object is no longer on the page.",
+  "base.refused.shading": "A color blend fills its whole area, so it can't be moved on its own.",
+  "base.refused.other": "That edit can't be written into this page ({why}).",
+  "base.save.refused": {
+    "one": "1 page edit could not be written and was left out.",
+    "other": "{n} page edits could not be written and were left out."
+  },
+  "base.rebuild.failed": "The page could not be redrawn with its edits: {error}",
+  "base.into": "Put into the page",
+  "base.into.title": "Make these markups part of the page's own content (line work only: no text, pictures or see-through color)",
+  "base.into.cant": "Only line work can go into the page: text, pictures, stamps and see-through colors stay markups.",
+  "base.into.done": {
+    "one": "1 markup is part of the page now (Ctrl+Z takes it back).",
+    "other": "{n} markups are part of the page now (Ctrl+Z takes them back)."
+  },
+  "input.cmd.tool.content": "Page content",
+  "base.sel.shape": {
+    "one": "1 shape",
+    "other": "{n} shapes"
+  },
+  "base.sel.picture": {
+    "one": "1 picture",
+    "other": "{n} pictures"
+  },
+  "base.sel.text": {
+    "one": "1 line of text",
+    "other": "{n} lines of text"
+  },
+  "base.picture.replace": "Replace picture…",
+  "base.picture.replace.title": "Put another picture (PNG or JPEG) in this one's place; its proportions are kept inside the same box",
+  "base.picture.bad": "That file is not a PNG or JPEG picture MarkupCraft can use.",
+  "base.picture.done": "Picture replaced.",
+  "base.undo.picture": "Replace picture",
+  "base.refused.picture": "That picture could not be replaced in this file.",
+  "base.words": "Words",
+  "base.undo.words": "Change words",
+  "base.text.done": "Words changed, in the line's own font.",
+  "base.text.fallback": "Words changed. The file's copy of {font} has no {letters}, so those letters are printed in Helvetica.",
+  "base.text.font": "Font: {font}.",
+  "base.text.font.subset": "Font: {font}. The file carries only some of its letters ({letters}); others are printed in Helvetica.",
+  "base.refused.metrics": "MarkupCraft doesn't have this font's letter widths (a standard font the file doesn't describe), so it can't place new words in it.",
+  "menu.paste_picture": "Paste a picture",
+  "pic.paste.label": "Pasted picture",
+  "pic.paste.undo": "Paste a picture",
+  "pic.paste.done": "Picture pasted as a markup: drag it into place, or resize it by its corners.",
+  "pic.paste.bad": "That clipboard picture is not a PNG or JPEG MarkupCraft can use.",
+  "pic.paste.none": "There is no picture on the clipboard.",
+  "pic.paste.denied": "The browser did not let MarkupCraft read the clipboard. Press Ctrl+V instead (⌘V on a Mac).",
+  "pic.paste.no_api": "This browser can't read pictures from the clipboard from a menu. Press Ctrl+V instead (⌘V on a Mac).",
+  "input.cmd.edit.paste-picture": "Paste a picture"
 }

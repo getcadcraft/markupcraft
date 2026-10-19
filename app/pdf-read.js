@@ -365,20 +365,8 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   // draw: pages with only editable annotations → annotations off; pages with both → a cleaned copy
   const mixed = pageHasEditable.some((e, i) => e && pageHasForeign[i]);
   if (mixed && ldoc) {
-    for (let i = 0; i < pages.length; i++) {
-      if (!pageHasEditable[i]) continue;
-      const node = ldoc.getPage(i).node;
-      const arr = node.lookupMaybe(lib.PDFName.of('Annots'), lib.PDFArray);
-      if (!arr) continue;
-      const keep = arr.asArray().filter((it) => {
-        if (!(it instanceof lib.PDFRef)) return true;
-        if (record.removeRefs.has(refKey(it.objectNumber, it.generationNumber))) return false;
-        const d = ctx.lookupMaybe(it, lib.PDFDict);
-        const irt = d?.get(lib.PDFName.of('IRT'));
-        return !(irt instanceof lib.PDFRef && record.removeRefs.has(refKey(irt.objectNumber, irt.generationNumber)));
-      });
-      node.set(lib.PDFName.of('Annots'), ctx.obj(keep));
-    }
+    record.cleanPages = pageHasEditable.map((e, i) => (e ? i : -1)).filter((i) => i >= 0);
+    dropTakenAnnots(lib, ldoc, record.removeRefs, record.cleanPages);
     const cleaned = await ldoc.save({ useObjectStreams: false });
     try {
       const doc2 = await pdfjs.getDocument(src(cleaned)).promise;
@@ -391,6 +379,28 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   }
   if (!ldoc && needLib) record.notes.push(t('open.note.extras'));
   return record;
+}
+
+/**
+ * Take the annotations MarkupCraft read as editable markups (and their replies) off these pages of a pdf-lib document,
+ * so the page draws without them while the markups are drawn by MarkupCraft (the "cleaned" copy; also used for the
+ * working copy of a page whose own content was edited, base-ui.js).
+ */
+export function dropTakenAnnots(lib, ldoc, removeRefs, pageIndexes) {
+  const ctx = ldoc.context;
+  for (const i of pageIndexes) {
+    const node = ldoc.getPage(i).node;
+    const arr = node.lookupMaybe(lib.PDFName.of('Annots'), lib.PDFArray);
+    if (!arr) continue;
+    const keep = arr.asArray().filter((it) => {
+      if (!(it instanceof lib.PDFRef)) return true;
+      if (removeRefs.has(refKey(it.objectNumber, it.generationNumber))) return false;
+      const d = ctx.lookupMaybe(it, lib.PDFDict);
+      const irt = d?.get(lib.PDFName.of('IRT'));
+      return !(irt instanceof lib.PDFRef && removeRefs.has(refKey(irt.objectNumber, irt.generationNumber)));
+    });
+    node.set(lib.PDFName.of('Annots'), ctx.obj(keep));
+  }
 }
 
 /** Let go of a pdf.js document (and its worker side). */

@@ -29,7 +29,8 @@ import { View, PX_PER_PT, hexRgb, mix } from './view.js';
 import { displayOf, boundsOf, pick, pickWindow, grips, applyGrip, moveBy, simplify, snap45, squareFrom, BOX_TYPES, similarity, apply as applyT, inv } from './geom.js';
 import { shapes, NOTE_SIZE, stampSub, frame as textFrame } from './shapes.js';
 import { textWidth, wrapText, SCREEN_FONT } from './font.js';
-import { openPdf, closePdf, sheetInfo } from './pdf-read.js';
+import { openPdf, closePdf, sheetInfo, dropTakenAnnots } from './pdf-read.js';
+import { createBaseUi } from './base-ui.js';   // 0.6 DF.14: the Page content tool
 import { writeMarkedUp } from './pdf-write.js';
 import { matchSheets, carryMarkups, supersededStamp, sheetNoKey } from './slip.js';
 import { Autosave } from "./app-autosave.js";
@@ -51,7 +52,7 @@ import { readBcf, planImport } from './bcf-read.js';
 import { writeXlsx } from './xlsx.js';
 import { rotatePages, deletePages, movePages, insertPages, insertBlank, extractPages, parsePageList, orderDelete } from './pages.js';
 import { PAPERS, ORIENTS, GRIDS, MAX_PAGES, cleanBlank, blankPdf, untitledName } from './blank.js';
-import { measure, measureArea, parseLength, calibrationFrom, presetCalibration, SCALE_PRESETS, UNITS } from './units.js';
+import { measure, measureArea, parseLength, parseLengthCalc, calibrationFrom, presetCalibration, SCALE_PRESETS, UNITS } from './units.js';
 import { buildBcf, guidFor } from './bcf.js';
 import { DEFAULT_CHEST, parseChest, mergeChest, exportChest, toolFromMarkup, cleanTool } from './chest.js';
 import { toCsv, markupRows, punchRows } from './csv.js';
@@ -70,7 +71,7 @@ const KIND = {
   arc: 'three', angle: 'three',   // three clicks (0.4 K4)
   polyline: 'poly', polygon: 'poly', cloud: 'poly', area: 'poly', callout: 'callout', note: 'note', count: 'count',
 };
-const KEYS = { o: 'arc', x: 'angle', v: 'select', h: 'pan', p: 'pen', i: 'highlight', l: 'line', a: 'arrow', r: 'rect', e: 'ellipse', y: 'polyline', g: 'polygon', c: 'cloudrect', k: 'callout', t: 'text', n: 'note', s: 'stamp', m: 'measure', q: 'area', u: 'count' };
+const KEYS = { b: 'content', o: 'arc', x: 'angle', v: 'select', h: 'pan', p: 'pen', i: 'highlight', l: 'line', a: 'arrow', r: 'rect', e: 'ellipse', y: 'polyline', g: 'polygon', c: 'cloudrect', k: 'callout', t: 'text', n: 'note', s: 'stamp', m: 'measure', q: 'area', u: 'count' };
 const TYPE_ICON = { image: 'image', arc: 'bezier2', angle: 'triangle', pen: 'pencil', highlight: 'highlighter', line: 'slash-lg', arrow: 'arrow-up-right', rect: 'square', ellipse: 'circle', polyline: 'activity', polygon: 'pentagon', cloudrect: 'cloud', cloud: 'cloud-haze2', callout: 'chat-left-text', text: 'fonts', note: 'sticky', stamp: 'patch-check', measure: 'arrows', area: 'bounding-box', count: 'hash', foreign: 'lock' };
 const TEXT_TYPES = new Set(['text', 'callout']);
 const LS = { settings: 'markupcraft.settings', author: 'markupcraft.author', chest: 'markupcraft.chest' };
@@ -326,7 +327,7 @@ function init(root) {
     }
     stopCompare();
     cancelOps();
-    for (const f of files) { f.auto?.close(); await closePdf(f.doc); }
+    for (const f of files) { f.auto?.close(); baseUi.forget(f); await closePdf(f.doc); }
     files.length = 0;
     store.dropSheets('');
     store.dirtySheets.clear();
@@ -390,7 +391,8 @@ function init(root) {
    * A file's markups written into its bytes — the marked-up copy Save downloads. `flatten` ('all' | Set of ids) draws those
    * markups into the pages instead; `rot` (page index → degrees) turns the text of that page's markups to read upright.
    */
-  function bake(f, lib, { flatten = null, rot = null } = {}) {
+  async function bake(f, lib, { flatten = null, rot = null } = {}) {
+    const src = await baseUi.bytesFor(f);   // the working copy when the page's own content was edited (0.6 DF.14)
     const pages = f.pages.map((pg) => ({ index: pg.index,
       markups: store.onSheet(pg.key).map((m) => (rot?.has(pg.index) && !m.locked ? { ...m, rot: rot.get(pg.index) } : m)),
       cal: store.calibrations.get(pg.key) || null, calCleared: !store.calibrations.get(pg.key), badge: badgeFor(pg.key), sheetName: store.sheetNames.get(pg.key) || null, legendOf }));
@@ -398,7 +400,7 @@ function init(root) {
     const renamed = f.pages.some((pg) => store.sheetNames.get(pg.key)?.number);
     const labels = renamed ? f.pages.map((pg) => store.sheetNames.get(pg.key)?.number || pg.label || String(pg.index + 1)) : null;
     const linkPage = (link) => { const s = linkTarget(link, sheetList()); return s && s.file === f ? s.page.index : null; };
-    return writeMarkedUp(lib, f.bytes, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null });
+    return writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null });
   }
   /** Sheets as link.js wants them (their place in the list = newest last). */
   const sheetList = () => sheets.map((s) => ({ key: s.page.key, sheetNo: s.page.sheetNo, title: s.page.title, file: s.file, page: s.page }));
@@ -534,6 +536,7 @@ function init(root) {
     files[at] = rec;
     store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
     for (const pg of rec.pages) store.dirtySheets.add(pg.key);
+    baseUi.forget(f);
     await closePdf(f.doc);
     sel = new Set();
     cur = -1;
@@ -1207,6 +1210,7 @@ function init(root) {
       afterCalibrate = name;
       name = 'calibrate';
     }
+    if (tool === 'content' && name !== 'content') baseUi.leave();
     tool = name;
     toolPreset = preset;
     for (const b of root.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === name));
@@ -1223,11 +1227,12 @@ function init(root) {
     else if (name === 'callout') status(t('hint.callout'));
     else if (name === 'count') status(t('hint.count'));
     if (name === 'area') status(t('hint.area'));
+    if (name === 'content') { sel = new Set(); baseUi.enter(); renderProps(); view.invalidate(true); }
   }
 
   function updateCursor() {
     const c = ui.over;
-    if (tool !== 'select') c.style.cursor = '';
+    if (tool !== 'select' && tool !== 'content') c.style.cursor = '';
     c.classList.toggle('is-pan', tool === 'pan' || spaceDown);
     c.classList.toggle('is-draw', DRAW_TOOLS.has(tool) || tool === 'calibrate' || !!cmp.aligning);
     c.classList.toggle('is-panning', drag?.kind === 'pan');
@@ -1287,6 +1292,7 @@ function init(root) {
       case 'copy': copySelection(); break;
       case 'paste': paste('offset'); break;
       case 'paste-in-place': paste('place'); break;
+      case 'paste-picture': pastePictureMenu(); break;
       case 'duplicate': duplicate(); break;
       case 'select-all': selectAll(); break;
       case 'select-none': if (sel.size) { sel = new Set(); refreshSelection(); } break;
@@ -1421,6 +1427,47 @@ function init(root) {
     refreshAll();
     status(t('paste.done.' + (how === 'place' || how === 'pointer' ? how : 'offset'), { n: made.length }) + (c.skipped ? ' ' + t('paste.skipped', { n: c.skipped }) : '') + ' ' + t('paste.undo', { n: made.length }));
   }
+  // ---- a picture from the system clipboard (0.6 DF.6, GJoe_tx): placed as a picture markup ----
+  let pasteWait = 0, pasteHow = 'offset';
+  document.addEventListener('paste', (e) => {
+    const inField = typing(e.target) || e.target?.closest?.('dialog');
+    if (inField || !root.isConnected) return;
+    const waiting = !!pasteWait;
+    clearTimeout(pasteWait); pasteWait = 0;
+    const item = [...(e.clipboardData?.items || [])].find((it) => it.kind === 'file' && /^image\/(png|jpeg)$/.test(it.type));
+    const file = item?.getAsFile();
+    if (file) { e.preventDefault(); pastePicture(file); return; }
+    if (waiting) paste(pasteHow);
+  }, true);
+  async function pastePicture(file) {
+    const s = curSheet();
+    if (!s) { status(t('need.pdf')); return false; }
+    commitEdit(); cancelOps();
+    if (!author && !askedAuthor) await askAuthor();
+    status(t('image.loading'));
+    const src = await pictureFrom(file);
+    const info = src ? imageInfo(src) : null;
+    if (!info) { status(t('pic.paste.bad')); return false; }
+    if (tool !== 'select') setTool('select');
+    const center = pointer ? view.toUser(pointer[0], pointer[1]) : view.toUser(view.w / 2, view.h / 2);
+    const [w, h] = fitBox(info.width, info.height, 216, 216);   // at most 3 in either way; resize it like any picture
+    commitNew(newMarkup('image', { rect: placeRect(center, w, h, view.seenRotate), img: src, label: t('pic.paste.label'), subject: TYPES.image.subject }), t('pic.paste.undo'));
+    status(t('pic.paste.done'));
+    return true;
+  }
+  /** Edit › More › Paste a picture: the browser may ask first. */
+  async function pastePictureMenu() {
+    if (!navigator.clipboard?.read) { status(t('pic.paste.no_api')); return; }
+    let items;
+    try { items = await navigator.clipboard.read(); } catch { status(t('pic.paste.denied')); return; }
+    for (const it of items) {
+      const type = it.types.find((x) => /^image\/(png|jpeg)$/.test(x));
+      if (type) { const blob = await it.getType(type); await pastePicture(new File([blob], 'pasted.' + (type === 'image/png' ? 'png' : 'jpg'), { type })); return; }
+    }
+    status(t('pic.paste.none'));
+  }
+  window.markupcraft.pastePicture = pastePicture;   // tests
+
   /** Copies of the selection a step down and right, as one undo step. The clipboard is left as it was. */
   function duplicate() {
     const s = curSheet();
@@ -1597,6 +1644,7 @@ function init(root) {
     if (editing) { commitEdit(); return; }
     try { over.setPointerCapture(e.pointerId); } catch { /* a replayed tap: the finger is already up */ }
     if (cmp.aligning) { alignClick(p); return; }
+    if (tool === 'content') { baseUi.down(p, sx, sy, e); view.invalidate(); return; }
     const kind = tool === 'select' ? 'select' : KIND[tool];
     switch (kind) {
       case 'select': selectDown(p, sx, sy, e); break;
@@ -1639,6 +1687,7 @@ function init(root) {
     const p = view.toUser(sx, sy);
     showCoords(p);
     if (drag?.kind === 'pan') { view.panBy(sx - drag.sx, sy - drag.sy); drag.sx = sx; drag.sy = sy; return; }
+    if (tool === 'content' && !drag) { if (!baseUi.move(p, sx, sy, e)) baseUi.hover(p); return; }
     if (!drag) {
       if (pending?.kind === 'two') { pending.b = constrain(pending.a, p, e); view.invalidate(); }
       else if (pending?.kind === 'poly') { const last = pending.pts[pending.pts.length - 2]; pending.pts[pending.pts.length - 1] = constrain(last, p, e); view.invalidate(); }
@@ -1670,6 +1719,7 @@ function init(root) {
   });
 
   over.addEventListener('pointerup', (e) => {
+    if (tool === 'content' && !drag && baseUi.busy) { const [ux, uy] = localXY(e); baseUi.up(view.toUser(ux, uy), ux, uy, e); return; }
     if (!drag) return;
     const [sx, sy] = localXY(e);
     const p = view.toUser(sx, sy);
@@ -1693,11 +1743,12 @@ function init(root) {
     view.hidden = null;
     view.invalidate(true);
   });
-  over.addEventListener('pointercancel', () => { drag = null; view.hidden = null; view.invalidate(true); updateCursor(); });
+  over.addEventListener('pointercancel', () => { baseUi.cancel(); drag = null; view.hidden = null; view.invalidate(true); updateCursor(); });
 
   over.addEventListener('dblclick', (e) => {
     if (!view.page) return;
     if (pending?.kind === 'poly') { finishPoly(); return; }
+    if (tool === 'content') { const [cx, cy] = localXY(e); baseUi.dblclick(view.toUser(cx, cy)); return; }
     if (tool !== 'select') return;
     const [sx, sy] = localXY(e);
     const m = pick(pickable(), view.toUser(sx, sy), tolerance(), envOf);
@@ -2195,6 +2246,7 @@ function init(root) {
         }
       }
     }
+    if (tool === 'content') baseUi.paintOver(ctx);
     // drawing previews
     const s = curSheet();
     if (!s) return;
@@ -2252,6 +2304,7 @@ function init(root) {
     if (e.target.closest?.('button, a, summary') /* i18n-ignore */ && (k.startsWith('Arrow') || k === ' ' || k === 'Enter')) return;
     const mod = e.ctrlKey || e.metaKey;
     if (k === ' ' && !mod) { if (!spaceDown) { spaceDown = true; updateCursor(); } e.preventDefault(); return; }
+    if (tool === 'content' && baseUi.key(e)) return;
     if (e.altKey && k === 'ArrowLeft' && backStack.length) { e.preventDefault(); goBack(); return; }
     if (mod) {
       const lk = k.toLowerCase();
@@ -2265,7 +2318,14 @@ function init(root) {
       else if (lk === 'a' && curSheet()) { e.preventDefault(); selectAll(); }
       else if (lk === 'x') { if (sel.size) { e.preventDefault(); cutSelection(); } }
       else if (lk === 'c') { if (sel.size) { e.preventDefault(); copySelection(); } }
-      else if (lk === 'v') { e.preventDefault(); paste(e.shiftKey ? 'place' : pasteMode()); }
+      else if (lk === 'v') {
+        // 0.6 DF.6: a picture on the system clipboard (a screenshot, a copied image) comes as a paste event; give it 80 ms,
+        // else this is MarkupCraft's own paste. No preventDefault here, or the browser sends no paste event.
+        const how = e.shiftKey ? 'place' : pasteMode();
+        clearTimeout(pasteWait);
+        pasteWait = setTimeout(() => { pasteWait = 0; paste(how); }, 80);
+        pasteHow = how;
+      }
       else if (lk === 'd') { e.preventDefault(); duplicate(); }
       else if (k === '0') { e.preventDefault(); view.fit('page'); }
       else if (k === '9') { e.preventDefault(); view.fit('width'); }
@@ -2359,6 +2419,29 @@ function init(root) {
   let uid = 0;
   const fid = () => 'mc-f' + (++uid);
 
+  // ---- the page's own content (0.6 DF.14, base-ui.js) ----
+  const baseUi = createBaseUi({
+    view, store, t, el, status, over: ui.over, settings, saveSettings, fid, mix, dropTakenAnnots, closePdf,
+    curSheet, pdfLib, libs: () => libs, touch: () => touchMode, refresh: () => refreshSelection(),
+    listOf: (m) => displayOf(m, envOf(m)).list,
+    // a picture file for "Replace picture" (0.6 DF.14 b): null = nothing picked, '' = not a PNG/JPEG we can use
+    pickPicture: async () => {
+      const f = await new Promise((done) => { picPick = done; ui.imageFile.click(); });
+      if (!f) return null;
+      return /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name) ? await pictureFrom(f) : '';
+    },
+    fileOf: (key) => files.find((f) => key.startsWith(f.id + ':')) || null,
+    reshow: async (f) => {
+      forgetText(f.id + ':');
+      for (const k of [...segCache.keys()]) if (k.startsWith(f.id + ':')) segCache.delete(k);
+      const s = curSheet();
+      if (s && s.file === f) view.setPage(s.page, await f.doc.getPage(s.page.index + 1), { keepView: true, extraRot: view.extraRot || 0, keepPicture: true });
+      for (const c of findAll('canvas.mc-thumb')) if (c.dataset.key?.startsWith(f.id + ':') && c.classList.contains('is-ready')) { c.classList.remove('is-ready'); thumbQueue.push(c); }
+      pumpThumbs();
+    },
+  });
+  window.markupcraft.base = baseUi;
+
   /** Apply a patch to the selected markups (one undo step). */
   function patchSel(label, fn) {
     const list = editable();
@@ -2415,6 +2498,7 @@ function init(root) {
     const box = ui.props;
     box.replaceChildren();
     const s = curSheet();
+    if (tool === 'content') { const r = baseUi.props(); ui.propsH.textContent = r.title; box.append(r.body); return; }
     const list = [...sel].map((id) => store.get(id)).filter(Boolean);
     if (list.length === 1) { ui.propsH.textContent = list[0].locked ? t('props.h.locked') : TYPES[list[0].type] ? tname(list[0].type) : t('props.h.markup'); box.append(markupProps(list[0])); return; }
     if (list.length > 1) { ui.propsH.textContent = t('save.markups', { n: list.length }); box.append(multiProps(list)); return; }
@@ -2555,6 +2639,7 @@ function init(root) {
       TEXT_TYPES.has(m.type) || m.type === 'note' ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => startEdit(m) }, t('props.edit_on_sheet')) : null,
       m.type === 'area' && !m.locked ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => startCutout(m) }, t('hole.add')) : null,
       m.type === 'area' && !m.locked && m.holes?.length ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => { store.change(t('undo.hole.remove'), (tx) => tx.update(m.id, { holes: [] })); status(t('hole.removed', { n: m.holes.length })); refreshAll(); } }, t('hole.remove', { n: m.holes.length })) : null,
+      intoPageButton([m]),
       el('button', { type: 'button', className: 'btn-line btn-sm-cc mc-danger', onclick: () => deleteSelection() }, t('menu.delete'))));
     return wrap;
   }
@@ -2663,8 +2748,15 @@ function init(root) {
     wrap.append(grid, el('div', { className: 'mc-actions' },
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => addToPunch() }, t('punch.add.one')),
       sheets.length > 1 ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => copyToSheets(), dataset: { copySheets: '' } }, t('batch.button')) : null,
+      intoPageButton(ed),
       el('button', { type: 'button', className: 'btn-line btn-sm-cc mc-danger', onclick: () => deleteSelection() }, t('menu.delete'))));
     return wrap;
+  }
+  /** "Put into the page" (0.6 DF.14): opaque line work becomes the page's own content, one undo step. */
+  function intoPageButton(list) {
+    if (!baseUi.intoPage(list)) return null;
+    return el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('base.into.title'), dataset: { intoPage: '' },
+      onclick: async () => { if (await baseUi.putIntoPage(list)) { sel = new Set(); refreshAll(); } } }, t('base.into'));
   }
 
   // ---- markups list ----
@@ -3102,7 +3194,9 @@ function init(root) {
       check: (key) => {
         if (key !== 'set') return '';
         if (dist && dist.value.trim()) {
-          const mm = parseLength(dist.value, unit.value);
+          const pl = parseLengthCalc(dist.value, unit.value);   // 0.6 DF.3: arithmetic, with the reason when it can't be read
+          if (pl.error) return t(pl.error, { pos: pl.pos + 1, text: pl.text });
+          const mm = pl.value;
           if (!mm) return t('cal.bad_length');
           result = calibrationFrom(ptLen, mm, unit.value);
           return '';
@@ -3374,6 +3468,8 @@ function init(root) {
     const blankFile = curSheet()?.file.blank ? curSheet().file : null;   // "Add a blank page" under the sheets: blank sets only
     for (const b of findAll('[data-add-blank]')) { b.hidden = !blankFile; b.disabled = !blankFile; }
     all('page-move-down', !curSheet() || curSheet().page.index >= curSheet().file.pages.length - 1);
+    for (const b of findAll('[data-tool]')) if (b.dataset.tool !== 'select' && b.dataset.tool !== 'pan') b.disabled = !curSheet();   // drawing needs a page
+    for (const a of ['zoom-in', 'zoom-out', 'fit-page', 'fit-width', 'view-ccw', 'view-cw', 'calibrate']) all(a, !curSheet());
     q('prev').disabled = cur <= 0;
     q('next').disabled = cur < 0 || cur >= sheets.length - 1;
     q('save').classList.toggle('is-dirty', anyDirty());
@@ -3506,7 +3602,7 @@ function init(root) {
       const nm = store.sheetNames.get(pg.key); if (nm) sheetNames[pg.index] = nm;
     }
     void idx;
-    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null };
+    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, base: baseUi.fileState(f) };
   }
   function track(f) {
     if (f.auto) return;
@@ -3533,6 +3629,7 @@ function init(root) {
       Object.fromEntries(Object.entries(st.calibrations || {}).filter(([i]) => key(+i)).map(([i, c]) => [key(+i), c])),
       Object.fromEntries(Object.entries(st.sheetNames || {}).filter(([i]) => key(+i)).map(([i, nm]) => [key(+i), nm])), st.layers || [], st.columns || []);
     for (const pg of f.pages) store.dirtySheets.add(pg.key);
+    baseUi.restore(f, st.base);   // page-content edits (0.6 DF.14)
     if (Array.isArray(st.bookmarks)) { f.bookmarks = cleanBookmarks(st.bookmarks); f.bookmarksEdited = true; }
     rebuildSheets();
     await goTo(sheets.findIndex((s) => s.file === f));

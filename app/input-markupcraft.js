@@ -41,6 +41,7 @@ export const COMMANDS = [
 
   C('tool.select', 'tools', 'bi-cursor', TL('select'), { defKeys: ['V'] }),
   C('tool.pan', 'tools', 'bi-hand-index-thumb', TL('pan'), { defKeys: ['H'] }),
+  C('tool.content', 'tools', 'bi-vector-pen', TL('content'), { defKeys: ['B'] }),   // 0.6 DF.14
   C('tool.pen', 'draw', 'bi-pencil', TL('pen'), { defKeys: ['P'] }),
   C('tool.highlight', 'draw', 'bi-highlighter', TL('highlight'), { defKeys: ['I'] }),
   C('tool.line', 'draw', 'bi-slash-lg', TL('line'), { defKeys: ['L'] }),
@@ -68,6 +69,7 @@ export const COMMANDS = [
   C('edit.paste', 'edit', 'bi-clipboard-plus', A('paste'), { defKeys: ['Ctrl+V'] }),
   C('edit.cut', 'edit', 'bi-scissors', A('cut'), { defKeys: ['Ctrl+X'] }),
   C('edit.paste-in-place', 'edit', 'bi-clipboard-check', A('paste-in-place'), { defKeys: ['Ctrl+Shift+V'] }),
+  C('edit.paste-picture', 'edit', 'bi-image', A('paste-picture')),   // 0.6 DF.6 (Ctrl+V takes a picture too)
   C('edit.duplicate', 'edit', 'bi-files', A('duplicate'), { defKeys: ['Ctrl+D'] }),
   C('edit.delete', 'edit', 'bi-trash', A('delete'), { defKeys: ['Delete'], fixed: true }),
   C('edit.select-all', 'edit', 'bi-check2-all', A('select-all'), { defKeys: ['Ctrl+A'] }),
@@ -112,10 +114,10 @@ export const STYLES = {
     format: 'cadcraft-input', version: 1, id: 'review', name: 'input.style.review', builtin: true, layout: 'menubar',
     menus: [
       m('file', ['file.new', 'file.open', '-', 'file.save', 'file.save-flat', 'file.print', '-', 'file.close', '-', 'app.settings', 'app.palette', 'app.help']),
-      m('edit', ['edit.undo', 'edit.redo', '-', 'edit.cut', 'edit.copy', 'edit.paste', 'edit.paste-in-place', 'edit.duplicate', 'edit.delete', '-', 'edit.select-all', 'edit.select-none', '-', 'edit.find']),
+      m('edit', ['edit.undo', 'edit.redo', '-', 'edit.cut', 'edit.copy', 'edit.paste', 'edit.paste-in-place', 'edit.paste-picture', 'edit.duplicate', 'edit.delete', '-', 'edit.select-all', 'edit.select-none', '-', 'edit.find']),
       m('view', ['view.prev', 'view.next', '-', 'view.zoom-in', 'view.zoom-out', 'view.fit-page', 'view.fit-width', '-', 'view.turn-ccw', 'view.turn-cw', '-', 'tool.pan']),
       m('document', ['pages.rotate-cw', 'pages.rotate-ccw', 'pages.move-up', 'pages.move-down', '-', 'pages.insert-pdf', 'pages.insert-blank', 'pages.delete', 'pages.extract', '-', 'pages.slip-sheet', 'view.takeoff']),
-      m('markup', ['tool.select', '-', 'tool.pen', 'tool.highlight', 'tool.line', 'tool.arrow', 'tool.arc', 'tool.rect', 'tool.ellipse', 'tool.polyline', 'tool.polygon', '-', 'tool.cloudrect', 'tool.cloud', '-', 'tool.callout', 'tool.text', 'tool.note', 'tool.stamp']),
+      m('markup', ['tool.select', 'tool.content', '-', 'tool.pen', 'tool.highlight', 'tool.line', 'tool.arrow', 'tool.arc', 'tool.rect', 'tool.ellipse', 'tool.polyline', 'tool.polygon', '-', 'tool.cloudrect', 'tool.cloud', '-', 'tool.callout', 'tool.text', 'tool.note', 'tool.stamp']),
       m('measure', ['tool.calibrate', '-', 'tool.measure', 'tool.angle', 'tool.area', 'tool.count']),
       m('window', ['panel.props', 'panel.list', 'panel.punch', 'panel.chest', 'panel.compare']),
     ],

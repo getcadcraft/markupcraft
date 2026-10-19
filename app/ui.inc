@@ -22,7 +22,7 @@ $__lx = static function (string $key, array $html): string {
    [tool key, icon]; the label is lang key tool.<key>, the title tool.<key>.title. */
 $__tools = [
     'File' => [['act:new', 'file-plus'], ['act:open', 'folder2-open'], ['act:save', 'download'], ['act:close', 'x-square']],   // i18n-ignore
-    'Select' => [['select', 'cursor'], ['pan', 'hand-index-thumb']],                                                     // i18n-ignore
+    'Select' => [['select', 'cursor'], ['pan', 'hand-index-thumb'], ['content', 'vector-pen']],                                                     // i18n-ignore
     'Draw' => [['pen', 'pencil'], ['highlight', 'highlighter'], ['line', 'slash-lg'], ['arrow', 'arrow-up-right'], ['arc', 'bezier2'],   // i18n-ignore
                ['rect', 'square'], ['ellipse', 'circle'], ['polyline', 'activity'], ['polygon', 'pentagon']],
     'Revise' => [['cloudrect', 'cloud'], ['cloud', 'cloud-haze2']],                                                       // i18n-ignore
@@ -31,7 +31,7 @@ $__tools = [
     'Edit' => [['act:undo', 'arrow-counterclockwise'], ['act:redo', 'arrow-clockwise'], ['act:copy', 'copy'], ['act:paste', 'clipboard-plus']], // i18n-ignore
 ];
 $__tabs = ['props', 'list', 'punch', 'chest', 'compare'];
-$__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['duplicate', 'Ctrl+D'],
+$__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['duplicate', 'Ctrl+D'],
            ['delete', 'Delete'], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc']];   // i18n-ignore (key names)
 /* File › Pages (0.4 K1): on the PDF the open sheet belongs to. */
 $__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['slip-sheet', 'layers'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],

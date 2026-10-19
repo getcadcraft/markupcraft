@@ -14,6 +14,7 @@ Shortcuts written with {{key:Mod}} accept either ⌘ or Control on a Mac, and Ct
 |---|---|
 | {{key:V}} | {{ui:Select}} |
 | {{key:H}} | {{ui:Pan}} |
+| {{key:B}} | {{ui:Content}}: the page's own lines, pictures and text (see [Change the page's own content](topic:page-content)) |
 | {{key:P}} | {{ui:Pen}} |
 | {{key:I}} | {{ui:Highlight}} |
 | {{key:L}} | {{ui:Line}} |

@@ -182,6 +182,7 @@ export class Store {
     this.dirtySheets = new Set();     // sheets changed since the last save of their file
     this.layers = new Map();          // layer name → { hidden, locked } (0.4 K3; a view state, not undoable)
     this.columns = [];                // custom columns (0.4 K19): [{ key, name, type, choices }] — the set's, not undoable
+    this.base = new Map();            // sheet key → edits to the page's own content (0.6 DF.14, base-edit.js), undoable
   }
 
   // ---- layers (0.4 K3) ----
@@ -214,7 +215,7 @@ export class Store {
   onSheet(sheet) { const out = []; for (const m of this.markups.values()) if (m.sheet === sheet) out.push(m); return out; }
   all() { return [...this.markups.values()]; }
 
-  /** Run one edit. `fn(tx)` calls tx.add/update/remove/setCalibration/setPunchNext. */
+  /** Run one edit. `fn(tx)` calls tx.add/update/remove/setCalibration/setPunchNext/setSheetName/setBase. */
   change(label, fn) {
     const ops = [];
     const tx = {
@@ -251,6 +252,13 @@ export class Store {
         ops.push({ op: 'cal', sheet, before, after: clone(cal ?? null) });
       },
       setPunchNext: (n) => { ops.push({ op: 'punch', before: this.punchNext, after: n }); this.punchNext = n; },
+      /** A sheet's page-content edits (base-edit.js state; null = none). */
+      setBase: (sheet, state) => {
+        const before = clone(this.base.get(sheet) ?? null);
+        const empty = !state || (!Object.keys(state.o || {}).length && !(state.add || []).length);
+        if (empty) this.base.delete(sheet); else this.base.set(sheet, clone(state));
+        ops.push({ op: 'base', sheet, before, after: empty ? null : clone(state) });
+      },
       setSheetName: (sheet, name) => {
         const before = clone(this.sheetNames.get(sheet) ?? null);
         if (name) this.sheetNames.set(sheet, clone(name)); else this.sheetNames.delete(sheet);
@@ -315,6 +323,11 @@ export class Store {
       case 'punch':
         this.punchNext = back ? o.before : o.after;
         break;
+      case 'base': {
+        const v = back ? o.before : o.after;
+        if (v) this.base.set(o.sheet, clone(v)); else this.base.delete(o.sheet);
+        break;
+      }
     }
   }
 
@@ -342,6 +355,7 @@ export class Store {
     for (const [id, m] of this.markups) if (m.sheet.startsWith(prefix)) this.markups.delete(id);
     for (const k of [...this.calibrations.keys()]) if (k.startsWith(prefix)) this.calibrations.delete(k);
     for (const k of [...this.sheetNames.keys()]) if (k.startsWith(prefix)) this.sheetNames.delete(k);
+    for (const k of [...this.base.keys()]) if (k.startsWith(prefix)) this.base.delete(k);
     if (!prefix) { this.layers.clear(); this.columns = []; }
     this.undoStack = []; this.redoStack = [];
     this.emit('load');
