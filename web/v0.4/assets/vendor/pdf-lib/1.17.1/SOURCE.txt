@@ -1,4 +1,0 @@
-pdf-lib 1.17.1 — create and modify PDF documents in JavaScript.
-License: MIT (see LICENSE.md). Permissive: fine for every area.
-Source: https://github.com/Hopding/pdf-lib  Package: https://www.npmjs.com/package/pdf-lib/v/1.17.1
-Kept: dist/pdf-lib.esm(.min).js. Used by MarkupCraft and TakeoffCraft to write markups into a saved copy of a PDF.
