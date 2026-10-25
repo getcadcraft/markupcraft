@@ -15,6 +15,7 @@
  */
 
 import { TYPES, STATUSES } from './model.js';
+import { RECORD_STATUSES } from './records.js';
 import { t as tr } from './i18n.js';   // `t` is a topic in this file
 
 // ---- zip (stored entries; PNGs are already compressed, XML is small) ----
@@ -110,14 +111,52 @@ export async function guidFor(name) {
 const TOPIC_TYPE = { pen: 'Pen', highlight: 'Highlighter', line: 'Line', arrow: 'Arrow', rect: 'Rectangle', ellipse: 'Ellipse',   // i18n-ignore
   polyline: 'Polyline', polygon: 'Polygon', cloudrect: 'Cloud', cloud: 'Cloud (freeform)', callout: 'Callout', text: 'Text',   // i18n-ignore
   note: 'Note', stamp: 'Stamp', measure: 'Length', area: 'Area', count: 'Count', foreign: 'Other' };   // i18n-ignore
-export const TOPIC_TYPES = Object.keys(TYPES).map((k) => TOPIC_TYPE[k]);
+/* Field records (0.7 LC.7) are topics too: their own TopicTypes and the statuses of their kinds. */
+const RECORD_TOPIC_TYPE = { rfi: 'RFI', submittal: 'Submittal', log: 'Daily log' };   // i18n-ignore
+export const TOPIC_TYPES = [...Object.keys(TYPES).map((k) => TOPIC_TYPE[k]), ...Object.values(RECORD_TOPIC_TYPE)];
+export const TOPIC_STATUSES = [...new Set([...STATUSES, ...Object.values(RECORD_STATUSES).flat()])];
 
 export function extensionsXsd() {
   const enumOf = (vals) => vals.map((v) => '\t\t\t\t<xs:enumeration value="' + xml(v) + '"/>').join('\n');
   return '<?xml version="1.0" encoding="UTF-8"?>\n<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">\n\t<xs:redefine schemaLocation="markup.xsd">\n' +
     '\t\t<xs:simpleType name="TopicType">\n\t\t\t<xs:restriction base="TopicType">\n' + enumOf(TOPIC_TYPES) + '\n\t\t\t</xs:restriction>\n\t\t</xs:simpleType>\n' +
-    '\t\t<xs:simpleType name="TopicStatus">\n\t\t\t<xs:restriction base="TopicStatus">\n' + enumOf(STATUSES) + '\n\t\t\t</xs:restriction>\n\t\t</xs:simpleType>\n' +
+    '\t\t<xs:simpleType name="TopicStatus">\n\t\t\t<xs:restriction base="TopicStatus">\n' + enumOf(TOPIC_STATUSES) + '\n\t\t\t</xs:restriction>\n\t\t</xs:simpleType>\n' +
     '\t</xs:redefine>\n</xs:schema>\n';
+}
+
+/** A field record's topic (records.js recordTopic data in `t.record`; `t.box` = its place on the sheet; `t.png` optional). */
+async function recordTopicFiles(files, t, index, exported) {
+  const r = t.record;
+  const g = await guidFor('topic:' + r.id);
+  const vg = await guidFor('viewpoint:' + r.id);
+  const lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<Markup>'];
+  if (t.fileName) lines.push('\t<Header>', '\t\t<File isExternal="true">', '\t\t\t<Filename>' + xml(t.fileName) + '</Filename>', '\t\t\t<Date>' + isoDate(exported) + '</Date>', '\t\t</File>', '\t</Header>');
+  lines.push('\t<Topic Guid="' + g + '" TopicType="' + xml(RECORD_TOPIC_TYPE[r.kind]) + '" TopicStatus="' + xml(r.status) + '">');
+  lines.push('\t\t<Title>' + xml((t.sheetTitle ? tr('bcf.title.on', { what: r.what, sheet: t.sheetTitle }) : r.what).slice(0, 250)) + '</Title>', '\t\t<Index>' + index + '</Index>');
+  for (const l of r.labels) lines.push('\t\t<Labels>' + xml(l) + '</Labels>');
+  lines.push('\t\t<CreationDate>' + isoDate(r.created) + '</CreationDate>', '\t\t<CreationAuthor>' + xml(r.author || 'Unknown') + '</CreationAuthor>');
+  if (r.modified && r.modified !== r.created) lines.push('\t\t<ModifiedDate>' + isoDate(r.modified) + '</ModifiedDate>', '\t\t<ModifiedAuthor>' + xml(r.author || 'Unknown') + '</ModifiedAuthor>');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(r.due)) lines.push('\t\t<DueDate>' + r.due + 'T00:00:00Z</DueDate>');
+  if (r.assignee) lines.push('\t\t<AssignedTo>' + xml(r.assignee) + '</AssignedTo>');
+  if (r.description) lines.push('\t\t<Description>' + xml(r.description) + '</Description>');
+  lines.push('\t</Topic>');
+  for (const c of r.replies) {
+    const cg = await guidFor('comment:' + r.id + ':' + c.id);
+    lines.push('\t<Comment Guid="' + cg + '">', '\t\t<Date>' + isoDate(c.date) + '</Date>', '\t\t<Author>' + xml(c.author || 'Unknown') + '</Author>', '\t\t<Comment>' + xml(c.text) + '</Comment>', '\t\t<Viewpoint Guid="' + vg + '"/>', '\t</Comment>');
+  }
+  lines.push('\t<Viewpoints Guid="' + vg + '">', '\t\t<Viewpoint>viewpoint.bcfv</Viewpoint>');
+  if (t.png) lines.push('\t\t<Snapshot>snapshot.png</Snapshot>');
+  lines.push('\t\t<Index>0</Index>', '\t</Viewpoints>', '</Markup>');
+  files.push({ name: g + '/markup.bcf', data: lines.join('\n') + '\n' });
+  const b = t.box || [0, 0, 0, 0];
+  const k = 0.0254 / 72;
+  const cx = ((b[0] + b[2]) / 2) * k, cy = ((b[1] + b[3]) / 2) * k;
+  const span = Math.max(b[2] - b[0], b[3] - b[1], 36) * k;
+  const pt = (x, y, z) => '<X>' + +x.toFixed(6) + '</X><Y>' + +y.toFixed(6) + '</Y><Z>' + +z.toFixed(6) + '</Z>';
+  files.push({ name: g + '/viewpoint.bcfv', data: '<?xml version="1.0" encoding="UTF-8"?>\n<VisualizationInfo Guid="' + vg + '">\n\t<OrthogonalCamera>\n' +
+    '\t\t<CameraViewPoint>' + pt(cx, cy, 10) + '</CameraViewPoint>\n\t\t<CameraDirection>' + pt(0, 0, -1) + '</CameraDirection>\n' +
+    '\t\t<CameraUpVector>' + pt(0, 1, 0) + '</CameraUpVector>\n\t\t<ViewToWorldScale>' + +(span * 1.4).toFixed(6) + '</ViewToWorldScale>\n\t</OrthogonalCamera>\n</VisualizationInfo>\n' });
+  if (t.png) files.push({ name: g + '/snapshot.png', data: t.png });
 }
 
 /**
@@ -132,6 +171,7 @@ export async function buildBcf(topics, { project = 'MarkupCraft', exported = new
   files.push({ name: 'extensions.xsd', data: extensionsXsd() });
   let index = 0;
   for (const t of topics) {
+    if (t.record) { await recordTopicFiles(files, t, ++index, exported); continue; }
     const m = t.markup;
     const g = await guidFor('topic:' + m.id);
     const vg = await guidFor('viewpoint:' + m.id);

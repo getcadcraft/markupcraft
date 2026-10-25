@@ -53,6 +53,7 @@ import { writeXlsx } from './xlsx.js';
 import { rotatePages, deletePages, movePages, insertPages, insertBlank, extractPages, parsePageList, orderDelete } from './pages.js';
 import { PAPERS, ORIENTS, GRIDS, MAX_PAGES, cleanBlank, blankPdf, untitledName } from './blank.js';
 import { measure, measureArea, parseLength, parseLengthCalc, calibrationFrom, presetCalibration, SCALE_PRESETS, UNITS } from './units.js';
+import { choices as unitChoices, defaultUnit, limitSelect, onUnitsChange } from './unit-prefs.js';   // 0.7 UNITS: Settings › General › Units
 import { buildBcf, guidFor } from './bcf.js';
 import { DEFAULT_CHEST, parseChest, mergeChest, exportChest, toolFromMarkup, cleanTool } from './chest.js';
 import { toCsv, markupRows, punchRows } from './csv.js';
@@ -61,6 +62,7 @@ import { CLIP_KEY, makeClip, cleanClip, clipBounds, placeClip } from './clip.js'
 import { t } from './i18n.js';
 import { installAgents } from './agents.js';
 import { startAddons, columnsNow } from './addons/markupcraft-api.js';
+import { installField } from './field-ui.js';   // 0.7 LC.7: RFIs, submittals and daily logs
 import { panButton, wheelFactor } from './input-mouse.js';   // 0.5 IP.3: the menu style's wheel and pan buttons (input-markupcraft.js)
 
 const DRAW_TOOLS = new Set(['pen', 'highlight', 'line', 'arrow', 'arc', 'angle', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text', 'note', 'stamp', 'measure', 'area', 'count']);
@@ -115,6 +117,7 @@ function init(root) {
   const files = [];
   let fileSeq = 0;
   let sheets = [];            // [{ file, page }]
+  let fieldUi = null;           // the Field tab (field-ui.js), set up once the page is built
   let cur = -1;
   let sel = new Set();
   let tool = 'select';
@@ -137,6 +140,7 @@ function init(root) {
     if (Object.hasOwn(WEIGHTS, v.weight)) out.weight = v.weight;
     if (v.pasteAt === 'pointer' || v.pasteAt === 'offset') out.pasteAt = v.pasteAt;
     if (UNITS.some(([u]) => u === v.unit)) out.unit = v.unit;
+    else out.unit = defaultUnit('length', { offer: UNITS.map(([u]) => u), fallback: out.unit });   // 0.7 UNITS: the starred unit (ids as in the shared table)
     if (v.posUnit === 'in' || v.posUnit === 'mm') out.posUnit = v.posUnit;
     if (!out.styles || typeof out.styles !== 'object') out.styles = {};
     return out;
@@ -297,6 +301,7 @@ function init(root) {
         files.push(rec);
         if (opts.keepMarkups) store.load([], {}, {}, rec.layers, rec.columns);
         else store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
+        fieldUi?.loadFrom(rec);
         read += rec.markups.length;
         opened++;
         for (const n of rec.notes) errors.push(t('open.note', { file: f.name, note: n }));
@@ -391,7 +396,7 @@ function init(root) {
    * A file's markups written into its bytes — the marked-up copy Save downloads. `flatten` ('all' | Set of ids) draws those
    * markups into the pages instead; `rot` (page index → degrees) turns the text of that page's markups to read upright.
    */
-  async function bake(f, lib, { flatten = null, rot = null } = {}) {
+  async function bake(f, lib, { flatten = null, rot = null, remap = null } = {}) {
     const src = await baseUi.bytesFor(f);   // the working copy when the page's own content was edited (0.6 DF.14)
     const pages = f.pages.map((pg) => ({ index: pg.index,
       markups: store.onSheet(pg.key).map((m) => (rot?.has(pg.index) && !m.locked ? { ...m, rot: rot.get(pg.index) } : m)),
@@ -400,7 +405,7 @@ function init(root) {
     const renamed = f.pages.some((pg) => store.sheetNames.get(pg.key)?.number);
     const labels = renamed ? f.pages.map((pg) => store.sheetNames.get(pg.key)?.number || pg.label || String(pg.index + 1)) : null;
     const linkPage = (link) => { const s = linkTarget(link, sheetList()); return s && s.file === f ? s.page.index : null; };
-    return writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null });
+    return writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, records: fieldUi?.packFor(f, remap) ?? null });
   }
   /** Sheets as link.js wants them (their place in the list = newest last). */
   const sheetList = () => sheets.map((s) => ({ key: s.page.key, sheetNo: s.page.sheetNo, title: s.page.title, file: s.file, page: s.page }));
@@ -453,7 +458,7 @@ function init(root) {
     if (!s) { status(t('need.pdf')); return; }
     commitEdit(); cancelOps();
     const f = s.file, n = f.pages.length, i = s.page.index;
-    let run, show = i, rot = null, done;
+    let run, show = i, rot = null, done, remap = null;   // remap: old page index → new (-1 = gone), so the records' pages follow
     const labels = labelsOf(f);
     switch (kind) {
       case 'page-rotate-cw': case 'page-rotate-ccw': {
@@ -467,6 +472,7 @@ function init(root) {
         const to = kind === 'page-move-up' ? i - 1 : i + 1;
         if (to < 0 || to >= n) { status(t(to < 0 ? 'pages.first' : 'pages.last', { name: f.name })); return; }
         run = (lib, b) => movePages(lib, b, [i], to, { labels });
+        remap = (k) => (k === i ? to : i < to && k > i && k <= to ? k - 1 : i > to && k >= to && k < i ? k + 1 : k);
         show = to;
         done = t('pages.done.move', { sheet: s.page.title, page: to + 1, n });
         break;
@@ -478,12 +484,15 @@ function init(root) {
         const src = new Uint8Array(await pick.arrayBuffer());
         let count = 0;
         run = async (lib, b) => { const r = await insertPages(lib, b, src, i + 1, { labels }); count = r.count; return r.bytes; };
+        const added = (await (await pdfLib()).PDFDocument.load(src, { ignoreEncryption: true, updateMetadata: false })).getPageCount();
+        remap = (k) => (k > i ? k + added : k);
         show = i + 1;
         done = () => t('pages.done.insert', { n: count, file: pick.name, after: s.page.title });
         break;
       }
       case 'page-insert-blank':
         run = (lib, b) => insertBlank(lib, b, i + 1, { labels, grid: f.blank });
+        remap = (k) => (k > i ? k + 1 : k);
         show = i + 1;
         done = t('pages.done.blank', { after: s.page.title });
         break;
@@ -496,9 +505,10 @@ function init(root) {
         const idx = await askPages(f, t('pages.delete.title'), t('pages.delete.text'), t('pages.delete.ok'), true);
         if (!idx) return;
         if (idx.length >= n) { await ask(t('pages.delete.title'), t('pages.err.all'), [['cancel', t('dlg.ok'), 'btn-plot']]); return; }
-        const lost = idx.reduce((a, k) => a + store.onSheet(f.pages[k].key).length, 0);
+        const lost = idx.reduce((a, k) => a + store.onSheet(f.pages[k].key).length + store.onSheetRecords(f.pages[k].key).length, 0);
         if (lost && await ask(t('pages.delete.title'), t('pages.delete.markups', { n: lost, pages: idx.length }), [['cancel', t('dlg.cancel')], ['ok', t('pages.delete.ok'), 'btn-danger']]) !== 'ok') return;
         run = (lib, b) => deletePages(lib, b, idx, { labels });
+        remap = (k) => (idx.includes(k) ? -1 : k - idx.filter((d) => d < k).length);
         const left = orderDelete(n, idx);
         show = Math.max(0, left.findIndex((k) => k >= i)); if (left[show] === undefined) show = left.length - 1;
         done = t('pages.done.delete', { n: idx.length, name: f.name });
@@ -511,7 +521,7 @@ function init(root) {
     await frame();
     try {
       const lib = await pdfLib();
-      const { bytes: baked } = await bake(f, lib, { rot });
+      const { bytes: baked } = await bake(f, lib, { rot, remap });
       const out = await run(lib, baked);
       await replaceFile(f, out, show);
       status((typeof done === 'function' ? done() : done) + ' ' + t('pages.no_undo'));
@@ -535,6 +545,7 @@ function init(root) {
     f.auto?.close();
     files[at] = rec;
     store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
+    fieldUi?.loadFrom(rec);
     for (const pg of rec.pages) store.dirtySheets.add(pg.key);
     baseUi.forget(f);
     await closePdf(f.doc);
@@ -1211,10 +1222,12 @@ function init(root) {
       name = 'calibrate';
     }
     if (tool === 'content' && name !== 'content') baseUi.leave();
+    if (name !== 'record') fieldUi?.cancelPlace();
     tool = name;
     toolPreset = preset;
     for (const b of root.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === name));
     updateCursor();
+    wsSoon();
     // the count tool keeps adding to a selected count group; every other drawing tool starts fresh
     const keepGroup = name === 'count' && sel.size === 1 && store.get([...sel][0])?.type === 'count';
     if (DRAW_TOOLS.has(name) && !keepGroup) { sel = new Set(); view.invalidate(true); }
@@ -1234,7 +1247,7 @@ function init(root) {
     const c = ui.over;
     if (tool !== 'select' && tool !== 'content') c.style.cursor = '';
     c.classList.toggle('is-pan', tool === 'pan' || spaceDown);
-    c.classList.toggle('is-draw', DRAW_TOOLS.has(tool) || tool === 'calibrate' || !!cmp.aligning);
+    c.classList.toggle('is-draw', DRAW_TOOLS.has(tool) || tool === 'record' || tool === 'calibrate' || !!cmp.aligning);
     c.classList.toggle('is-panning', drag?.kind === 'pan');
   }
 
@@ -1244,6 +1257,11 @@ function init(root) {
     if (!b || !root.contains(b)) return;
     closeMenus();
     act(b.dataset.act, b);
+  });
+  // 0.7 WS.10: a workspace layout may put the app's own buttons (the status bar's scale and name) above or below <main>
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest?.('.ws-top [data-act], .ws-bottom [data-act]');
+    if (b && !root.contains(b)) { closeMenus(); act(b.dataset.act, b); }
   });
   // the toolbar's More menu: closes on a choice, a click elsewhere or Esc
   function closeMenus() { for (const d of root.querySelectorAll('details.mc-menu[open]')) d.open = false; }
@@ -1538,7 +1556,7 @@ function init(root) {
   let tap = null;                // a deferred press: { id, x, y, e }
   let lastTap = null;            // for double-tap (finishes a polyline)
   const pinch = () => { const [a, b] = [...touches.values()]; return { mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], d: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])) }; };
-  const pressTool = () => tool !== 'select' && (KIND[tool] === 'count' || KIND[tool] === 'note' || KIND[tool] === 'poly' || KIND[tool] === 'three' || pending?.kind === 'two');
+  const pressTool = () => tool !== 'select' && (tool === 'record' || KIND[tool] === 'count' || KIND[tool] === 'note' || KIND[tool] === 'poly' || KIND[tool] === 'three' || pending?.kind === 'two');
   // A long press (a finger held still) is the touch form of Enter / double-click: it finishes a polyline, area or free
   // cloud, and on a markup with the Select tool it opens its text for editing.
   let press = null;              // { id, x, y, timer }
@@ -1645,9 +1663,10 @@ function init(root) {
     try { over.setPointerCapture(e.pointerId); } catch { /* a replayed tap: the finger is already up */ }
     if (cmp.aligning) { alignClick(p); return; }
     if (tool === 'content') { baseUi.down(p, sx, sy, e); view.invalidate(); return; }
+    if (tool === 'record') { fieldUi?.place(p); view.invalidate(true); return; }
     const kind = tool === 'select' ? 'select' : KIND[tool];
     switch (kind) {
-      case 'select': selectDown(p, sx, sy, e); break;
+      case 'select': { const pin = fieldUi?.hit(sx, sy); if (pin) { fieldUi.pick(pin); break; } selectDown(p, sx, sy, e); break; }
       case 'free': drag = { kind: 'free', pts: [p], sx, sy }; break;
       case 'two':
         if (pending?.kind === 'two') { finishTwo(pending.a, constrain(pending.a, p, e)); pending = null; }
@@ -2194,6 +2213,7 @@ function init(root) {
     // live drag previews
     if (drag?.live) for (const m of drag.live) view.paint(ctx, shapes(m, envOf(m)));
     if (editing) boxOf(editing.m.rect || boundsOf(editing.m, envOf(editing.m)), view.colors.action, [4, 3]);
+    fieldUi?.paint(ctx);   // field record pins (0.7 LC.7)
     // sheet links (K9): a small arrow at the top right of each linked markup (screen only)
     for (const m of pageMarkups()) {
       if (!m.link) continue;
@@ -2400,6 +2420,7 @@ function init(root) {
     }
     if (k === 'list') renderList();
     if (k === 'punch') renderPunch();
+    if (k === 'field') fieldUi?.render();
     if (k === 'chest') renderChest();
     if (k === 'compare') renderCompareSelects();
   }
@@ -3171,7 +3192,8 @@ function init(root) {
     let dist = null, unit = null;
     if (ptLen) {
       dist = el('input', { type: 'text', id: 'mc-dlg-dist', className: 'mc-input', placeholder: t('cal.placeholder'), autocomplete: 'off' });
-      unit = el('select', { id: 'mc-dlg-unit', className: 'mc-select' }, ...UNITS.map(([v, l]) => el('option', { value: v, selected: v === (cal?.unit || settings.unit) }, l)));
+      const on = unitChoices('length', { offer: UNITS.map(([v]) => v), keep: [cal?.unit || settings.unit] });   // 0.7 UNITS: the units turned on
+      unit = el('select', { id: 'mc-dlg-unit', className: 'mc-select' }, ...UNITS.filter(([v]) => on.includes(v)).map(([v, l]) => el('option', { value: v, selected: v === (cal?.unit || settings.unit) }, l)));
       body.push(el('p', { className: 'mc-dlg-text' }, t('cal.two.text', { d: (ptLen / 72).toFixed(3) })),
         el('div', { className: 'mc-props' },
           el('label', { className: 'mc-k', for: 'mc-dlg-dist' }, t('cal.real')), dist,
@@ -3438,17 +3460,38 @@ function init(root) {
     refreshAll();
   }
 
+  // ---- workspace layouts (0.7 WS.10): Settings › Global › Layout, through the shell's engine (assets/js/app-workspace.js) and
+  // workspace-markupcraft.js; only builds whose manifest lists layouts (#cc-workspace on the page, 'cc-workspace' in the import map)
+  let wsSoon = () => {};
+  async function mountLayouts() {
+    if (!document.getElementById('cc-workspace')) return;
+    try {
+      const [{ mountWorkspaces }, { createMarkupcraftWorkspace }] = await Promise.all([import('cc-workspace'), import('./workspace-markupcraft.js')]);
+      const ws = await createMarkupcraftWorkspace({ root, app: {
+        sheets: () => sheets, cur: () => cur, goTo: (i) => goTo(i), files: () => files, dirty: () => anyDirty(), busy: () => !ui.busy.hidden,
+        sel: () => sel, tool: () => tool, setTool: (n) => setTool(n), status: (text) => status(text),
+      } });
+      if (!ws) { document.documentElement.removeAttribute('data-cc-ws-boot'); return; }
+      ws.attach(mountWorkspaces(ws.adapter));
+      wsSoon = ws.refresh;
+    } catch (err) {
+      document.documentElement.removeAttribute('data-cc-ws-boot');   // the classic layout, never a blank page
+      status(t('ws.failed', { reason: err?.message || String(err) }));
+    }
+  }
+
   function refreshAll() {
     view.invalidate(true);
     applySheetNames();
     if (refreshRaf) return;
     refreshRaf = requestAnimationFrame(() => {
       refreshRaf = 0;
-      renderProps(); renderList(); renderPunch(); refreshSheetCounts(); refreshToolbar();
+      renderProps(); renderList(); renderPunch(); if (activeTab() === 'field') fieldUi?.render(); refreshSheetCounts(); refreshToolbar();
       renderNav();
+      wsSoon();
     });
   }
-  function refreshSelection() { view.invalidate(true); renderProps(); renderList(); renderPunch(); refreshToolbar(); }
+  function refreshSelection() { view.invalidate(true); renderProps(); renderList(); renderPunch(); refreshToolbar(); wsSoon(); }
   function refreshToolbar() {
     const q = (a) => find('[data-act="' + a + '"]');
     q('undo').disabled = !store.canUndo;
@@ -3480,7 +3523,9 @@ function init(root) {
   installAgents({ store, author: () => author, styleFor: (ty) => styleFor(ty), measureOf: (m) => valueOf(m),
     sheets: () => sheets.map((x) => ({ key: x.page.key, title: x.page.title, width: x.page.width, height: x.page.height, view: x.page.view, file: x.file?.name || null })),
     current: () => curSheet()?.page.key || null,
-    goTo: (key) => { const i = sheets.findIndex((x) => x.page.key === key); return i >= 0 ? goTo(i) : null; } });
+    goTo: (key) => { const i = sheets.findIndex((x) => x.page.key === key); return i >= 0 ? goTo(i) : null; },
+    // 0.7 AS.5 (session assistants): the page redraws after an assistant's edit; the Markups list's own CSV and BCF
+    refresh: () => refreshAll(), exportCsv: () => exportListCsv(), exportBcf: () => exportBcf() });
 
   // ---- add-ons (0.5 AO.6, session addons; docs/ADDONS-SPEC.md §5.5): MarkupCraft's own loader and API 1.0 (manifest "addons": "own") ----
   startAddons({ store, root, find, author: () => author, status, tabTo,
@@ -3534,9 +3579,10 @@ function init(root) {
     if (f('mcColor')) f('mcColor').value = settings.markColor || '#d0021b';
     radios('mcWeight', settings.weight);
     radios('mcPaste', settings.pasteAt);
-    if (f('mcUnit')) f('mcUnit').value = settings.unit;
-    if (f('mcPos')) f('mcPos').value = settings.posUnit;
+    if (f('mcUnit')) { limitSelect(f('mcUnit'), 'length', { keep: [settings.unit] }); f('mcUnit').value = settings.unit; }   // 0.7 UNITS
+    if (f('mcPos')) { limitSelect(f('mcPos'), 'length', { keep: [settings.posUnit] }); f('mcPos').value = settings.posUnit; }
   }
+  onUnitsChange(() => syncSettingsForm());   // 0.7 UNITS: Settings › General › Units changed
   function settingsChanged(say) {
     saveSettings();
     syncSettingsForm();
@@ -3602,7 +3648,7 @@ function init(root) {
       const nm = store.sheetNames.get(pg.key); if (nm) sheetNames[pg.index] = nm;
     }
     void idx;
-    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, base: baseUi.fileState(f) };
+    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, base: baseUi.fileState(f), records: fieldUi ? fieldUi.stateFor(f) : [] };
   }
   function track(f) {
     if (f.auto) return;
@@ -3630,6 +3676,7 @@ function init(root) {
       Object.fromEntries(Object.entries(st.sheetNames || {}).filter(([i]) => key(+i)).map(([i, nm]) => [key(+i), nm])), st.layers || [], st.columns || []);
     for (const pg of f.pages) store.dirtySheets.add(pg.key);
     baseUi.restore(f, st.base);   // page-content edits (0.6 DF.14)
+    fieldUi?.restore(f, st.records);   // field records (0.7 LC.7)
     if (Array.isArray(st.bookmarks)) { f.bookmarks = cleanBookmarks(st.bookmarks); f.bookmarksEdited = true; }
     rebuildSheets();
     await goTo(sheets.findIndex((s) => s.file === f));
@@ -3663,12 +3710,28 @@ function init(root) {
       (err) => status(err.code === 'blocked' ? t('handoff.blocked') : err.code === 'storage' ? t('handoff.storage') : t('handoff.failed', { reason: err.message })));
   });
 
+  fieldUi = installField({
+    root, store, view, find, status, busy, ask, setTool, tabTo, download: dl, setName, curSheet,
+    curKey, sheetByKey, libs: loadLibs, askAuthor, getAuthor: () => author, refresh: () => refreshAll(), repaint: () => view.invalidate(true),
+    goToKey: async (key, at) => {
+      const i = sheets.findIndex((x) => x.page.key === key);
+      if (i < 0) return;
+      if (i !== cur) await goTo(i);
+      if (at && view.page) {   // bring the pin into view when it is off the stage
+        const [sx, sy] = view.toScreen(at);
+        const w = ui.over.clientWidth, h = ui.over.clientHeight;
+        if (sx < 40 || sy < 40 || sx > w - 40 || sy > h - 40) view.panBy(w / 2 - sx, h / 2 - sy);
+      }
+    },
+  });
+  window.markupcraft.field = fieldUi;
   renderAuthor();
   rebuildSheets();
   refreshAll();
   renderLayers();
   setTool('select');
   start();
+  mountLayouts();
   void PX_PER_PT; void BOX_TYPES;
 }
 

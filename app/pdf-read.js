@@ -26,7 +26,8 @@
 import { makeMarkup, geometryOk, cleanReply, statusText, STATUSES, TYPES } from './model.js';
 import { t } from './i18n.js';
 import { validCalibration } from './units.js';
-import { PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
+import { unpackRecords } from './records.js';
+import { PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_RECORDS_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
 import { readTitleBlock } from './titleblock.js';
 import { cleanImage } from './imagestamp.js';
 import { cleanHoles } from './holes.js';
@@ -274,6 +275,9 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   let columns = [];
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_COLUMNS_KEY) : custom?.[PRIVATE_COLUMNS_KEY]; columns = raw ? JSON.parse(String(raw)) : []; } catch { columns = []; }
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_LAYERS_KEY) : custom?.[PRIVATE_LAYERS_KEY]; const v = raw ? JSON.parse(String(raw)) : []; layers = Array.isArray(v) ? v.slice(0, 500).filter((l) => l && typeof l === 'object') : []; } catch { layers = []; }
+  // field records (0.7 LC.7): untrusted JSON by page index, cleaned by records.js; mapped to sheet keys below
+  let records = [];
+  try { const raw = custom instanceof Map ? custom.get(PRIVATE_RECORDS_KEY) : custom?.[PRIVATE_RECORDS_KEY]; records = unpackRecords(raw ? String(raw) : '', doc.numPages); } catch { records = []; }
   // File › New (blank.js): the paper and grid of a blank set, so "Add a blank page" matches it
   const blank = blankInfo(custom instanceof Map ? custom.get(BLANK_KEY) : custom?.[BLANK_KEY]);
   const pages = [];
@@ -294,7 +298,7 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     onProgress?.(i + 1, doc.numPages);
   }
 
-  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, blank, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
+  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, blank, records, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
   const needLib = ours || raw.some((list) => list.some((a) => EDITABLE_SUBTYPES.has(a.subtype)));
   if (!needLib) return record;
 

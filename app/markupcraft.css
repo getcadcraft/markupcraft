@@ -503,3 +503,51 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 /* Bookmarks (0.4 K24) */
 .mc-bm .mc-layer-name { padding-left: calc(.3rem + var(--depth, 0) * .9rem); }
 .mc-bm { grid-template-columns: 1fr auto auto; }
+
+/* Field records (0.7 LC.7): the Field tab. Touch targets stay ≥ 2.75rem on coarse pointers (the shell's rule). */
+.mc-rec-new { flex-wrap: wrap; }
+.mc-rec-place { border-left: var(--pen-3) solid var(--action); padding-left: .5rem; }
+.mc-rec-mine { grid-column: 1 / -1; }
+.mc-rec-row.is-selected { background: var(--sheet); border-left-color: var(--action); }
+.mc-rec-row.is-late { border-left-color: var(--layer-red); }
+.mc-rec-chips { display: flex; flex-wrap: wrap; gap: .25rem; justify-content: end; }
+.mc-chip-late { color: var(--layer-red); border-color: var(--layer-red); }
+.mc-rec-detail { margin-top: .6rem; padding-top: .5rem; border-top: var(--pen-1) solid var(--line); }
+.mc-rec-detail:empty { display: none; }
+.mc-rec-text { resize: vertical; min-height: 4.5rem; }
+.mc-rec-names { list-style: none; margin: 0 0 .35rem; padding: 0; display: grid; gap: .2rem; }
+.mc-rec-names li { display: flex; align-items: center; gap: .35rem; font-size: .8125rem; }
+.mc-rec-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.mc-rec-attach-add { display: flex; flex-wrap: wrap; gap: .35rem; }
+.mc-rec-attach-add .mc-input { flex: 1 1 8rem; min-width: 0; }
+.mc-rec-detail .mc-reply.is-status { color: var(--ink-2); font-style: italic; }
+/* touch: every control in the Field tab is at least 2.75rem high */
+@media (pointer: coarse) {
+  .mc-rec-row { min-height: 2.75rem; }
+  #mc-pane-field .mc-linkbtn, #mc-pane-field .mc-rec-new .btn-plot, #mc-pane-field .mc-rec-detail .btn-line, #mc-pane-field .mc-rec-detail .btn-plot,
+  #mc-pane-field .mc-filters .mc-select, #mc-pane-field .mc-filters .mc-input, #mc-pane-field .mc-rec-detail .mc-input, #mc-pane-field .mc-rec-detail .mc-select { min-height: 2.75rem; }
+  #mc-pane-field .mc-linkbtn { display: inline-flex; align-items: center; }
+  #mc-pane-field .mc-rec-mine { display: flex; align-items: center; min-height: 2.75rem; }
+  #mc-pane-field .mc-rec-mine input { width: 1.4rem; height: 1.4rem; margin-right: .4rem; }
+}
+
+/* ---- 0.7 WS.10: the workspace layouts (the shell's engine, assets/css/app-workspace.css; workspace-markupcraft.js) ----
+   The sheet and zoom bar sits in the layout's view bar or quick bar instead of floating under the sheet; the status bar keeps its
+   parts in the layout's status bar; the Properties and the markups list read as palettes. Tokens and rem only. */
+:is(.ws-view-controls, .tbx-quick) > .mc-nav { position: static; inset: auto; height: auto; flex: 1 1 auto; min-width: 0; padding: 0; background: transparent; border: 0; overflow-x: auto; scrollbar-width: thin; }
+:is(.ws-view-controls, .tbx-quick) > .mc-nav > * { flex-shrink: 0; }
+.ws-view-controls > .mc-statbtn, .tbx-ig-body > .mc-statbtn { white-space: nowrap; flex-shrink: 0; }
+.ws-status-slot > .mc-status { display: flex; gap: .9rem; }
+
+.mc-ws-list { border-top: var(--pen-1) solid var(--line); }
+.mc-ws-browser .mc-sheets-sec { padding: .5rem .8rem; }
+.mc-ws-list .mc-sec-head { flex-wrap: wrap; }
+.mc-ws-list .mc-links { flex-wrap: wrap; gap: .25rem .75rem; }
+.mc-ws-props > .mc-pane, .mc-ws-list > .mc-pane { overflow: visible; padding: .5rem .8rem .75rem; }
+.mc-ws-props [data-props-h] { display: none; }   /* the palette's own heading says Properties */
+/* the info box keeps one height while the scale changes (the drawing under it does not jump; the selection note's one line is the
+   engine's, app-workspace.css .tbx-sel) */
+.mc .tbx-info { flex-wrap: nowrap; }
+.mc .tbx-ig { flex-shrink: 1; }
+.mc .tbx-ig-tool .tbx-ig-body { flex-wrap: nowrap; min-width: 0; }
+.mc .tbx-ig-body > .mc-statbtn { max-width: 14rem; }

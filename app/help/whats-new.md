@@ -1,54 +1,44 @@
 ---
-title: What's new in 0.6
-summary: Change the PDF's own lines, pictures and text with the Content tool, put markups into the page, replace pictures, change the words of a line, paste pictures from the clipboard, and calibrate with a calculation.
+title: What's new in 0.7
+summary: RFIs, submittals and daily logs in a new Field tab, with due dates, overdue in red, CSV and BCF, offline work and Merge; assistants that set statuses, reply and export the list; unit lists that follow Settings; panels that tidy away and dialogs that move.
 section: start
 order: 5
-keywords: whats new, what's new, release notes, changelog, changes, 0.6, version, new features, content tool, edit pdf, page content, base content, move, resize, recolor, delete, points, put into the page, replace picture, change text, words, font, paste picture, screenshot, clipboard, calibrate, calculation, arithmetic, pen, touch, indonesian
+keywords: whats new, what's new, release notes, changelog, changes, 0.7, version, new features, field, field records, rfi, request for information, submittal, daily log, site diary, overdue, due date, assigned to me, pin, merge, offline, tablet, bcf, csv, assistant, mcp, markup status, reply, export, units, unit lists, star, calibrate, compact, panels, dialogs, portuguese
 ---
 
-This is what changed in MarkupCraft 0.6, compared with 0.5. Until now MarkupCraft could only mark up a PDF; now it can also change what the PDF itself draws. This was asked for on Discord.
+This is what changed in MarkupCraft 0.7, compared with 0.6. The big new thing is field records: RFIs, submittals and daily logs kept inside the PDF beside your markups.
 
 ## New
 
-### Change the page itself
+### RFIs, submittals and daily logs
 
-- **The Content tool.** Choose {{ui:Content}} in the {{ui:Select}} group, or press {{key:B}}, to select the page's own lines, pictures and text (not markups). Pick by kind ({{ui:Shapes}}, {{ui:Pictures}}, {{ui:Text}}) with a click or a box, then move, resize, recolor, change the line width or delete. Each change is one undo step, and it is saved into the copy you download; your original PDF is never changed. See [Change the page's own lines, pictures and text](topic:page-content).
-- **Move a line's points.** Double-click a line or curve to drag its points and curve handles. See [Move a line's points](topic:page-content#move-a-lines-points).
-- **Put markups into the page.** Select line-work markups (lines, rectangles, ellipses, polylines, clouds, pen strokes) and choose {{ui:Put into the page}} to make them part of the page itself. See [Put markups into the page](topic:page-content#put-markups-into-the-page).
-- **Replace a picture.** Select a picture on the page and choose {{ui:Replace picture…}} to put a PNG or JPEG in its place, keeping its proportions. See [Replace a picture](topic:page-content#replace-a-picture).
-- **Change the words of a line of text.** Double-click a line of text and type the new words. They are written in the line's own font and size, and the line keeps its length. A letter the file's copy of the font lacks is printed in Helvetica, and MarkupCraft says which. See [Change the words of a line of text](topic:page-content#change-the-words-of-a-line-of-text).
-- **Encrypted and signed PDFs** are left alone: the Content tool says why it changes nothing (editing would break a signature), and markups still work. See [What MarkupCraft leaves as it is](topic:page-content#what-markupcraft-leaves-as-it-is).
-- **Checked on real files.** Saving after page edits was checked on 12 PDFs made by different programs: on the 10 that can be edited, every part you didn't touch stayed exactly the same, byte for byte. Three other PDF renderers showed no change outside the edited objects, and other PDF readers found the moved lines and the changed words in their new places.
+- **The Field tab.** Open the {{ui:Field}} tab and choose {{ui:RFI}}, {{ui:Submittal}} or {{ui:Daily log}}. Tap or click the sheet where an RFI or a submittal belongs and a pin marks the place; a daily log goes on the open sheet without a pin ({{ui:Place pin}} adds one later, {{ui:Move pin}} moves any pin). Each record has its own number (RFI-0001, SUB-0001, LOG-0001), a title, text, a status, an assignee, a due date, a thread of replies and a list of attachment names. See [Track RFIs, submittals and daily logs](topic:field-records).
+- **See what is late.** Filter the list by type, status, due date (overdue, due in 7 days, has or has no due date), this sheet or all sheets, a text search, or {{ui:Assigned to me}}. A record past its due date that is still waiting is marked **Overdue**, in red, on the list and on its pin. See [Find what matters](topic:field-records#find-what-matters).
+- **CSV and BCF.** {{ui:CSV}} writes the listed records as a spreadsheet; {{ui:BCF}} writes them as BCF topics, each with a snapshot of its place on the sheet. Both follow the filters. See [Export](topic:field-records#export).
+- **Offline, and two copies made one.** Records are saved inside the PDF and need no network, so a tablet on site can add, answer and save them. Back at the office, {{ui:Merge}} joins the records of another copy of the same PDF by their ids, as one undo step. See [Save, offline and merging copies](topic:field-records#save-offline-and-merging-copies).
 
-### Pictures and measuring
+### AI assistants
 
-- **Paste a picture.** Copy a picture or take a screenshot, then press {{key:Mod+V}} over the sheet: it lands at the pointer as a picture markup. {{ui:Edit}} › {{ui:More}} › {{ui:Paste a picture}} does the same. See [Paste a picture from the clipboard](topic:stamps-and-notes#paste-a-picture-from-the-clipboard).
-- **Calibrate with a calculation.** The real length in the calibrate dialog can be a small calculation, such as `4+7/16`, `12'6" + 3/4"`, `(24'-0")/3` or `2*450mm`, and the dialog says where it can't read one. See [Calibrate from a known dimension](topic:calibrate-and-measure#calibrate-from-a-known-dimension).
-
-## Changed
-
-- **The toolbar** keeps one row at 1280 px wide with the new {{ui:Content}} button.
-- **Languages.** Spanish (Mexico) has drafts for every new string.
-- The replies summary reads the same in both of its forms ("Last: …").
+- **More an assistant can do.** Your own assistant, connected through CadCraft Studio, can now set a markup's status (`markup_status`, logged in its thread), reply in a thread (`markup_reply`) and export the {{ui:Markups}} list as CSV or BCF (`markups_export`, what the list shows with its filters). Each change is one undo step, signed with the assistant's name. See [What an assistant can ask for](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
 
 ## In every app
 
-- **The toolbar can't get lost.** While full screen hides the bars, a small {{ui:Show bars}} tab stays at the top of the window. {{ui:Settings}} › {{ui:General}} › {{ui:Reset the layout}} puts the toolbar, panels, screen mode and menu style back to how the app starts (your interface size and panel text size stay). In CadCraft Studio, its own {{ui:Settings}} has {{ui:Reset the layout in every app}}. See [Where did my toolbar go?](common:lost-toolbar).
-- **A menu on the toolbar.** Right-click the toolbar, or press and hold it, to arrange it, lock it so nothing moves by accident, or reset it. Ribbon menu styles collapse to their tab names: a tab opens its tools for one command; double-click a tab or use the pin to keep the ribbon open. See [The toolbar's own menu](common:lost-toolbar#the-toolbars-own-menu).
-- **Interface size.** {{ui:Settings}} › {{ui:General}} › {{ui:Interface size}} makes the bars, toolbars, panels and dialogs 80 % to 140 % of normal, for this app only, so two apps side by side on one monitor both fit. The drawing keeps its own zoom. See [Everything is too big or too small](common:lost-toolbar#everything-is-too-big-or-too-small).
-- **Pen and touch.** On a tablet or a touch-screen laptop with a pen, your palm is ignored while you draw, fingers can be left to moving the view, a two-finger tap undoes and a three-finger tap redoes, and the pen's side button and eraser end can undo or redo. {{ui:Settings}} › {{ui:General}} › {{ui:Pen and touch}}. See [Draw with a pen on a tablet](common:pen-and-touch).
-- **Live sessions can grow past 20 people.** In CadCraft Studio, when more people knock than the usual 20, Studio tells you what to expect and you choose {{ui:Allow anyway}} for this session or {{ui:Keep it at 20}}. {{ui:Recent edits}} in the Live panel shows who changed what. See [Work together live](common:work-together-live#when-many-people-join).
-- **Bahasa Indonesia** is new in {{ui:Settings}} › {{ui:General}} › {{ui:Language}}: a machine-made draft of every word, not yet reviewed by a native speaker. **Spanish (Mexico)** is still a draft too. Help topics are in English.
-- **Installers are still not signed** (signing comes next, in 0.7), and CadCraft Studio is not in an app store yet. Check the SHA-256 beside each file on getcadcraft.com/download. On Windows, if SmartScreen stops the installer, choose {{ui:More info}}, then {{ui:Run anyway}}. On a Mac, the first time, right-click CadCraft Studio and choose {{ui:Open}}. There is no iPad or iPhone build yet.
-- **Fixed:** with the bars hidden, {{ui:Arrange the toolbar…}} in Settings was grayed out, and from the keyboard it lost its place after the first move.
+- **Units.** {{ui:Settings}} › {{ui:General}} › {{ui:Units}} has one list each for length, area, volume, angle and slope, with the exact sizes the units' definitions give (the US survey foot is its own unit). Switch off the units you never use and they leave the unit lists; star one and new work starts in it. A file always keeps its own unit. In MarkupCraft, the measuring and position units in {{ui:Settings}} › {{ui:MarkupCraft}} and the unit in the calibrate dialog follow the switches, the star sets the measuring unit until you save MarkupCraft's own settings, and the real distance you type when you calibrate can carry any unit's mark, such as `3 yd` or `1.5 km`. See [Units, typed values and the unit lists](common:unit-lists).
+- **A denser layout and panels that tidy away.** {{ui:Settings}} › {{ui:General}} › {{ui:Layout density}} › {{ui:Compact}} fits more on the screen (touch screens and phones keep their large buttons). Each side panel has a slim title bar: drag it to dock or float the panel, drop it on another panel's bar to share one frame as tabs, pin it to slide away to the edge, or hide it and bring it back from the edge. See [Arrange the panels](common:arrange-panels#make-the-layout-denser).
+- **Dialogs move.** Drag a dialog by its title bar out of the way of the drawing; it comes back where you left it. Double-click the title bar to centre it again. See [Move a dialog](common:arrange-panels#move-a-dialog).
+- **Recipes for AI assistants.** Ten worked requests for your own assistant (tidy a drawing, plot a set, check drawings, ask a model questions, total a takeoff, try a part variant…), each with the tools it calls and the permissions it needs, and each replayed by our tests. The apps contain no AI. See [Recipes for AI assistants](common:assistants-recipes).
+- **Languages.** **Português (Portugal)** is new in {{ui:Settings}} › {{ui:General}} › {{ui:Language}}. It, **Português (Brasil)**, **Español (México)** and **Bahasa Indonesia** now have every word of the apps, as drafts not yet reviewed by a native speaker. Help topics are in English.
+- **CadCraft Studio** says why an update check failed (no file for your system yet, no network, a bad signature) instead of just "Done", and stops bringing back a What's new card you closed until there is a newer release.
 
 ## Not in this version yet
 
-- Turning page objects to any angle.
-- Drawing new shapes straight into the page: draw a markup, then choose {{ui:Put into the page}}.
-- Changing text in a standard font the file gives no letter widths for (such as Times, Symbol or ZapfDingbats), changing a line's font or size, and text that flows over several lines.
-- {{ui:Delete}} and {{ui:Select all}} in the {{ui:Edit}} group act on markups only; inside the Content tool the keys act on page objects.
-- A saved copy with page edits has not been opened in Acrobat yet.
+- **0.7 is not code-signed.** Signing, and the Microsoft Store package, moved to 0.8 because the certificate validation has not come through yet. Check the SHA-256 beside each file on getcadcraft.com/download. On Windows, if SmartScreen stops the installer, choose {{ui:More info}}, then {{ui:Run anyway}}. On a Mac, the first time, right-click CadCraft Studio and choose {{ui:Open}}. CadCraft Studio is not in an app store yet, and there is no iPad or iPhone build yet.
+- The angle and slope lists in {{ui:Units}} are saved, but no box reads them yet.
+- Field records are not shared in a CadCraft Studio live session (live sessions carry markups only); bring copies together with {{ui:Merge}}.
+- Merge takes a record as a whole from the copy changed last: if two people changed different fields of one record, the later copy's fields win. Threads and attachment names are joined.
+- Attachments are names only; the files stay where they are. There are no teams, notifications or cloud projects for records, and assistants have no tools for records yet.
+- Field records were tested in a browser at phone and tablet sizes with the network cut, but not yet by hand on a real tablet.
+- Still from 0.6: turning page objects to any angle, drawing new shapes straight into the page, changing a line's font or size, and text that flows over several lines. A saved copy with page edits has not been opened in Acrobat yet.
 - Still from 0.5: undoing a page change (such as adding a blank page), reading text from scanned sheets, and live sessions beyond your own network.
 
 Everything else is in [What is not built yet](topic:not-built-yet).

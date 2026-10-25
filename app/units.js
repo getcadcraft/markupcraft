@@ -3,12 +3,14 @@
  * units.js — real-world lengths for the measure tool. A sheet's calibration is
  * `{ mmPerPt, unit, label }`: real millimeters per PDF point (PDF user space is 72 pt per inch) and
  * the unit lengths are shown in. Parsing takes what people type on a drawing: 24'-0", 12' 6 1/2",
- * 6", 1/2", 12.5', 12.5 ft, 3 ft 6 in, 3.5 m, 90 cm, 900 mm, or a bare number in the chosen unit.
+ * 6", 1/2", 12.5', 12.5 ft, 3 ft 6 in, 3.5 m, 90 cm, 900 mm, or a bare number in the chosen unit; since 0.7 UNITS any
+ * length mark of the shared table (lib/units: 3 yd, 2 ch, 10 US ft, 1.5 km, 12 pt).
  * No DOM.
  */
 
 import { t } from './i18n.js';
 import { calc, hasArithmetic } from './lencalc.js';
+import { parseTo } from './unit-table.js';   // 0.7 UNITS: the shared table (lib/units; a copy: tools/units/sync.mjs)
 
 export const MM_PER_IN = 25.4;
 export const MM_PER_PT = MM_PER_IN / 72;
@@ -112,7 +114,11 @@ function one(text, unit) {
     return Number.isFinite(inch) ? pos(parseFloat(m[1]) * 304.8 + inch * 25.4) : null;
   }
   const n = num(s);
-  if (!Number.isFinite(n)) return null;
+  if (!Number.isFinite(n)) {
+    // every other length mark of the shared table (0.7 UNITS): 3 yd, 2 ch, 10 US ft, 1.5 km, 12 pt — as typed (case matters)
+    const r = parseTo(String(text ?? '').replace(/(\d),(\d)/g, '$1.$2'), 'length', 'mm');
+    return r.ok ? pos(r.value) : null;
+  }
   return pos(n * (UNIT_MM[unit] || 1));
 }
 const pos = (v) => (Number.isFinite(v) && v > 0 ? v : null);

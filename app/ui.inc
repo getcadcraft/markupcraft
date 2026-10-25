@@ -30,7 +30,7 @@ $__tools = [
     'Measure' => [['calibrate', 'rulers'], ['measure', 'arrows'], ['angle', 'triangle'], ['area', 'bounding-box'], ['count', 'hash']],   // i18n-ignore
     'Edit' => [['act:undo', 'arrow-counterclockwise'], ['act:redo', 'arrow-clockwise'], ['act:copy', 'copy'], ['act:paste', 'clipboard-plus']], // i18n-ignore
 ];
-$__tabs = ['props', 'list', 'punch', 'chest', 'compare'];
+$__tabs = ['props', 'list', 'punch', 'field', 'chest', 'compare'];
 $__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['duplicate', 'Ctrl+D'],
            ['delete', 'Delete'], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc']];   // i18n-ignore (key names)
 /* File › Pages (0.4 K1): on the PDF the open sheet belongs to. */
@@ -266,6 +266,41 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <p class="mc-note"><?= Lang::e('punch.note') ?></p>
       <div class="mc-actions"><button type="button" class="btn-plot btn-sm-cc" data-act="punch-add"><i class="bi bi-list-check" aria-hidden="true"></i> <?= Lang::e('punch.add') ?></button></div>
       <ol class="mc-list mc-punch" data-punch></ol>
+    </section>
+
+    <section class="mc-pane" role="tabpanel" id="mc-pane-field" aria-labelledby="mc-tab-field" data-pane="field" hidden>
+      <div class="mc-sec-head">
+        <h2 class="mc-h"><?= Lang::e('tab.field') ?></h2>
+        <span class="mc-links">
+          <button type="button" class="mc-linkbtn" data-field-act="csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('rec.csv') ?></button>
+          <button type="button" class="mc-linkbtn" data-field-act="bcf" title="<?= Lang::e('rec.bcf.title') ?>"><i class="bi bi-box-arrow-up" aria-hidden="true"></i> <?= Lang::e('rec.bcf') ?></button>
+          <button type="button" class="mc-linkbtn" data-field-act="merge" title="<?= Lang::e('rec.merge.title') ?>"><i class="bi bi-union" aria-hidden="true"></i> <?= Lang::e('rec.merge') ?></button>
+        </span>
+      </div>
+      <p class="mc-note"><?= Lang::e('rec.note') ?></p>
+      <div class="mc-actions mc-rec-new" role="group" aria-label="<?= Lang::e('rec.new') ?>">
+        <button type="button" class="btn-plot btn-sm-cc" data-field-act="new" data-type="rfi"><i class="bi bi-question-circle" aria-hidden="true"></i> <?= Lang::e('rec.new.rfi') ?></button>
+        <button type="button" class="btn-plot btn-sm-cc" data-field-act="new" data-type="submittal"><i class="bi bi-file-earmark-check" aria-hidden="true"></i> <?= Lang::e('rec.new.submittal') ?></button>
+        <button type="button" class="btn-plot btn-sm-cc" data-field-act="new" data-type="log"><i class="bi bi-journal-text" aria-hidden="true"></i> <?= Lang::e('rec.new.log') ?></button>
+      </div>
+      <p class="mc-note mc-rec-place" data-field-place-note role="status" hidden></p>
+      <div class="mc-filters">
+        <label for="mc-r-type"><?= Lang::e('filter.type') ?></label>
+        <select id="mc-r-type" class="mc-select" data-field-filter="type"></select>
+        <label for="mc-r-status"><?= Lang::e('filter.status') ?></label>
+        <select id="mc-r-status" class="mc-select" data-field-filter="status"></select>
+        <label for="mc-r-due"><?= Lang::e('punch.due') ?></label>
+        <select id="mc-r-due" class="mc-select" data-field-filter="due"></select>
+        <label for="mc-r-sheet"><?= Lang::e('filter.sheet') ?></label>
+        <select id="mc-r-sheet" class="mc-select" data-field-filter="sheet"></select>
+        <label for="mc-r-q"><?= Lang::e('rec.filter.search') ?></label>
+        <input type="search" id="mc-r-q" class="mc-input" autocomplete="off" data-field-filter="q">
+        <label class="mc-radio mc-rec-mine"><input type="checkbox" data-field-mine> <?= Lang::e('rec.filter.mine') ?></label>
+      </div>
+      <p class="mc-muted mc-listcount" data-field-count role="status"></p>
+      <ol class="mc-list mc-rec" data-field-list></ol>
+      <div class="mc-rec-detail" id="mc-rec-detail" data-field-detail></div>
+      <input type="file" class="visually-hidden" accept=".pdf,application/pdf" tabindex="-1" aria-hidden="true" data-field-merge-file>
     </section>
 
     <section class="mc-pane" role="tabpanel" id="mc-pane-chest" aria-labelledby="mc-tab-chest" data-pane="chest" hidden>

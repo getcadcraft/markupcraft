@@ -38,6 +38,7 @@ export const PRIVATE_SHEET_KEY = 'MarkupCraftSheet';
 export const PRIVATE_PHOTO_KEY = 'MarkupCraftPhoto';   // a reply's photo (0.4 K20): on the reply, and on its file attachment
 export const PRIVATE_COLUMNS_KEY = 'MarkupCraftColumns';   // Info: the set's custom columns (0.4 K19)
 export const PRIVATE_LINK_KEY = 'MarkupCraftLink';     // our Link annotations for sheet links (0.4 K9)
+export const PRIVATE_RECORDS_KEY = 'MarkupCraftRecords';   // Info: the set's field records as JSON (0.7 LC.7, records.js packRecords)
 export const PRIVATE_LAYERS_KEY = 'MarkupCraftLayers';   // Info: the set's layers [{name, hidden, locked}] (0.4 K3)
 
 const n = (v) => {
@@ -159,7 +160,7 @@ export function privateData(m, rect) {
  *     printer shows them. Read-only annotations from the file stay as they are.
  * Returns { bytes, report: { written, flattened, missing, pages, replies } }.
  */
-export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null } = {}) {
+export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null, records = null } = {}) {
   const { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFRef } = lib;
   let doc;
   try {
@@ -503,6 +504,7 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
   info.set(N(PRIVATE_KEY), PDFString.of('1'));
   if (columns?.length) info.set(N(PRIVATE_COLUMNS_KEY), PDFHexString.fromText(JSON.stringify(columns))); else info.delete(N(PRIVATE_COLUMNS_KEY));
   if (layerList.length) info.set(N(PRIVATE_LAYERS_KEY), PDFHexString.fromText(JSON.stringify(layerList))); else info.delete(N(PRIVATE_LAYERS_KEY));
+  if (records) info.set(N(PRIVATE_RECORDS_KEY), PDFHexString.fromText(records)); else info.delete(N(PRIVATE_RECORDS_KEY));
   if (producerNote) info.set(N('ModDate'), PDFString.fromDate(new Date()));
   const out = await doc.save({ useObjectStreams: false, addDefaultPage: false, updateFieldAppearances: false });
   return { bytes: out, report };

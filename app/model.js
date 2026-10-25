@@ -183,6 +183,7 @@ export class Store {
     this.layers = new Map();          // layer name → { hidden, locked } (0.4 K3; a view state, not undoable)
     this.columns = [];                // custom columns (0.4 K19): [{ key, name, type, choices }] — the set's, not undoable
     this.base = new Map();            // sheet key → edits to the page's own content (0.6 DF.14, base-edit.js), undoable
+    this.records = new Map();         // id → field record (0.7 LC.7, records.js): RFIs, submittals, daily logs; removed ones stay as marks
   }
 
   // ---- layers (0.4 K3) ----
@@ -264,6 +265,13 @@ export class Store {
         if (name) this.sheetNames.set(sheet, clone(name)); else this.sheetNames.delete(sheet);
         ops.push({ op: 'name', sheet, before, after: clone(name ?? null) });
       },
+      /** A field record (records.js): add, change or remove (a removal keeps the record with `removed` set, so a merge cannot bring it back). */
+      setRecord: (rec) => {
+        const before = clone(this.records.get(rec.id) ?? null);
+        this.records.set(rec.id, clone(rec));
+        ops.push({ op: 'rec', id: rec.id, before, after: clone(rec), sheet: rec.sheet });
+        return rec;
+      },
       get: (id) => this.markups.get(id) || null,
     };
     const result = fn(tx);
@@ -320,6 +328,11 @@ export class Store {
         if (v) this.sheetNames.set(o.sheet, clone(v)); else this.sheetNames.delete(o.sheet);
         break;
       }
+      case 'rec': {
+        const v = back ? o.before : o.after;
+        if (v) this.records.set(o.id, clone(v)); else this.records.delete(o.id);
+        break;
+      }
       case 'punch':
         this.punchNext = back ? o.before : o.after;
         break;
@@ -356,10 +369,20 @@ export class Store {
     for (const k of [...this.calibrations.keys()]) if (k.startsWith(prefix)) this.calibrations.delete(k);
     for (const k of [...this.sheetNames.keys()]) if (k.startsWith(prefix)) this.sheetNames.delete(k);
     for (const k of [...this.base.keys()]) if (k.startsWith(prefix)) this.base.delete(k);
+    for (const [id, r] of this.records) if (r.sheet.startsWith(prefix)) this.records.delete(id);
     if (!prefix) { this.layers.clear(); this.columns = []; }
     this.undoStack = []; this.redoStack = [];
     this.emit('load');
   }
+
+  /** Records (cleaned by records.js) read from a file: not undoable. */
+  loadRecords(list) {
+    for (const r of list) if (!this.records.has(r.id)) this.records.set(r.id, r);
+    this.emit('load');
+  }
+  /** The records people see (not removed), as a list. */
+  liveRecords() { return [...this.records.values()].filter((r) => !r.removed); }
+  onSheetRecords(sheet) { return this.liveRecords().filter((r) => r.sheet === sheet); }
 
   /** Markups on punch, ordered by number. */
   punchItems() { return this.all().filter((m) => m.punch).sort((a, b) => a.punch.n - b.punch.n); }

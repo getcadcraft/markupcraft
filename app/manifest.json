@@ -26,5 +26,13 @@
     "live"
   ],
   "addons": "own",
-  "input": "input-markupcraft.js"
+  "input": "input-markupcraft.js",
+  "workspaces": {
+    "layouts": [
+      "docked",
+      "toolbox"
+    ],
+    "adapter": "workspace-markupcraft.js"
+  },
+  "hardware": true
 }

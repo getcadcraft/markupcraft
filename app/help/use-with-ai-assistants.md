@@ -1,6 +1,6 @@
 ---
 title: Use MarkupCraft with an AI assistant
-summary: Let your own AI assistant or script list the markups of a set and add simple ones: permissions, connecting through CadCraft Studio, and the activity log.
+summary: Let your own AI assistant or script list the markups of a set, add simple ones, set their status, reply and export the list: permissions, connecting through CadCraft Studio, and the activity log.
 section: tasks
 order: 135
 keywords: ai, assistant, agent, mcp, model context protocol, script, automation, markups, review, permissions, disconnect, activity
@@ -41,8 +41,10 @@ A browser tab can't open a connection for an assistant: in the browser apps the 
 | `app_info`, `sheets_list` | Read | The sets open, their sheets and how many markups each has |
 | `markups_list` | Read | The markups with type, sheet, text, comment, measurement, status, author and replies, filtered by sheet, status, type or author |
 | `markup_add` | Edit | Adds a rectangle, cloud, ellipse, text box, note, line or arrow to a sheet |
+| `markup_status`, `markup_reply` | Edit | Sets a markup's status (logged in its thread, signed by the assistant); adds a comment to a thread |
+| `markups_export` | Export | The {{ui:Markups}} list's own CSV or BCF of what the list shows (its filters as you set them); in Studio it can write the file to a folder you allowed |
 
-A markup an assistant adds names it as the author (the name the assistant program gives itself, followed by "(assistant)") unless you set your reviewer name, and it is one undo step. Saving the marked-up PDF stays with you: use {{ui:Save}} as usual.
+A markup an assistant adds names it as the author: the name the assistant program gives itself, followed by "(assistant)", or by "(assistant for <your name>)" once you have set your reviewer name. Its status changes and replies are signed the same way. Each is one undo step. Saving the marked-up PDF stays with you: use {{ui:Save}} as usual.
 
 Without opening MarkupCraft, the CadCraft MCP server lists the markups of a PDF in a folder you name (`markups_list`), and `cadcraft info Set.pdf` prints them on the command line.
 
@@ -51,3 +53,7 @@ Without opening MarkupCraft, the CadCraft MCP server lists the markups of a PDF 
 - **The assistant sees no MarkupCraft tools:** check that the switch is on in this window, and that the window is open in Studio.
 - **"needs the edit permission":** tick **Edit** under {{ui:Assistants}}, then ask again.
 - **"401" or "token" errors:** the token changed (Studio restarted, or {{ui:New token}}). Copy the new one into the assistant's settings.
+
+## See also
+
+- [Recipes for AI assistants](common:assistants-recipes): worked examples, each with the tools it calls.

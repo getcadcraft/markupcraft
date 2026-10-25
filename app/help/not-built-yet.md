@@ -14,7 +14,11 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 |---|---|
 | Shared review sessions over the internet (invite links are not open yet) | Review live on your own network in CadCraft Studio with a short code, which is free: see [Review one plan set together, live](topic:work-live). Or save the marked-up PDF and pass it on; each person replies and saves. |
 | Cloud saving and sync between computers | Keep the PDFs with your project files. Cloud saving is not available yet. |
-| Merging two people's copies | Divide the sheets between reviewers, or copy a few markups across with {{key:Mod+C}} and {{key:Mod+V}}. |
+| Merging two people's copies of the markups | Divide the sheets between reviewers, or copy a few markups across with {{key:Mod+C}} and {{key:Mod+V}}. RFIs, submittals and daily logs do merge: see [Track RFIs, submittals and daily logs](topic:field-records). |
+| Teams, notifications and cloud projects for RFIs and submittals | Pass the PDF on and use Merge to bring copies together. |
+| RFIs, submittals and daily logs in a live session | Each person works on their own copy; bring the copies together with {{ui:Merge}}. |
+| Merging two people's changes to different fields of one record | The copy changed last wins that record as a whole (its thread and attachment names are joined). Agree who edits which record. |
+| Assistant tools for RFIs, submittals and daily logs | Work with them in the {{ui:Field}} tab. Assistants can work with markups: see [Use MarkupCraft with an AI assistant](topic:use-with-ai-assistants). |
 | Editing or deleting a reply once sent | Undo right away, or add a correcting reply. |
 | Changing who a markup is by | Set your name before you start. |
 
@@ -28,7 +32,6 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 | Custom status sets | Use the four statuses, and the subject for anything more. |
 | Editing comments that came with the file as read-only (text highlights, other programs' stamps) | Reply to them, or draw a MarkupCraft markup next to them. |
 | Pressure-sensitive pen strokes | Set the line width. |
-| Changing keyboard shortcuts | See [Keyboard and mouse](topic:keyboard) for the fixed keys. |
 
 ## The page's own content
 
