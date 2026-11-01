@@ -209,3 +209,8 @@ export function similarity(a1, a2, b1, b2) {
   const e = b1[0] - (c * a1[0] - sn * a1[1]), f = b1[1] - (sn * a1[0] + c * a1[1]);
   return [c, sn, -sn, c, e, f];
 }
+
+// ---- small helpers the shared stroke cleaner (stroke-clean.js, a byte-identical copy of CadCraft's sketch.js, EG.55) imports ----
+export const TAU = Math.PI * 2;
+export const dist = (a, b) => Math.hypot(b.x - a.x, b.y - a.y);
+export const normAngle = (a) => { a %= TAU; return a < 0 ? a + TAU : a; };

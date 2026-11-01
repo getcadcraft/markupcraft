@@ -4,10 +4,16 @@
  * Tools live in the browser (localStorage, kept by markupcraft.js) and travel as a JSON file
  * ({format: 'markupcraft-tool-chest', version: 1, tools: [...]}) so an office can share one chest.
  * Imported files are untrusted: every field is checked and clamped; unknown fields are dropped.
+ *
+ * Stamps made from a selection (0.7.1 71.9, MrBorking) are tools of type 'stamp' that carry what they place: `items`
+ * (markups, as clip.js copies them; checked like a paste from another tab) or `content` (page content, a content clip
+ * from content-clip.js; checked like one). A click with such a tool places the whole selection there.
  */
 
 import { TYPES, STAMPS, stampLabel } from './model.js';
 import { t as tr } from './i18n.js';   // `t` is a tool in this file
+import { cleanItem, CLIP_MAX } from './clip.js';
+import { cleanContentClip } from './content-clip.js';
 
 export const CHEST_FORMAT = 'markupcraft-tool-chest';
 const TOOL_TYPES = new Set(Object.keys(TYPES).filter((t) => t !== 'foreign' && t !== 'image'));   // pictures stay in the stamp list
@@ -54,6 +60,15 @@ export function cleanTool(t, i = 0) {
     subject: str(t.subject, 120),
   };
   if (t.type === 'stamp') tool.label = str(t.label, 60).trim() || stampLabel(STAMPS[0]);
+  if (t.type === 'stamp' && Array.isArray(t.items)) {   // a stamp made from markups
+    const items = t.items.slice(0, CLIP_MAX).map(cleanItem).filter(Boolean);
+    if (!items.length) return null;
+    tool.items = items;
+  } else if (t.type === 'stamp' && t.content) {          // a stamp made from page content
+    const c = cleanContentClip(t.content);
+    if (!c) return null;
+    tool.content = c;
+  }
   if (t.type === 'count') tool.label = str(t.label, 60).trim() || tr('count.default');
   if (t.type === 'text' || t.type === 'callout' || t.type === 'note') tool.text = str(t.text, 2000);
   return tool;
@@ -62,6 +77,11 @@ export function cleanTool(t, i = 0) {
 /** A selected markup → a tool (style, subject, and the stamp label or starting text). */
 export function toolFromMarkup(m, name) {
   return cleanTool({ name, type: m.type, style: m.style, subject: m.subject, label: m.label, text: m.type === 'stamp' ? '' : m.text });
+}
+
+/** A stamp from selected markups (clip items) or from copied page content (a content clip). */
+export function stampTool(name, { items = null, content = null } = {}) {
+  return cleanTool({ name, type: 'stamp', style: {}, label: name, ...(items ? { items } : { content }) });
 }
 
 /** Parse an imported chest file. Returns { tools, skipped } or throws a plain-language Error. */

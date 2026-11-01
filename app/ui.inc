@@ -22,7 +22,7 @@ $__lx = static function (string $key, array $html): string {
    [tool key, icon]; the label is lang key tool.<key>, the title tool.<key>.title. */
 $__tools = [
     'File' => [['act:new', 'file-plus'], ['act:open', 'folder2-open'], ['act:save', 'download'], ['act:close', 'x-square']],   // i18n-ignore
-    'Select' => [['select', 'cursor'], ['pan', 'hand-index-thumb'], ['content', 'vector-pen']],                                                     // i18n-ignore
+    'Select' => [['select', 'cursor'], ['pan', 'hand-index-thumb'], ['content', 'vector-pen'], ['fill', 'input-cursor-text']],                       // i18n-ignore (0.8 fill: a PDF's form)
     'Draw' => [['pen', 'pencil'], ['highlight', 'highlighter'], ['line', 'slash-lg'], ['arrow', 'arrow-up-right'], ['arc', 'bezier2'],   // i18n-ignore
                ['rect', 'square'], ['ellipse', 'circle'], ['polyline', 'activity'], ['polygon', 'pentagon']],
     'Revise' => [['cloudrect', 'cloud'], ['cloud', 'cloud-haze2']],                                                       // i18n-ignore
@@ -30,13 +30,13 @@ $__tools = [
     'Measure' => [['calibrate', 'rulers'], ['measure', 'arrows'], ['angle', 'triangle'], ['area', 'bounding-box'], ['count', 'hash']],   // i18n-ignore
     'Edit' => [['act:undo', 'arrow-counterclockwise'], ['act:redo', 'arrow-clockwise'], ['act:copy', 'copy'], ['act:paste', 'clipboard-plus']], // i18n-ignore
 ];
-$__tabs = ['props', 'list', 'punch', 'field', 'chest', 'compare'];
-$__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['duplicate', 'Ctrl+D'],
-           ['delete', 'Delete'], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc']];   // i18n-ignore (key names)
+$__tabs = ['props', 'list', 'punch', 'tasks', 'notes', 'field', 'chest', 'compare'];
+$__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['insert-picture', ''], ['duplicate', 'Ctrl+D'],
+           ['delete', 'Delete'], ['clean-pen', ''], null, ['save-stamp', ''], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc'], null, ['seltext', ''], ['copy-area', ''], ['line-up', '']];   // i18n-ignore (key names; 0.7.1 71.7 insert-picture, 71.9 save-stamp, 71.10 seltext; 0.8 D8.15 copy-area, line-up)
 /* File › Pages (0.4 K1): on the PDF the open sheet belongs to. */
 $__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['slip-sheet', 'layers'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],
                 ['page-move-up', 'arrow-up'], ['page-move-down', 'arrow-down'], null, ['page-insert-pdf', 'file-earmark-plus'],
-                ['page-insert-blank', 'file-earmark'], ['page-delete', 'trash'], null, ['page-extract', 'box-arrow-up-right']];   // i18n-ignore (keys)
+                ['page-insert-blank', 'file-earmark'], ['page-delete', 'trash'], null, ['page-extract', 'box-arrow-up-right'], null, ['ocr', 'text-paragraph']];   // i18n-ignore (keys)
 /* "Open in TakeoffCraft" on the sheet bar (0.4 item 1.5): only when TakeoffCraft is open in this area and the build it runs
    here takes a handed-over file (manifest "accepts": ["handoff"]; see handoff.js). MarkupCraft itself takes one too. */
 $__takeoff = Catalog::app('takeoffcraft');
@@ -49,7 +49,10 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       data-pdf-cmaps="<?= e($__manifest['pdfCmaps'] ?? '') ?>"
       data-pdf-fonts="<?= e($__manifest['pdfFonts'] ?? '') ?>"
       data-pdf-wasm="<?= e($__manifest['pdfWasm'] ?? '') ?>"
-      data-pdf-icc="<?= e($__manifest['pdfIcc'] ?? '') ?>">
+      data-pdf-icc="<?= e($__manifest['pdfIcc'] ?? '') ?>"
+      data-ocr-worker="<?= e($__manifest['ocrWorker'] ?? '') ?>"
+      data-ocr-core="<?= e($__manifest['ocrCore'] ?? '') ?>"
+      data-ocr-data="<?= e($__manifest['ocrData'] ?? '') ?>">
   <h1 class="visually-hidden"><?= Lang::e('ui.h1', ['app' => $app['name']]) ?></h1>
 
   <div class="mc-tools" role="toolbar" aria-label="<?= Lang::e('ui.toolbar') ?>">
@@ -82,7 +85,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
                 <?php foreach ($__menu as $__m): if ($__m === null): ?>
                 <hr>
                 <?php else: ?>
-                <button type="button" role="menuitem" data-act="<?= e($__m[0]) ?>"><?= Lang::e('menu.' . $__k($__m[0])) ?> <kbd><?= e($__m[1]) ?></kbd></button>
+                <button type="button" role="menuitem" data-act="<?= e($__m[0]) ?>"><?= Lang::e('menu.' . $__k($__m[0])) ?><?php if ($__m[1] !== ''): ?> <kbd><?= e($__m[1]) ?></kbd><?php endif; ?></button>
                 <?php endif; endforeach; ?>
               </div>
             </details>
@@ -90,11 +93,11 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
         </div>
       </div>
     <?php endforeach; ?>
-    <input type="file" class="visually-hidden" accept=".pdf,application/pdf" multiple tabindex="-1" aria-hidden="true" data-file>
+    <input type="file" class="visually-hidden" accept=".pdf,application/pdf,.ccbundle,.zip" multiple tabindex="-1" aria-hidden="true" data-file>
     <input type="file" class="visually-hidden" accept=".json,application/json" tabindex="-1" aria-hidden="true" data-chest-file>
     <input type="file" class="visually-hidden" accept=".pdf,application/pdf" tabindex="-1" aria-hidden="true" data-insert-file>
     <input type="file" class="visually-hidden" accept=".pdf,application/pdf" multiple tabindex="-1" aria-hidden="true" data-slip-file>
-    <input type="file" class="visually-hidden" accept=".png,.jpg,.jpeg,image/png,image/jpeg" tabindex="-1" aria-hidden="true" data-image-file>
+    <input type="file" class="visually-hidden" accept=".png,.jpg,.jpeg,.svg,.pdf,image/png,image/jpeg,image/svg+xml,application/pdf" tabindex="-1" aria-hidden="true" data-image-file>
     <input type="file" class="visually-hidden" accept=".bcfzip,.bcf,.zip" tabindex="-1" aria-hidden="true" data-bcf-file>
     <input type="file" class="visually-hidden" accept="image/png,image/jpeg" capture="environment" tabindex="-1" aria-hidden="true" data-photo-file>
   </div>
@@ -202,6 +205,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <button type="button" class="mc-navbtn" data-act="zoom-in" title="<?= Lang::e('nav.zoom_in.title') ?>"><i class="bi bi-zoom-in" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.zoom_in') ?></span></button>
       <button type="button" class="mc-navbtn mc-navtext" data-act="fit-page" title="<?= Lang::e('nav.fit_page.title') ?>"><?= Lang::e('nav.fit_page') ?></button>
       <button type="button" class="mc-navbtn mc-navtext" data-act="fit-width" title="<?= Lang::e('nav.fit_width.title') ?>"><?= Lang::e('nav.fit_width') ?></button>
+      <button type="button" class="mc-navbtn mc-navtext" data-act="page-mode" aria-pressed="false" title="<?= Lang::e('nav.page_mode.tabs.title') ?>"><i class="bi bi-view-stacked" aria-hidden="true"></i> <?= Lang::e('nav.page_mode') ?></button>
       <button type="button" class="mc-navbtn" data-act="view-ccw" title="<?= Lang::e('nav.view_ccw.title') ?>"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.view_ccw') ?></span></button>
       <button type="button" class="mc-navbtn" data-act="view-cw" title="<?= Lang::e('nav.view_cw.title') ?>"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.view_cw') ?></span></button>
       <?php if ($__takeoffUrl): ?>
@@ -266,6 +270,90 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <p class="mc-note"><?= Lang::e('punch.note') ?></p>
       <div class="mc-actions"><button type="button" class="btn-plot btn-sm-cc" data-act="punch-add"><i class="bi bi-list-check" aria-hidden="true"></i> <?= Lang::e('punch.add') ?></button></div>
       <ol class="mc-list mc-punch" data-punch></ol>
+    </section>
+
+    <section class="mc-pane" role="tabpanel" id="mc-pane-tasks" aria-labelledby="mc-tab-tasks" data-pane="tasks" hidden>
+      <div class="mc-sec-head">
+        <h2 class="mc-h"><?= Lang::e('tab.tasks') ?></h2>
+        <span class="mc-links">
+          <button type="button" class="mc-linkbtn" data-act="tasks-csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('tasks.csv') ?></button>
+          <button type="button" class="mc-linkbtn" data-act="tasks-file-save" title="<?= Lang::e('tasks.file.save.title') ?>"><i class="bi bi-filetype-json" aria-hidden="true"></i> <?= Lang::e('tasks.file.save') ?></button>
+          <button type="button" class="mc-linkbtn" data-act="tasks-file-open" title="<?= Lang::e('tasks.file.open.title') ?>"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('tasks.file.open') ?></button>
+        </span>
+      </div>
+      <p class="mc-note"><?= Lang::e('tasks.note') ?></p>
+      <div class="mc-actions">
+        <button type="button" class="btn-plot btn-sm-cc" data-act="task-make"><i class="bi bi-check2-square" aria-hidden="true"></i> <?= Lang::e('tasks.make') ?></button>
+        <button type="button" class="btn-line btn-sm-cc" data-act="tasks-check" title="<?= Lang::e('tasks.check.title') ?>"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> <?= Lang::e('tasks.check') ?></button>
+      </div>
+      <label class="check mc-auto-close" title="<?= Lang::e('tasks.auto.title') ?>"><input type="checkbox" data-task-autoclose> <?= Lang::e('tasks.auto') ?></label>
+      <div class="mc-filters">
+        <label for="mc-t-state"><?= Lang::e('tasks.f.state') ?></label>
+        <select id="mc-t-state" class="mc-select" data-task-filter="state"><option value=""><?= Lang::e('tasks.f.any') ?></option><option value="open"><?= Lang::e('tasks.f.open') ?></option><option value="Open"><?= Lang::e('tasks.state.open') ?></option><option value="In progress"><?= Lang::e('tasks.state.in_progress') ?></option><option value="Done"><?= Lang::e('tasks.state.done') ?></option></select>
+        <label for="mc-t-who"><?= Lang::e('tasks.f.who') ?></label>
+        <select id="mc-t-who" class="mc-select" data-task-filter="who"><option value=""><?= Lang::e('tasks.f.any') ?></option><option value="person"><?= Lang::e('tasks.kind.person') ?></option><option value="assistant"><?= Lang::e('tasks.kind.assistant') ?></option><option value="overdue"><?= Lang::e('tasks.f.overdue') ?></option></select>
+      </div>
+      <p class="mc-muted" data-task-count role="status"></p>
+      <ol class="mc-list mc-act" data-task-list></ol>
+      <details class="mc-find">
+        <summary class="mc-find-sum"><?= Lang::e('redline.h') ?></summary>
+        <p class="mc-note"><?= Lang::e('redline.note') ?></p>
+        <div class="mc-form">
+          <label for="mc-rl-rev"><?= Lang::e('redline.revision') ?></label>
+          <input id="mc-rl-rev" class="mc-input" type="text" maxlength="60" data-redline-rev>
+        </div>
+        <div class="mc-actions">
+          <button type="button" class="btn-line btn-sm-cc" data-act="redline-export"><i class="bi bi-box-arrow-up" aria-hidden="true"></i> <?= Lang::e('redline.export') ?></button>
+          <button type="button" class="btn-line btn-sm-cc" data-act="redline-answers"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('redline.answers') ?></button>
+        </div>
+        <p class="mc-muted" data-redline-status role="status"></p>
+      </details>
+      <details class="mc-find">
+        <summary class="mc-find-sum"><?= Lang::e('permit.h') ?></summary>
+        <p class="mc-note"><?= Lang::e('permit.note') ?></p>
+        <div class="mc-actions">
+          <button type="button" class="btn-line btn-sm-cc" data-act="permit-import"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('permit.import') ?></button>
+        </div>
+        <p class="mc-muted" data-permit-status role="status"></p>
+      </details>
+      <details class="mc-find">
+        <summary class="mc-find-sum"><?= Lang::e('hazop.h') ?></summary>
+        <p class="mc-note"><?= Lang::e('hazop.note') ?></p>
+        <div class="mc-form">
+          <label for="mc-hz-scale"><?= Lang::e('hazop.scale') ?></label>
+          <input id="mc-hz-scale" class="mc-input" type="text" inputmode="decimal" value="1" maxlength="8" data-hazop-scale>
+        </div>
+        <div class="mc-actions">
+          <button type="button" class="btn-line btn-sm-cc" data-act="hazop-import"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('hazop.import') ?></button>
+        </div>
+        <p class="mc-muted" data-hazop-status role="status"></p>
+      </details>
+      <details class="mc-find">
+        <summary class="mc-find-sum"><?= Lang::e('progress.h') ?></summary>
+        <p class="mc-note"><?= Lang::e('progress.note') ?></p>
+        <div class="mc-actions">
+          <button type="button" class="btn-line btn-sm-cc" data-act="progress-import"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('progress.import') ?></button>
+        </div>
+        <p class="mc-muted" data-progress-status role="status"></p>
+      </details>
+    </section>
+
+    <section class="mc-pane" role="tabpanel" id="mc-pane-notes" aria-labelledby="mc-tab-notes" data-pane="notes" hidden>
+      <h2 class="mc-h"><?= Lang::e('tab.notes') ?></h2>
+      <p class="mc-note"><?= Lang::e('notes.note') ?></p>
+      <div class="mc-actions">
+        <button type="button" class="btn-plot btn-sm-cc" data-act="voice-record" aria-pressed="false"><i class="bi bi-mic" aria-hidden="true"></i> <span data-voice-label><?= Lang::e('notes.record') ?></span></button>
+        <button type="button" class="btn-line btn-sm-cc" data-act="decision-add"><i class="bi bi-check2-circle" aria-hidden="true"></i> <?= Lang::e('notes.decide') ?></button>
+      </div>
+      <div class="mc-form" data-decision-form hidden>
+        <label for="mc-dec-text"><?= Lang::e('notes.decision.text') ?></label>
+        <textarea id="mc-dec-text" class="mc-input" rows="3" maxlength="1000" data-decision-text></textarea>
+        <label for="mc-dec-sup"><?= Lang::e('notes.decision.replaces') ?></label>
+        <select id="mc-dec-sup" class="mc-select" data-decision-replaces></select>
+        <div class="mc-actions"><button type="button" class="btn-plot btn-sm-cc" data-act="decision-save"><?= Lang::e('notes.decision.pin') ?></button> <button type="button" class="btn-line btn-sm-cc" data-act="decision-cancel"><?= Lang::e('dlg.cancel') ?></button></div>
+      </div>
+      <p class="mc-muted" data-notes-status role="status"></p>
+      <ol class="mc-list mc-act" data-notes-list></ol>
     </section>
 
     <section class="mc-pane" role="tabpanel" id="mc-pane-field" aria-labelledby="mc-tab-field" data-pane="field" hidden>
@@ -340,10 +428,16 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
         </div>
         <div class="mc-actions">
           <button type="button" class="btn-line btn-sm-cc" data-act="set-compare"><?= Lang::e('setcmp.run') ?></button>
+          <button type="button" class="btn-line btn-sm-cc" data-act="changes-list"><i class="bi bi-card-list" aria-hidden="true"></i> <?= Lang::e('changes.run') ?></button>
           <button type="button" class="btn-line btn-sm-cc" data-act="set-cloud" hidden><i class="bi bi-cloud" aria-hidden="true"></i> <?= Lang::e('setcmp.cloud') ?></button>
         </div>
         <p class="mc-muted" data-set-status role="status"></p>
         <ol class="mc-find-list" data-set-results></ol>
+        <div data-changes-box hidden>
+          <h3 class="mc-k"><?= Lang::e('changes.h') ?></h3>
+          <pre class="mc-changes" data-changes-text tabindex="0"></pre>
+          <div class="mc-actions"><button type="button" class="btn-line btn-sm-cc" data-act="changes-copy"><?= Lang::e('changes.copy') ?></button> <button type="button" class="btn-line btn-sm-cc" data-act="changes-csv"><?= Lang::e('changes.csv') ?></button></div>
+        </div>
       </details>
       <div class="mc-cmp-tools" data-cmp-tools hidden>
         <div class="mc-cmp-mode" role="radiogroup" aria-label="<?= Lang::e('compare.mode') ?>">

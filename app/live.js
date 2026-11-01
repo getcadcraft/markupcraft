@@ -25,6 +25,7 @@
 import { pack, unpack } from './live-client.js';
 import { geometryOk } from './model.js';
 import { t } from './i18n.js';
+import { attachUi } from './live-ui.js';
 
 export const SCHEMA = 1;
 const clone = (v) => (v === undefined || v === null || typeof v !== 'object' ? v : JSON.parse(JSON.stringify(v)));
@@ -213,6 +214,28 @@ export function createLive(store, opts = {}) {
       return out;
     },
     touched, validate,
+    /** EG.41 (studio_PART_2, mounted by markup_PART_3): where a step landed — the sheet's key (a markup's `sheet`, a calibration's or
+     *  a name's `sheet`) and the extent of what it touches in page units — so a session can hold an assistant to a sheet or an area
+     *  (studio/hub/live/assistant-scope.js). null = can't tell; a removal or a step over several sheets has no box. */
+    where(ops) {
+      let sheet, box = null, unbounded = false;
+      const grow = (b) => { if (Array.isArray(b) && b.length === 4 && b.every(Number.isFinite)) box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : [b[0], b[1], b[2], b[3]]; else unbounded = true; };
+      const on = (k) => { if (typeof k !== 'string') return; if (sheet === undefined) sheet = k; else if (sheet !== k) sheet = '\u0000mixed'; };
+      for (const op of ops || []) {
+        if (!op || typeof op !== 'object' || op.o === 'g' || op.o === 'punch') continue;
+        if (op.o === 'cal' || op.o === 'name') { on(op.sheet); unbounded = true; continue; }
+        if (op.o === 'del') { unbounded = true; continue; }
+        const m = op.o === 'add' ? op.m : store.markups.get(op.id);
+        if (!m) { unbounded = true; continue; }
+        on(m.sheet);
+        try { grow(opts.bounds ? opts.bounds(m) : null); } catch { unbounded = true; }
+      }
+      if (sheet === undefined) return null;
+      return { sheet, box: unbounded ? null : box };
+    },
+    sheetLabel(key) { const s = (opts.sheets ? opts.sheets() : []).find((x) => x.page.key === key); return s ? s.page.title : String(key || ''); },
+    /** The keys this app's presence uses (assistant-scope.js presenceFor): the sheet is `sh`, the pointer `cur`. */
+    presenceKeys: { sheet: 'sh', cur: 'cur', box: 'box', cmd: 'cmd' },
     snapshot() { return pack(state()); },
     load(bytes) { loadState(unpack(bytes)); },
     state, opsOf,
@@ -252,7 +275,7 @@ export function createLive(store, opts = {}) {
 export function createLiveAdapter({ host } = {}) {
   const app = globalThis.markupcraft;
   if (!app || !app.store) return null;
-  const a = createLive(app.store, { files: () => app.files });
+  const a = createLive(app.store, { files: () => app.files, sheets: () => app.sheets || [], bounds: (m) => app.boundsOfMarkup?.(m) ?? null });
   // The edit log (0.6 DC.23): Studio's Live panel asks who changed the selected markups last.
   a.selectionKeys = () => [...(app.sel || [])].slice(0, 500).map((id) => 'e:' + id);
   a.onFiles = (list) => {
@@ -279,6 +302,7 @@ export function createLiveAdapter({ host } = {}) {
     }),
         ];
         app.live = a;
+        try { offs.push(attachUi(app, a, c)); } catch (e) { console.error(e); }   // i18n-ignore
       } else if (!c && a.client) { offs.forEach((f) => f()); a.unbind(); app.live = null; off(); }
     });
   }

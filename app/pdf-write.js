@@ -39,6 +39,7 @@ export const PRIVATE_PHOTO_KEY = 'MarkupCraftPhoto';   // a reply's photo (0.4 K
 export const PRIVATE_COLUMNS_KEY = 'MarkupCraftColumns';   // Info: the set's custom columns (0.4 K19)
 export const PRIVATE_LINK_KEY = 'MarkupCraftLink';     // our Link annotations for sheet links (0.4 K9)
 export const PRIVATE_RECORDS_KEY = 'MarkupCraftRecords';   // Info: the set's field records as JSON (0.7 LC.7, records.js packRecords)
+export const PRIVATE_SHELL_KEY = 'MarkupCraftShell';   // Info: the shell's calc sheets and design reasons as JSON {calcs, reasons} (0.8 round 3, shell-mount.js)
 export const PRIVATE_LAYERS_KEY = 'MarkupCraftLayers';   // Info: the set's layers [{name, hidden, locked}] (0.4 K3)
 
 const n = (v) => {
@@ -141,7 +142,7 @@ export function privateData(m, rect) {
   return JSON.stringify({
     v: 1, id: m.id, type: m.type, pts: m.pts, rect: m.rect, rot: m.rot, style: m.style, text: m.text, label: m.label,
     subject: m.subject, comment: m.comment, author: m.author, created: m.created, modified: m.modified, status: m.status,
-    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, xd: m.xd || undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
+    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, xd: m.xd || undefined, task: m.task || undefined, voice: m.voice || undefined, decision: m.decision || undefined, flat: m.flat === true ? true : undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
   });
 }
 
@@ -158,9 +159,11 @@ export function privateData(m, rect) {
  *   flatten: null | 'all' | Set of markup ids — those are drawn into the page itself (their appearance as a form XObject
  *     painted by the page's content) instead of becoming annotations: no longer editable, no thread, but every viewer and
  *     printer shows them. Read-only annotations from the file stay as they are.
- * Returns { bytes, report: { written, flattened, missing, pages, replies } }.
+ *   ocr: [{ index, pdf, matrix }] — text read from scanned pages (0.7.1 71.10, ocr.js): Tesseract's text-only page drawn into
+ *     page `index` with `matrix` (an invisible text layer; report.ocr counts the pages)
+ * Returns { bytes, report: { written, flattened, missing, pages, replies, ocr } }.
  */
-export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null, records = null } = {}) {
+export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null, records = null, shell = null, ocr = [] } = {}) {
   const { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFRef } = lib;
   let doc;
   try {
@@ -410,8 +413,10 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
           break;
         case 'text': case 'callout': {
           d.Subtype = 'FreeText';
-          d.DA = PDFString.of('/Helv ' + n(s.fontSize) + ' Tf ' + color.map(n).join(' ') + ' rg');
-          d.DS = PDFString.of('font: Helvetica ' + n(s.fontSize) + 'pt; color: ' + s.color);   // i18n-ignore (CSS)
+          // the text's colour (a text box from another program may have its own, apart from the border: 71.4)
+          const tc = s.textColor || s.color;
+          d.DA = PDFString.of('/Helv ' + n(s.fontSize) + ' Tf ' + rgb(tc).map(n).join(' ') + ' rg');
+          d.DS = PDFString.of('font: ' + (s.bold ? 'bold ' : '') + 'Helvetica ' + n(s.fontSize) + 'pt; color: ' + tc);   // i18n-ignore (CSS)
           d.Q = 0;
           const r = m.rect;
           d.RD = [r[0] - rect[0], rect[3] - r[3], rect[2] - r[2], r[1] - rect[1]].map((v) => Math.max(0, v));
@@ -489,6 +494,18 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
     else page.node.delete(N(PRIVATE_SHEET_KEY));
   }
 
+  // text read from scanned pages (0.7.1 71.10): Tesseract's text-only page (invisible text, its glyphless font with a
+  // ToUnicode map) drawn into the sheet as a form XObject, placed by the OCR matrix — a real text layer other programs search
+  // and select, apart from the markups (no annotation)
+  for (const o of ocr || []) {
+    const page = pdfPages[o?.index];
+    if (!page || !o.pdf?.length || !Array.isArray(o.matrix) || o.matrix.length !== 6 || !o.matrix.every(Number.isFinite)) continue;
+    const [form] = await doc.embedPdf(o.pdf, [0]);
+    const name = page.node.newXObject('MCText', form.ref);
+    page.pushOperators(lib.pushGraphicsState(), lib.concatTransformationMatrix(...o.matrix), lib.drawObject(name), lib.popGraphicsState());
+    report.ocr = (report.ocr || 0) + 1;
+  }
+
   // bookmarks (0.4 K24): null = the file's own outline untouched; a list = the outline replaced
   if (Array.isArray(bookmarks)) writeOutline(lib, doc, bookmarks);
 
@@ -505,6 +522,7 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
   if (columns?.length) info.set(N(PRIVATE_COLUMNS_KEY), PDFHexString.fromText(JSON.stringify(columns))); else info.delete(N(PRIVATE_COLUMNS_KEY));
   if (layerList.length) info.set(N(PRIVATE_LAYERS_KEY), PDFHexString.fromText(JSON.stringify(layerList))); else info.delete(N(PRIVATE_LAYERS_KEY));
   if (records) info.set(N(PRIVATE_RECORDS_KEY), PDFHexString.fromText(records)); else info.delete(N(PRIVATE_RECORDS_KEY));
+  if (shell) info.set(N(PRIVATE_SHELL_KEY), PDFHexString.fromText(JSON.stringify(shell))); else info.delete(N(PRIVATE_SHELL_KEY));
   if (producerNote) info.set(N('ModDate'), PDFString.fromDate(new Date()));
   const out = await doc.save({ useObjectStreams: false, addDefaultPage: false, updateFieldAppearances: false });
   return { bytes: out, report };

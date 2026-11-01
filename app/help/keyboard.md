@@ -149,3 +149,7 @@ Count dots, notes, polyline points and the second point of a two-point tool are 
 - **You are typing in a box.** Click on the sheet first. (A click with a drawing tool draws; press {{key:Esc}} afterward or use {{key:Mod+Z}}.)
 - **A dialog is open.** Keys go to the dialog until it closes.
 - **You just clicked a toolbar button** and the arrow keys or {{key:Space}} act on that button instead. Move the pointer over the sheet and use the wheel or middle button, or press a tool letter instead of clicking buttons.
+
+## Where Move lives
+
+There is no Move command: select a markup and drag it ({{key:Shift}} keeps 45° steps). A pin is moved with {{ui:Move pin}}, and a page with {{ui:Move page earlier}} or {{ui:Move page later}}.

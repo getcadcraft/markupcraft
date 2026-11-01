@@ -23,6 +23,7 @@
  * "<name> (marked up).pdf"; nothing is uploaded. `window.markupcraft` exposes the state for tests.
  */
 
+import { mountUndoHook } from './undo-hook.js';   // 0.8 EG.77: tells Studio each finished step
 import { el, bytes as fmtBytes, frame, download, shortDate, dateTime } from './ui-util.js';
 import { Store, makeMarkup, cleanLayerName, TYPES, STATUSES, PUNCH_STATUSES, STAMPS, stamps, stampLabel, defaultStyle, stampColor, clone, nowIso, statusReply, cleanReply } from './model.js';
 import { View, PX_PER_PT, hexRgb, mix } from './view.js';
@@ -46,7 +47,7 @@ import { pageSegments, diffSegments, clusters } from './vecdiff.js';
 import { legendRows, rowsKey } from './legend.js';
 import { fromSheets, count, cleanBookmarks } from './bookmarks.js';
 import { linkTarget, calloutRefs } from './link.js';
-import { cleanImage, imageInfo, fitBox, placeRect } from './imagestamp.js';
+import { cleanImage, imageInfo, fitBox, placeRect, pictureKind, clearPaper, inkBox, cleanSignatures, MAX_SIGNATURES } from './imagestamp.js';
 import { summarySheets, summaryPdf } from './summary.js';
 import { readBcf, planImport } from './bcf-read.js';
 import { writeXlsx } from './xlsx.js';
@@ -55,14 +56,31 @@ import { PAPERS, ORIENTS, GRIDS, MAX_PAGES, cleanBlank, blankPdf, untitledName }
 import { measure, measureArea, parseLength, parseLengthCalc, calibrationFrom, presetCalibration, SCALE_PRESETS, UNITS } from './units.js';
 import { choices as unitChoices, defaultUnit, limitSelect, onUnitsChange } from './unit-prefs.js';   // 0.7 UNITS: Settings › General › Units
 import { buildBcf, guidFor } from './bcf.js';
-import { DEFAULT_CHEST, parseChest, mergeChest, exportChest, toolFromMarkup, cleanTool } from './chest.js';
+import { DEFAULT_CHEST, parseChest, mergeChest, exportChest, toolFromMarkup, cleanTool, stampTool } from './chest.js';
 import { toCsv, markupRows, punchRows } from './csv.js';
 import { alignment } from './compare.js';
 import { CLIP_KEY, makeClip, cleanClip, clipBounds, placeClip } from './clip.js';
-import { t } from './i18n.js';
+import { CONTENT_KEY, cleanContentClip } from './content-clip.js';
+import { t, locale as uiLocale } from './i18n.js';
 import { installAgents } from './agents.js';
+import { regionSnapshot, checkTasks, closeChanged, adoptBaselines } from './tasks.js';   // 0.8 EG.64
+import { describeChanges, changesText } from './changes.js';   // 0.8 EG.65
+import { buildRedline, redlineFileName, applyAnswers } from './redline.js';   // 0.8 EG.19
+import { buildSidecar, sidecarText, readSidecar, applySidecar } from './sidecar.js';   // 0.8 H5 + EG.64: <name>.markups.json
+import { installActions } from './tasks-ui.js';   // 0.8 EG.64/65/66/19: the Tasks and Notes tabs
 import { startAddons, columnsNow } from './addons/markupcraft-api.js';
 import { installField } from './field-ui.js';   // 0.7 LC.7: RFIs, submittals and daily logs
+import { installForms } from './form-ui.js';   // 0.8: fill in a PDF's form on the sheet
+import { fillForm } from './forms.js';
+import { PadDetector } from './wheel-pad.js';   // 0.7 D7.56 (CadCraft's copy, byte-identical): a trackpad's two-finger swipe pans
+import { cleanPens } from './pen-clean.js';   // 0.8 EG.55: pen markups become lines, circles, arcs, rectangles, polylines
+import { mountMarkupShell } from './shell-mount.js';   // 0.8 round 3: the shell's seven modules (calc, reasons, totals, lessons, Suggest, activity, Ask)
+import { pageProblems, taskProblems, pageMarkers } from './problems-markupcraft.js';   // 0.8 P.6: pages that could not be drawn or read, in the shell's Problems
+import { installOcr } from './ocr-ui.js';   // 0.7.1 71.10: Read text (OCR)
+import { ocrState, cleanOcrState } from './ocr.js';
+import { installTextSelect } from './textsel-ui.js';
+import { installAreaCopy } from './areacopy-ui.js';   // 0.8 D8.15: Copy area (rectangle, ellipse, freeform), as a picture or an overlay
+import { AREA_KEY, cleanAreaClip, sameImage, fitTwoPoints, turnedSize } from './areaclip.js';   // 0.7.1 71.10: Select text
 import { panButton, wheelFactor } from './input-mouse.js';   // 0.5 IP.3: the menu style's wheel and pan buttons (input-markupcraft.js)
 
 const DRAW_TOOLS = new Set(['pen', 'highlight', 'line', 'arrow', 'arc', 'angle', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text', 'note', 'stamp', 'measure', 'area', 'count']);
@@ -73,14 +91,17 @@ const KIND = {
   arc: 'three', angle: 'three',   // three clicks (0.4 K4)
   polyline: 'poly', polygon: 'poly', cloud: 'poly', area: 'poly', callout: 'callout', note: 'note', count: 'count',
 };
-const KEYS = { b: 'content', o: 'arc', x: 'angle', v: 'select', h: 'pan', p: 'pen', i: 'highlight', l: 'line', a: 'arrow', r: 'rect', e: 'ellipse', y: 'polyline', g: 'polygon', c: 'cloudrect', k: 'callout', t: 'text', n: 'note', s: 'stamp', m: 'measure', q: 'area', u: 'count' };
+const KEYS = { f: 'fill', b: 'content', o: 'arc', x: 'angle', v: 'select', h: 'pan', p: 'pen', i: 'highlight', l: 'line', a: 'arrow', r: 'rect', e: 'ellipse', y: 'polyline', g: 'polygon', c: 'cloudrect', k: 'callout', t: 'text', n: 'note', s: 'stamp', m: 'measure', q: 'area', u: 'count' };
 const TYPE_ICON = { image: 'image', arc: 'bezier2', angle: 'triangle', pen: 'pencil', highlight: 'highlighter', line: 'slash-lg', arrow: 'arrow-up-right', rect: 'square', ellipse: 'circle', polyline: 'activity', polygon: 'pentagon', cloudrect: 'cloud', cloud: 'cloud-haze2', callout: 'chat-left-text', text: 'fonts', note: 'sticky', stamp: 'patch-check', measure: 'arrows', area: 'bounding-box', count: 'hash', foreign: 'lock' };
 const TEXT_TYPES = new Set(['text', 'callout']);
 const LS = { settings: 'markupcraft.settings', author: 'markupcraft.author', chest: 'markupcraft.chest' };
 const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } };
 // Settings › MarkupCraft (settings.inc). markColor '' = each tool's own red; weight scales the line width of the same tools.
-const SET_DEFAULTS = { markColor: '', weight: 'normal', pasteAt: 'pointer', unit: 'ft-in', posUnit: 'in' };
+// 71.12 Page contrast (user69q: pale text from other programs, faint scans): a view-only filter on the sheet; saved files are untouched.
+const CONTRAST = { normal: '', stronger: 'contrast(1.35) brightness(0.92)', strongest: 'contrast(1.8) brightness(0.8)' };
+// pageMode (0.8): 'tabs' = one page at a time (a tab per page in a workspace layout), 'scroll' = the file's pages in one column
+const SET_DEFAULTS = { markColor: '', weight: 'normal', pasteAt: 'pointer', unit: 'ft-in', posUnit: 'in', contrast: 'normal', pageMode: 'tabs' };
 const COLOR_TYPES = new Set(['pen', 'line', 'arrow', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text']);
 const WEIGHTS = { thin: 0.5, normal: 1, heavy: 1.5 };
 const PASTE_STEP = 12;        // screen pixels down and right for "beside the copy" (each paste of the same copy steps again)
@@ -113,11 +134,19 @@ function init(root) {
 
   // ---- state ----
   const store = new Store();
+  mountUndoHook({ store });   // 0.8 EG.77
   const view = new View(ui.canvases, ui.base, ui.over);
+  const applyContrast = () => { ui.canvases.style.filter = CONTRAST[settings.contrast] || ''; };
   const files = [];
   let fileSeq = 0;
   let sheets = [];            // [{ file, page }]
   let fieldUi = null;           // the Field tab (field-ui.js), set up once the page is built
+  let formUi = null;            // filling in a PDF's form (form-ui.js, 0.8), set up once the page is built
+  let textSel = null;           // the Select text tool (textsel-ui.js, 0.7.1 71.10)
+  let areaUi = null;            // the Copy area tool (areacopy-ui.js, 0.8 D8.15)
+  let areaClip = null;          // the newest copied area this tab made or read (areaclip.js)
+  let lineUp = null;            // Line up a picture with two points (0.8 D8.15): { id, a1, b1, a2 }
+  let ocrUi = null;             // Read text (OCR) (ocr-ui.js, 0.7.1 71.10)
   let cur = -1;
   let sel = new Set();
   let tool = 'select';
@@ -127,6 +156,7 @@ function init(root) {
   let hoverId = null;
   let editing = null;         // { id | null (new), m (markup being edited), field }
   let clip = null;            // this tab's last copy (clip.js); another tab's newer copy comes from localStorage
+  let contentClip = null;     // this tab's last copy of page content (content-clip.js, 0.7.1 71.6); the newer of the two pastes
   let pasteRun = { key: '', n: 0 };   // repeated "beside the copy" pastes of one copy on one sheet step further each time
   let pointer = null;         // the mouse/pen position over the sheet [x, y], or null when it is elsewhere
   let spaceDown = false;
@@ -142,9 +172,12 @@ function init(root) {
     if (UNITS.some(([u]) => u === v.unit)) out.unit = v.unit;
     else out.unit = defaultUnit('length', { offer: UNITS.map(([u]) => u), fallback: out.unit });   // 0.7 UNITS: the starred unit (ids as in the shared table)
     if (v.posUnit === 'in' || v.posUnit === 'mm') out.posUnit = v.posUnit;
+    if (Object.hasOwn(CONTRAST, v.contrast)) out.contrast = v.contrast;
+    if (v.pageMode === 'scroll' || v.pageMode === 'tabs') out.pageMode = v.pageMode;
     if (!out.styles || typeof out.styles !== 'object') out.styles = {};
     return out;
   })();
+  applyContrast();
   // Your name on markups (0.5 SI.9): signed in, it is your account's (host.account(), wired after Settings below) with no
   // dialog; a name typed here (Settings, or the name dialog) wins until it is cleared. Signed out: the dialog, as before.
   let typedAuthor = String(lsGet(LS.author, '') || '');
@@ -157,13 +190,13 @@ function init(root) {
   const filters = { sheet: '', author: '', status: '', type: '', layer: '', space: '', field: '' };
 
   const saveSettings = () => lsSet(LS.settings, { styles: settings.styles, stamp: settings.stamp, countLabel: settings.countLabel,
-    markColor: settings.markColor, weight: settings.weight, pasteAt: settings.pasteAt, unit: settings.unit, posUnit: settings.posUnit });
+    markColor: settings.markColor, weight: settings.weight, pasteAt: settings.pasteAt, unit: settings.unit, posUnit: settings.posUnit, contrast: settings.contrast, pageMode: settings.pageMode });
   let afterCalibrate = 'measure';
 
   // the menu styles (0.5 IP.3, input-markupcraft.js + the shell's app-input-ui.js): messages to the status bar; letters stay
   // the text box's while a markup's text is being typed
   window.ccInputHooks = { status: (text) => status(text || ''), busy: () => !!editing };
-  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t), status: (s) => status(s) };
+  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t), status: (s) => status(s), get pointer() { return pointer; }, stage: ui.stage, boundsOfMarkup: (m) => boundsOf(m, envOf(m)), boundsOfId: (id) => { const m = store.get(id); return m ? boundsOf(m, envOf(m)) : null; }, refreshList: () => renderList() };
 
   // ---- helpers ----
   const curSheet = () => sheets[cur] || null;
@@ -200,6 +233,8 @@ function init(root) {
     if (libs) return libs;
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = root.dataset.pdfWorker;
+    // the picture-painting operators: view.checkImages finds pictures pdf.js could not decode (0.7.1, blank-page reports)
+    view.imageOps = new Set([pdfjs.OPS.paintImageXObject, pdfjs.OPS.paintImageMaskXObject, pdfjs.OPS.paintImageXObjectRepeat, pdfjs.OPS.paintImageMaskXObjectRepeat].filter(Number.isFinite));
     libs = {
       pdfjs,
       pdfLib: null,
@@ -276,8 +311,18 @@ function init(root) {
   // ---- files ----
   ui.file.addEventListener('change', () => { const list = [...ui.file.files]; ui.file.value = ''; if (list.length) openFiles(list); });
 
+  /** A project bundle in the list becomes the PDF sheets it holds (the shared reader, ./bundle/plan.js); the history line says how many. */
+  async function unbundle(list) {
+    if (!list.some((f) => /\.ccbundle$|ccbundle\.zip$/i.test(f.name || ''))) return list;
+    const { expandBundles } = await import('./bundle/plan.js');
+    const r = await expandBundles(list, 'markupcraft', { prefer: ['pdf'] });
+    for (const n of r.notes) status(n.code === 'bundle' ? t('bundle.sheets', { file: n.file, n: n.n }) : n.code === 'empty' ? t('bundle.nosheets', { file: n.file }) : t('bundle.failed', { file: n.file, why: n.why }));
+    return r.files;
+  }
+
   /** opts (Studio Live, live.js): ids = the host's file ids, in order; keepMarkups = the markups came with the session. */
   async function openFiles(list, opts = {}) {
+    list = await unbundle(list);   // 0.8 BIM-BUNDLE-OPEN: a project bundle opens as its layout sheets
     const pdfs = list.filter((f) => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
     const skipped = list.length - pdfs.length;
     if (!pdfs.length) { status(list[0]?.name ? t('open.not_pdf.named', { file: list[0].name }) : t('open.not_pdf')); return; }
@@ -285,7 +330,7 @@ function init(root) {
     await frame();
     try { await loadLibs(); } catch (e) { busy(''); status(t('open.load_failed', { error: e.message })); return; }
     const errors = [];
-    let opened = 0, read = 0, firstNew = sheets.length;
+    let opened = 0, read = 0, fields = 0, firstNew = sheets.length;
     for (const f of pdfs) {
       busy(t('open.opening', { file: f.name }));
       await frame();
@@ -302,6 +347,8 @@ function init(root) {
         if (opts.keepMarkups) store.load([], {}, {}, rec.layers, rec.columns);
         else store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
         fieldUi?.loadFrom(rec);
+        if (rec.shell && !shellData.calcs && !shellData.reasons) { shellData.calcs = rec.shell.calcs || null; shellData.reasons = rec.shell.reasons || null; shellOpened = true; }
+        fields += (await formUi?.prepare(rec)) || 0;
         read += rec.markups.length;
         opened++;
         for (const n of rec.notes) errors.push(t('open.note', { file: f.name, note: n }));
@@ -311,15 +358,18 @@ function init(root) {
     }
     rebuildSheets();
     busy('');
+    if (shellOpened) { shellOpened = false; shellMount?.filesOpened(); }
     if (opened && cur < 0) await goTo(firstNew);
     else if (opened) await goTo(firstNew);
     const parts = [];
     if (opened) parts.push(t('open.done', { n: opened, sheets: t('open.done.sheets', { n: sheets.length }) }));
     if (read) parts.push(t(opened === 1 ? 'open.read.one_file' : 'open.read', { n: read }));
+    if (fields) parts.push(t('form.found', { n: fields }));
     if (skipped) parts.push(t('open.skipped', { n: skipped }));
     status(parts.join(' '));
     if (errors.length) await ask(t('open.failed.title'), errors.join('\n'), [['cancel', t('dlg.ok'), 'btn-plot']]);
     refreshAll();
+    if (opened && files.length > 1 && autoCloseOn()) { try { const r = await checkAllTasks(); if (r.closed.length) status(t('tasks.auto.closed', { n: r.closed.length })); } catch { /* the Check now button says why */ } }   // EG.64: a newer revision closes the tasks it answers
     return opened;
   }
 
@@ -332,6 +382,7 @@ function init(root) {
     }
     stopCompare();
     cancelOps();
+    formUi?.forget();
     for (const f of files) { f.auto?.close(); baseUi.forget(f); await closePdf(f.doc); }
     files.length = 0;
     store.dropSheets('');
@@ -370,7 +421,7 @@ function init(root) {
       busy(t('save.saving', { file: f.name }));
       await frame();
       try {
-        const { bytes, report } = await bake(f, lib);
+        const { bytes, report } = await bake(f, lib, { burn: true });
         const name = f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') + ' (marked up).pdf';   // i18n-ignore: the copy's file name suffix, matched when reopened
         let shown = name;
         if (host.kind === 'desktop') {
@@ -380,7 +431,7 @@ function init(root) {
           f.saveTarget = r.target; shown = r.name || name;
         } else download(bytes, name, 'application/pdf');
         for (const k of [...store.dirtySheets]) if (k.startsWith(f.id + ':')) store.dirtySheets.delete(k);
-        done.push(t('save.file', { file: shown, markups: t('save.markups', { n: report.written }), size: fmtBytes(bytes.length) }) + (report.missing ? t('save.missing', { n: report.missing }) : ''));
+        done.push(t('save.file', { file: shown, markups: t('save.markups', { n: report.written }), size: fmtBytes(bytes.length) }) + (report.missing ? t('save.missing', { n: report.missing }) : '') + (report.flattened ? t('save.flattened', { n: report.flattened }) : '') + (report.ocr ? t('save.ocr', { n: report.ocr }) : '') + (report.formFilled ? t('save.form', { n: report.formFilled }) : '') + (report.formFailed?.length ? t('save.form_failed', { list: report.formFailed.slice(0, 5).join(', ') }) : ''));
       } catch (e) {
         busy('');
         await ask(t('save.failed', { file: f.name }), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
@@ -395,8 +446,14 @@ function init(root) {
   /**
    * A file's markups written into its bytes — the marked-up copy Save downloads. `flatten` ('all' | Set of ids) draws those
    * markups into the pages instead; `rot` (page index → degrees) turns the text of that page's markups to read upright.
+   * `burn` (Save, extract): markups marked "Flatten into the page when saved" (0.7.1 71.7) are drawn in too; page
+   * operations leave it off, so they stay markups while the file is open.
    */
-  async function bake(f, lib, { flatten = null, rot = null, remap = null } = {}) {
+  async function bake(f, lib, { flatten = null, rot = null, remap = null, burn = false } = {}) {
+    if (burn && flatten !== 'all') {
+      const marked = f.pages.flatMap((pg) => store.onSheet(pg.key)).filter((m) => m.flat && !m.locked && m.type !== 'foreign').map((m) => m.id);
+      if (marked.length) flatten = new Set([...(flatten || []), ...marked]);
+    }
     const src = await baseUi.bytesFor(f);   // the working copy when the page's own content was edited (0.6 DF.14)
     const pages = f.pages.map((pg) => ({ index: pg.index,
       markups: store.onSheet(pg.key).map((m) => (rot?.has(pg.index) && !m.locked ? { ...m, rot: rot.get(pg.index) } : m)),
@@ -405,7 +462,17 @@ function init(root) {
     const renamed = f.pages.some((pg) => store.sheetNames.get(pg.key)?.number);
     const labels = renamed ? f.pages.map((pg) => store.sheetNames.get(pg.key)?.number || pg.label || String(pg.index + 1)) : null;
     const linkPage = (link) => { const s = linkTarget(link, sheetList()); return s && s.file === f ? s.page.index : null; };
-    return writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, records: fieldUi?.packFor(f, remap) ?? null });
+    const out = await writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, records: fieldUi?.packFor(f, remap) ?? null, shell: shellPack(),
+      ocr: [...(f.ocr || [])].filter(([, o]) => o.pdf).map(([index, o]) => ({ index, pdf: o.pdf, matrix: o.matrix })) });
+    return fillFormInto(lib, f, out, flatten === 'all');
+  }
+  /** The values typed into the file's form (form-ui.js) written into its fields; `flat` (print, the flattened copy) draws the form into the pages. */
+  async function fillFormInto(lib, f, out, flat) {
+    const edits = f.formEdits || new Map();
+    if (!f.form || (!edits.size && !flat)) return out;
+    const r = await fillForm(lib, out.bytes, edits, { flatten: flat });
+    out.report.formFilled = r.filled; out.report.formFailed = r.failed;
+    return { ...out, bytes: r.bytes };
   }
   /** Sheets as link.js wants them (their place in the list = newest last). */
   const sheetList = () => sheets.map((s) => ({ key: s.page.key, sheetNo: s.page.sheetNo, title: s.page.title, file: s.file, page: s.page }));
@@ -546,6 +613,7 @@ function init(root) {
     files[at] = rec;
     store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
     fieldUi?.loadFrom(rec);
+    await formUi?.prepare(rec);   // the values typed so far were written into the copy (bake)
     for (const pg of rec.pages) store.dirtySheets.add(pg.key);
     baseUi.forget(f);
     await closePdf(f.doc);
@@ -564,7 +632,7 @@ function init(root) {
     await frame();
     try {
       const lib = await pdfLib();
-      const { bytes: baked } = await bake(f, lib);
+      const { bytes: baked } = await bake(f, lib, { burn: true });
       const out = await extractPages(lib, baked, idx);
       const name = t('pages.extract.file', { name: f.name.replace(/\.pdf$/i, ''), pages: rangeText(idx) }) + '.pdf';
       dl(out, name, 'application/pdf');
@@ -711,7 +779,10 @@ function init(root) {
   async function sheetText(s) {
     if (textCache.has(s.page.key)) return textCache.get(s.page.key);
     let idx = { text: '', spans: [] };
-    try { idx = textIndex((await (await s.file.doc.getPage(s.page.index + 1)).getTextContent()).items); } catch { /* closed meanwhile */ }
+    // a scan read by OCR (0.7.1 71.10): its words until the file is saved (then they are the PDF's own text)
+    const ocr = s.file.ocr?.get(s.page.index);
+    if (ocr) idx = textIndex(ocr.items);
+    else try { idx = textIndex((await (await s.file.doc.getPage(s.page.index + 1)).getTextContent()).items); } catch { /* closed meanwhile */ }
     textCache.set(s.page.key, idx);
     return idx;
   }
@@ -750,6 +821,8 @@ function init(root) {
     if (blank) parts.push(t('find.no_text', { n: blank }));
     if (found.hits.length >= 2000) parts.push(t('find.capped', { n: found.hits.length }));
     findUi.count.textContent = parts.join(' ');
+    // scans have no text: offer to read it (0.7.1 71.10)
+    if (blank) findUi.count.append(' ', el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { act: 'ocr' } }, t('find.ocr')));
     findUi.list.replaceChildren(...found.hits.slice(0, 500).map((h, i) => {
       const sh = sheetByKey(h.key);
       return el('li', {}, el('button', { type: 'button', dataset: { hit: String(i) }, 'aria-current': i === found.at ? 'true' : 'false' },
@@ -844,7 +917,7 @@ function init(root) {
     try {
       const lib = await pdfLib();
       busy(t('save.saving', { file: f.name }));
-      const { bytes, report } = await bake(f, lib, { flatten: which });
+      const { bytes, report } = await bake(f, lib, { flatten: which, burn: true });
       const name = t('flat.file', { name: f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') }) + '.pdf';
       dl(bytes, name, 'application/pdf');
       status(t('flat.done', { file: name, n: report.flattened }) + (report.written ? ' ' + t('flat.kept', { n: report.written }) : ''));
@@ -931,7 +1004,7 @@ function init(root) {
   // The stamp tool's list ends with "Picture…" (a PNG or JPEG from this computer) and "My signature…" (drawn in a dialog);
   // the chosen one is kept in this browser and placed like a stamp: click, or drag a box. The markup is type 'image'.
   const PIC = '\u0001picture', SIG = '\u0001signature';
-  const LS_PIC = 'markupcraft.picture', LS_SIG = 'markupcraft.signature';
+  const LS_PIC = 'markupcraft.picture', LS_SIG = 'markupcraft.signature', LS_SIGS = 'markupcraft.signatures';
   const isPic = (v) => v === PIC || v === SIG;
   function currentPicture() {
     const v = settings.stamp === PIC ? lsGet(LS_PIC, null) : settings.stamp === SIG ? lsGet(LS_SIG, null) : null;
@@ -941,24 +1014,112 @@ function init(root) {
   let picPick = null;
   ui.imageFile?.addEventListener('change', () => { const f = ui.imageFile.files[0]; ui.imageFile.value = ''; const r = picPick; picPick = null; r?.(f || null); });
   ui.imageFile?.addEventListener('cancel', () => { const r = picPick; picPick = null; r?.(null); });
-  /** A picked file → a PNG or JPEG data URL, at most 1600 px on its longer side ('' when it is not a picture). */
-  async function pictureFrom(file) {
-    const url = URL.createObjectURL(file);
-    try {
-      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
-      const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
-      const c = el('canvas', { width: Math.max(1, Math.round(img.naturalWidth * k)), height: Math.max(1, Math.round(img.naturalHeight * k)) });
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      return cleanImage(c.toDataURL(/jpe?g/i.test(file.type || file.name) ? 'image/jpeg' : 'image/png', 0.9));
-    } catch { return ''; } finally { URL.revokeObjectURL(url); }
+  /**
+   * A picked file → a PNG or JPEG data URL, at most 1600 px on its longer side ('' when it is not a picture we take).
+   * 0.7.1 71.7: an SVG is drawn at that size (an <img> runs none of its scripts), a PDF page through pdf.js; both become a
+   * PNG that keeps what is see-through. opts.page (1-based) picks the PDF page; opts.paper makes white paper see-through.
+   */
+  async function pictureFrom(file, { page = 1, paper = false } = {}) {
+    const kind = pictureKind(file.name, file.type);
+    if (!kind) return '';
+    let c;
+    if (kind === 'pdf') {
+      let doc = null;
+      try {
+        await loadLibs();
+        doc = await libs.pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, enableScripting: false, ...libs.docOptions }).promise;
+        const pg = await doc.getPage(Math.max(1, Math.min(doc.numPages, page)));
+        const v1 = pg.getViewport({ scale: 1 });
+        const vp = pg.getViewport({ scale: Math.min(1600 / Math.max(v1.width, v1.height), 8) });
+        c = el('canvas', { width: Math.max(1, Math.round(vp.width)), height: Math.max(1, Math.round(vp.height)) });
+        await pg.render({ canvasContext: c.getContext('2d'), viewport: vp, background: 'rgba(0,0,0,0)', annotationMode: 0 }).promise;
+      } catch { return ''; } finally { doc?.destroy?.(); }
+    } else {
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+        const w0 = img.naturalWidth || 1024, h0 = img.naturalHeight || 1024;   // an SVG without a size
+        const k = kind === 'svg' ? 1600 / Math.max(w0, h0) : Math.min(1, 1600 / Math.max(w0, h0));
+        c = el('canvas', { width: Math.max(1, Math.round(w0 * k)), height: Math.max(1, Math.round(h0 * k)) });
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      } catch { return ''; } finally { URL.revokeObjectURL(url); }
+    }
+    if (paper) c = paperless(c);
+    if (!c) return '';
+    return cleanImage(c.toDataURL(kind === 'jpeg' && !paper ? 'image/jpeg' : 'image/png', 0.9));
   }
-  async function choosePicture() {
-    const f = await new Promise((done) => { picPick = done; ui.imageFile.click(); });
-    if (!f) return false;
+  /** White paper → see-through, trimmed to the ink (a signature on paper, 71.8). null when nothing is left. */
+  function paperless(c) {
+    const g = c.getContext('2d');
+    const d = g.getImageData(0, 0, c.width, c.height);
+    clearPaper(d.data);
+    const b = inkBox(d.data, c.width, c.height);
+    if (!b) return null;
+    g.putImageData(d, 0, 0);
+    const pad = 4, x0 = Math.max(0, b[0] - pad), y0 = Math.max(0, b[1] - pad), x1 = Math.min(c.width, b[2] + pad), y1 = Math.min(c.height, b[3] + pad);
+    const out = el('canvas', { width: x1 - x0, height: y1 - y0 });
+    out.getContext('2d').drawImage(c, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+    return out;
+  }
+  const PICTURE_TYPES = [{ description: 'PNG, JPEG, SVG, PDF', extensions: ['.png', '.jpg', '.jpeg', '.svg', '.pdf'] }];   // i18n-ignore (file type names)
+  /** Ask for a picture file: the desktop app's own dialog, as File › Open does; the browser's file input otherwise. */
+  async function pickPictureFile() {
+    if (host.kind === 'desktop') {
+      const [hf] = await host.openFile({ types: PICTURE_TYPES }).catch(() => []);
+      if (!hf) return null;
+      for (const e of await host.recent.list()) if (e.path && e.path === hf.path) host.recent.remove(e);   // a picture is not a recent drawing
+      try { const b = await hf.file(); return b instanceof File ? b : new File([b], hf.name, { type: '' }); } catch { return null; }
+    }
+    return new Promise((done) => { picPick = done; ui.imageFile.click(); });
+  }
+  /** A PDF with more than one page: which one becomes the picture (1-based), or null when cancelled. */
+  async function askPdfPage(file) {
+    let n = 1;
+    try { await loadLibs(); const d = await libs.pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, enableScripting: false, ...libs.docOptions }).promise; n = d.numPages; d.destroy?.(); } catch { return 1; }
+    if (n <= 1) return 1;
+    const input = el('input', { type: 'number', id: 'mc-dlg-page', className: 'mc-input mc-num', min: '1', max: String(n), step: '1', value: '1' });
+    const r = await dialog({ title: t('pic.page.title'), text: t('pic.page.text', { file: file.name, n }), body: [el('label', { className: 'mc-k', for: 'mc-dlg-page' }, t('pic.page.label')), input],
+      buttons: [['cancel', t('dlg.cancel')], ['ok', t('dlg.ok'), 'btn-plot']], submit: 'ok', check: () => (+input.value >= 1 && +input.value <= n ? '' : t('pic.page.need', { n })) });
+    return r.key === 'ok' ? Math.round(+input.value) : null;
+  }
+  /** A file → {src, name} for a picture markup or stamp, or null (said why). */
+  async function pictureOf(f, opts = {}) {
+    if (!pictureKind(f.name, f.type)) { status(t('image.bad', { file: f.name })); return null; }
+    const page = pictureKind(f.name, f.type) === 'pdf' ? await askPdfPage(f) : 1;
+    if (!page) return null;
     status(t('image.loading'));
-    const src = /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name) ? await pictureFrom(f) : '';
-    if (!src) { status(t('image.bad', { file: f.name })); return false; }
-    const name = f.name.replace(/\.[^.]+$/, '').slice(0, 60);
+    const src = await pictureFrom(f, { page, ...opts });
+    if (!src) { status(t('image.bad', { file: f.name })); return null; }
+    return { src, name: f.name.replace(/\.[^.]+$/, '').slice(0, 60) };
+  }
+  /**
+   * Insert › A picture from a file (0.7.1 71.7): a picture markup at `at` (screen point; else the middle of the view),
+   * at most 3 in, selected. It stays a markup; "Flatten into the page when saved" burns it into the page on Save.
+   */
+  async function insertPicture(file = null, at = null) {
+    const s = curSheet();
+    if (!s) { status(t('need.pdf')); return false; }
+    commitEdit(); cancelOps();
+    const f = file || await pickPictureFile();
+    if (!f) return false;
+    const pic = await pictureOf(f);
+    const info = pic ? imageInfo(pic.src) : null;
+    if (!info) return false;
+    if (!author && !askedAuthor) await askAuthor();
+    if (tool !== 'select') setTool('select');
+    const center = at ? view.toUser(at[0], at[1]) : view.toUser(view.w / 2, view.h / 2);
+    const [w, h] = fitBox(info.width, info.height, 216, 216);
+    commitNew(newMarkup('image', { rect: placeRect(center, w, h, view.seenRotate), img: pic.src, label: pic.name || TYPES.image.name, subject: TYPES.image.subject }), t('pic.insert.undo'));
+    status(t('pic.insert.done', { name: pic.name }));
+    return true;
+  }
+  window.markupcraft.insertPicture = insertPicture;   // tests
+  async function choosePicture() {
+    const f = await pickPictureFile();
+    if (!f) return false;
+    const pic = await pictureOf(f);
+    if (!pic) return false;
+    const { src, name } = pic;
     if (!lsSet(LS_PIC, { src, name })) { status(t('image.too_big')); return false; }
     settings.stamp = PIC; saveSettings();
     status(t('image.ready', { name }));
@@ -980,17 +1141,53 @@ function init(root) {
     c.addEventListener('pointerup', up); c.addEventListener('pointercancel', up);
     const clear = el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => { g.clearRect(0, 0, W, H); ink = null; } }, t('image.signature.clear'));
     const r = await dialog({ title: t('image.signature.title'), text: t('image.signature.text'), body: [c, el('div', { className: 'mc-actions' }, clear)], wide: true,
-      buttons: [['cancel', t('dlg.cancel')], ['ok', t('image.signature.ok'), 'btn-plot']], submit: 'ok', check: () => (ink ? '' : t('image.signature.need')) });
+      buttons: [['cancel', t('dlg.cancel')], ['file', t('image.signature.upload')], ['ok', t('image.signature.ok'), 'btn-plot']], submit: 'ok', check: (key) => (key !== 'ok' || ink ? '' : t('image.signature.need')) });
+    if (r.key === 'file') return uploadSignature();
     if (r.key !== 'ok' || !ink) return false;
     const pad = 6, x0 = Math.max(0, ink[0] - pad), y0 = Math.max(0, ink[1] - pad), x1 = Math.min(W, ink[2] + pad), y1 = Math.min(H, ink[3] + pad);
     const out = el('canvas', { width: Math.round((x1 - x0) * 2), height: Math.round((y1 - y0) * 2) });
     out.getContext('2d').drawImage(c, x0 * 2, y0 * 2, out.width, out.height, 0, 0, out.width, out.height);
     const src = cleanImage(out.toDataURL('image/png'));
-    if (!src || !lsSet(LS_SIG, { src })) return false;
+    return src ? keepSignature(src, t('image.signature.drawn')) : false;
+  }
+  // ---- the signature list (0.7.1 71.8): drawn or from a file, kept in this browser, one of them in use ----
+  function signatures() {
+    const list = cleanSignatures(lsGet(LS_SIGS, null));
+    const one = lsGet(LS_SIG, null);
+    if (!list.length && one && cleanImage(one.src)) list.push({ id: 'sig-1', src: one.src, name: t('image.signature.label'), at: '' });   // kept before 0.7.1
+    return list;
+  }
+  /** Add a signature to the list (newest first) and use it. */
+  function keepSignature(src, name) {
+    const list = [{ id: 'sig-' + Date.now().toString(36), src, name, at: nowIso() }, ...signatures().filter((x) => x.src !== src)].slice(0, MAX_SIGNATURES);
+    if (!lsSet(LS_SIGS, list) || !lsSet(LS_SIG, { src })) { status(t('image.too_big')); return false; }
     settings.stamp = SIG; saveSettings();
     status(t('image.signature.ready'));
     return true;
   }
+  function useSignature(sig) { if (!lsSet(LS_SIG, { src: sig.src })) return; settings.stamp = SIG; toolPreset = null; saveSettings(); status(t('image.signature.ready')); renderProps(); }
+  function dropSignature(sig) {
+    const list = signatures().filter((x) => x.id !== sig.id);
+    lsSet(LS_SIGS, list);
+    if (lsGet(LS_SIG, null)?.src === sig.src) { if (list[0]) lsSet(LS_SIG, { src: list[0].src }); else { try { localStorage.removeItem(LS_SIG); } catch { /* gone */ } if (settings.stamp === SIG) { settings.stamp = STAMPS[0]; saveSettings(); } } }
+    status(t('image.signature.removed'));
+    renderProps();
+  }
+  /** A signature from a file (71.8): a scan or photo on paper, or a PNG that is already see-through. */
+  async function uploadSignature() {
+    const f = await pickPictureFile();
+    if (!f) return false;
+    const kind = pictureKind(f.name, f.type);
+    let clear = kind !== 'png' && kind !== 'svg';   // a JPEG or PDF page is almost always ink on white paper
+    if (kind === 'png' || kind === 'svg') {
+      const k = await ask(t('image.signature.paper.title'), t('image.signature.paper.text'), [['keep', t('image.signature.paper.keep')], ['clear', t('image.signature.paper.clear'), 'btn-plot']]);
+      if (k !== 'keep' && k !== 'clear') return false;
+      clear = k === 'clear';
+    }
+    const pic = await pictureOf(f, { paper: clear });
+    return pic ? keepSignature(pic.src, pic.name || t('image.signature.label')) : false;
+  }
+  window.markupcraft.uploadSignature = uploadSignature;   // tests
   ui.photoFile = $('[data-photo-file]');
   ui.photoFile?.addEventListener('change', () => { const f = ui.photoFile.files[0]; ui.photoFile.value = ''; const r = picPick; picPick = null; r?.(f || null); });
   ui.photoFile?.addEventListener('cancel', () => { const r = picPick; picPick = null; r?.(null); });
@@ -1096,6 +1293,12 @@ function init(root) {
 
   async function goTo(i, { keepSelection = false } = {}) {
     if (i < 0 || i >= sheets.length) return;
+    // Scroll mode: a page of the file already in the column is scrolled to (view.onActivate makes it the open sheet)
+    if (view.strip && !cmp.on && sheets[i].file === curSheet()?.file) {
+      commitEdit();
+      cancelOps();
+      if (await view.stripGo(sheets[i].page.index)) { if (cur !== i) view.onActivate?.(sheets[i].page); return; }
+    }
     commitEdit();
     cancelOps();
     if (cmp.on && sheets[i].page.key !== cmp.newKey) stopCompare();
@@ -1108,8 +1311,10 @@ function init(root) {
     if (cur !== i) return;
     const vs = viewStates.get(s.page.key);
     const p = view.setPage(s.page, proxy, { keepView: !!vs, extraRot: vs?.extraRot || 0 });
+    if (window.markupcraftProblems?.state.render[s.page.key]) { delete window.markupcraftProblems.state.render[s.page.key]; problemsPush(); }   // drawn again: the next failure, if any, comes from onFail
     if (vs) { view.z = vs.z; view.ox = vs.ox; view.oy = vs.oy; view.update(); }
     await p;
+    applyStrip();
     renderNav();
     renderBookmarks();
     markCurrentSheet();
@@ -1125,7 +1330,48 @@ function init(root) {
     renderZoom();
   }
   function renderZoom() { if (document.activeElement !== ui.zoom) ui.zoom.value = view.page ? Math.round(view.percent) + '%' : '100%'; }
-  view.onView = () => { renderZoom(); positionEditor(); };
+  view.onView = () => { renderZoom(); positionEditor(); formUi?.position(); };
+
+  // ---- Scroll mode (0.8): the open file's pages in one column; Tabs = one page at a time, as before ----
+  const scrollMode = () => settings.pageMode === 'scroll';
+  /** The column for the open sheet's file (Scroll mode), or none. */
+  function applyStrip() {
+    const s = curSheet();
+    if (!s || !scrollMode() || cmp.on || s.file.pages.length < 2) { if (view.strip) view.setStrip(null); return; }
+    if (view.strip && view.strip.items[view.strip.at]?.page === s.page && view.strip.items[0]?.page === s.file.pages[0]) return;
+    const f = s.file;
+    view.setStrip(f.pages.map((page) => ({ page, load: () => f.doc.getPage(page.index + 1) })), s.page.index);
+  }
+  function setPageMode(mode) {
+    settings.pageMode = mode === 'scroll' ? 'scroll' : 'tabs';
+    saveSettings();
+    showPageMode();
+    applyStrip();
+    status(t(scrollMode() ? 'pagemode.scroll.on' : 'pagemode.tabs.on'));
+    wsSoon();
+  }
+  function showPageMode() {
+    for (const b of findAll('[data-act="page-mode"]')) {
+      b.setAttribute('aria-pressed', String(scrollMode()));
+      b.title = t(scrollMode() ? 'nav.page_mode.scroll.title' : 'nav.page_mode.tabs.title');
+    }
+  }
+  // the page in the middle of the stage (or the one pressed on) is the open sheet: tools, the panels and the sheets list follow it
+  view.onActivate = (page) => {
+    const i = sheets.findIndex((s) => s.page === page);
+    if (i < 0 || i === cur) return;
+    cur = i;
+    sel = new Set(); hoverId = null;
+    renderNav(); markCurrentSheet(); renderBookmarks(); refreshAll(); formUi?.render();
+  };
+  view.lockActive = () => !!drag || !!pending || !!editing || cmp.on;
+  view.onBaseOther = (ctx, v, page, S) => {
+    for (const m of store.onSheet(page.key)) { if (m.type === 'foreign' || !store.shown(m)) continue; v.paint(ctx, displayOf(m, envOf(m)).list, { S }); }
+    formUi?.paint(ctx, page, S);
+  };
+  // a page pdf.js could not draw says so on the sheet and in the status line, never a silent blank (0.7.1, blank-page reports)
+  view.onNotice = (kind, f) => (kind !== 'failed' ? t('render.drawing') : f?.kind === 'image' ? t('render.image_failed.sheet', { n: f.n, total: f.total }) : t('render.failed.sheet', { reason: (f?.message || '').slice(0, 120) }));
+  view.onFail = (f) => { const st = window.markupcraftProblems?.state; if (st && curKey()) { st.render[curKey()] = { kind: f?.kind, n: f?.n, total: f?.total, message: String(f?.message || '').slice(0, 200) }; problemsPush(); } status(f?.kind === 'image' ? t('render.image_failed', { sheet: curSheet()?.page.title || '', n: f.n }) : t('render.failed', { sheet: curSheet()?.page.title || '', reason: f?.message || '' })); };
 
   // thumbnails: rendered when they scroll into view, one at a time
   const thumbQueue = [];
@@ -1150,6 +1396,11 @@ function init(root) {
     thumbBusy = false;
   }
 
+  /** A sheet's thumbnail drawn again (a form value on it changed). */
+  function redrawThumb(key) {
+    const c = [...ui.sheets.querySelectorAll('canvas.mc-thumb')].find((x) => x.dataset.key === key);
+    if (c) { thumbQueue.push(c); pumpThumbs(); }
+  }
   function renderSheets() {
     const q = ui.sheetSearch.value.trim().toLowerCase();
     ui.sheets.replaceChildren();
@@ -1222,9 +1473,13 @@ function init(root) {
       name = 'calibrate';
     }
     if (tool === 'content' && name !== 'content') baseUi.leave();
+    if (tool === 'seltext' && name !== 'seltext') textSel?.leave();
+    if (tool === 'areacopy' && name !== 'areacopy') areaUi?.leave();
+    if (lineUp && name !== 'select') { lineUp = null; view.invalidate(); }
     if (name !== 'record') fieldUi?.cancelPlace();
     tool = name;
     toolPreset = preset;
+    formUi?.render();   // the form's inputs show while Fill form is on
     for (const b of root.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === name));
     updateCursor();
     wsSoon();
@@ -1241,13 +1496,17 @@ function init(root) {
     else if (name === 'count') status(t('hint.count'));
     if (name === 'area') status(t('hint.area'));
     if (name === 'content') { sel = new Set(); baseUi.enter(); renderProps(); view.invalidate(true); }
+    if (name === 'seltext') { sel = new Set(); renderProps(); textSel?.enter(); }
+    if (name === 'areacopy') { sel = new Set(); renderProps(); areaUi?.enter(); }
+    if (name === 'fill') { sel = new Set(); renderProps(); view.invalidate(true); const f = curSheet()?.file; status(f?.form ? t('hint.fill', { n: formUi.countFor(f) }) : t('hint.fill.none')); }
   }
 
   function updateCursor() {
     const c = ui.over;
     if (tool !== 'select' && tool !== 'content') c.style.cursor = '';
-    c.classList.toggle('is-pan', tool === 'pan' || spaceDown);
-    c.classList.toggle('is-draw', DRAW_TOOLS.has(tool) || tool === 'record' || tool === 'calibrate' || !!cmp.aligning);
+    c.classList.toggle('is-pan', tool === 'pan' || tool === 'fill' || spaceDown);
+    c.classList.toggle('is-text', tool === 'seltext' && !spaceDown);
+    c.classList.toggle('is-draw', DRAW_TOOLS.has(tool) || tool === 'record' || tool === 'calibrate' || tool === 'areacopy' || !!lineUp || !!cmp.aligning);
     c.classList.toggle('is-panning', drag?.kind === 'pan');
   }
 
@@ -1297,6 +1556,7 @@ function init(root) {
       case 'close': closeSet(); break;
       case 'print': printSheets(); break;
       case 'print-pages': printSheets(true); break;
+      case 'ocr': ocrUi?.run(); break;
       case 'find-cloud': cloudFound(); break;
       case 'auto-link': autoLink(); break;
       case 'save-flat': saveFlat(); break;
@@ -1306,16 +1566,23 @@ function init(root) {
       case 'undo': undo(); break;
       case 'redo': redo(); break;
       case 'delete': deleteSelection(); break;
+      case 'clean-pen': cleanPenMarkups(); break;
       case 'cut': cutSelection(); break;
       case 'copy': copySelection(); break;
       case 'paste': paste('offset'); break;
       case 'paste-in-place': paste('place'); break;
       case 'paste-picture': pastePictureMenu(); break;
+      case 'insert-picture': insertPicture(); break;
+      case 'save-stamp': if (tool === 'content') { const cc = await baseUi.copy(); if (cc) saveStamp({ content: cc }); } else saveStamp(); break;
       case 'duplicate': duplicate(); break;
       case 'select-all': selectAll(); break;
-      case 'select-none': if (sel.size) { sel = new Set(); refreshSelection(); } break;
+      case 'seltext': setTool('seltext'); break;   // 0.7.1 71.10: Select text (Edit › More)
+      case 'copy-area': setTool('areacopy'); break;   // 0.8 D8.15: Copy area (Edit › More)
+      case 'line-up': startLineUp(); break;   // 0.8 D8.15: a picture or overlay lined up with two points
+      case 'select-none': if (tool === 'content') baseUi.select([]); else if (sel.size) { sel = new Set(); refreshSelection(); } break;
       case 'prev': if (cur > 0) goTo(cur - 1); break;
       case 'next': if (cur < sheets.length - 1) goTo(cur + 1); break;
+      case 'page-mode': setPageMode(scrollMode() ? 'tabs' : 'scroll'); break;
       case 'zoom-in': view.zoomAt(1.25, view.w / 2, view.h / 2); break;
       case 'zoom-out': view.zoomAt(0.8, view.w / 2, view.h / 2); break;
       case 'fit-page': view.fit('page'); break;
@@ -1366,7 +1633,28 @@ function init(root) {
 
   function editable(ids = sel) { return [...ids].map((id) => store.get(id)).filter((m) => m && !m.locked); }
 
+  /** Edit › Clean up pen: the selected pen markups (none selected: every pen markup on this sheet) become precise ones, one undo step. */
+  function cleanPenMarkups() {
+    const chosen = [...sel].map((id) => store.get(id)).filter(Boolean);
+    const pool = chosen.some((m) => m.type === 'pen') ? chosen : store.onSheet(curKey());
+    const r = cleanPens(pool);
+    if (!r.changes.length) { status(t('pen.clean.none')); return; }
+    const made = [];
+    store.change(t('undo.pen.clean', { n: r.changes.length }), (tx) => {
+      for (const c of r.changes) {
+        const old = tx.get(c.id);
+        if (!old) continue;
+        const { id, pts, rect, type, created, modified, ...keep } = old;
+        tx.remove(c.id);
+        made.push(tx.add({ ...keep, ...c.add }).id);
+      }
+    });
+    sel = new Set(made);
+    refreshSelection();
+    status(t('pen.clean.done', { n: made.length }));
+  }
   function deleteSelection() {
+    if (tool === 'content') { baseUi.remove(); return; }
     const list = [...sel].map((id) => store.get(id)).filter(Boolean);
     if (!list.length) { status(t('delete.need')); return; }
     const locked = list.filter((m) => m.locked).length;
@@ -1385,10 +1673,40 @@ function init(root) {
     if (shared && shared.at > clip.at && !(shared.source === clip.source && shared.at === clip.at)) return shared;
     return clip;
   }
-  const hasClip = () => { if (clip) return true; try { return localStorage.getItem(CLIP_KEY) !== null; } catch { return false; } };
-  window.addEventListener('storage', (e) => { if (e.key === CLIP_KEY) refreshToolbar(); });
+  const hasClip = () => { if (clip || contentClip || areaClip) return true; try { return localStorage.getItem(CLIP_KEY) !== null || localStorage.getItem(CONTENT_KEY) !== null || localStorage.getItem(AREA_KEY) !== null; } catch { return false; } };
+  window.addEventListener('storage', (e) => { if (e.key === CLIP_KEY || e.key === CONTENT_KEY || e.key === AREA_KEY) refreshToolbar(); });
+  /** The newest copied area (0.8 D8.15): this tab's, or one another tab or app copied later (checked like a file). */
+  function currentAreaClip() {
+    let shared = null;
+    try { const raw = localStorage.getItem(AREA_KEY); if (raw && !(areaClip && raw.includes('"at":"' + areaClip.at + '"'))) shared = cleanAreaClip(raw); } catch { /* none */ }
+    if (!areaClip) return shared;
+    return shared && shared.at > areaClip.at ? shared : areaClip;
+  }
+  /** The newest copy of page content: this tab's, or another tab's when newer (checked like a file). */
+  function currentContentClip() {
+    let shared = null;
+    try { const raw = localStorage.getItem(CONTENT_KEY); if (raw && !(contentClip && raw.includes('"at":"' + contentClip.at + '"') && raw.includes('"source":"' + contentClip.source + '"'))) shared = cleanContentClip(raw); } catch { /* none */ }
+    if (!contentClip) return shared;
+    return shared && shared.at > contentClip.at ? shared : contentClip;
+  }
+  /** Page content selected with the Content tool → the clipboard (0.7.1 71.6). */
+  async function copyContentSel(verb = 'copy') {
+    const c = await baseUi.copy();
+    if (!c) return false;
+    contentClip = c;
+    pasteRun = { key: '', n: 0 };
+    let shared = false;
+    try { localStorage.setItem(CONTENT_KEY, JSON.stringify(c)); shared = true; } catch { /* too big or a private window: this tab still has it */ }
+    if (verb === 'cut') baseUi.remove();
+    status(t('base.' + verb + '.done' + (shared ? '' : '.local'), { n: c.n }));
+    refreshToolbar();
+    return true;
+  }
 
   function copySelection(verb = 'copy') {
+    if (tool === 'content') { copyContentSel(verb); return true; }
+    if (tool === 'seltext') { textSel?.copy(); return true; }
+    if (tool === 'areacopy') { areaUi?.copy(false); return true; }
     const list = editable();
     if (!list.length) { status(sel.size ? t('clip.' + verb + '.locked') : t('clip.' + verb + '.need')); return false; }
     clip = makeClip(list, { source: TAB, sheet: curKey() });
@@ -1400,6 +1718,7 @@ function init(root) {
     return true;
   }
   function cutSelection() {
+    if (tool === 'content') { copyContentSel('cut'); return; }
     const list = editable();
     if (!copySelection('cut')) return;
     store.change(t('undo.cut', { n: list.length }), (tx) => { for (const m of list) tx.remove(m.id); });
@@ -1415,17 +1734,22 @@ function init(root) {
    * 'offset' (beside the copy: on the sheet it came from a step down and right, a step more each time; on another sheet
    * where it was; if that is out of view, in the middle of the view).
    */
-  function paste(how = 'offset') {
+  function paste(how = 'offset', at = null) {   // at: a stage point for 'pointer' (the context menu's "Paste here")
     const s = curSheet();
     if (!s) { status(t('need.pdf')); return; }
+    const pt = at || pointer;
     const c = currentClip();
+    const cc = currentContentClip();
+    const ac = currentAreaClip();
+    if (ac && (!c || ac.at > c.at) && (!cc || ac.at > cc.at)) { pasteArea(ac, how, pt); return; }   // an area copied last (0.8 D8.15): a picture at its size
+    if (cc && (!c || cc.at > c.at)) { pasteContentClip(cc, how, pt); return; }   // page content copied last: it pastes as page content
     if (!c) { status(t('paste.empty')); return; }
     commitEdit();
     cancelOps();
     if (tool !== 'select') setTool('select');
     let opts;
     if (how === 'place') opts = { delta: [0, 0] };
-    else if (how === 'pointer' && pointer) opts = { center: view.toUser(pointer[0], pointer[1]) };
+    else if (how === 'pointer' && pt) opts = { center: view.toUser(pt[0], pt[1]) };
     else {
       const key = c.source + '|' + c.at + '|' + s.page.key;
       pasteRun = pasteRun.key === key ? { key, n: pasteRun.n + 1 } : { key, n: 1 };
@@ -1445,6 +1769,118 @@ function init(root) {
     refreshAll();
     status(t('paste.done.' + (how === 'place' || how === 'pointer' ? how : 'offset'), { n: made.length }) + (c.skipped ? ' ' + t('paste.skipped', { n: c.skipped }) : '') + ' ' + t('paste.undo', { n: made.length }));
   }
+  /**
+   * Paste a copied area (0.8 D8.15) as a picture markup at its size: the same size on paper; on a sheet with a scale, when
+   * the area came from one too, the same size in the drawing (a 1:50 area on a 1:100 sheet comes in at half). An overlay
+   * starts at its strength. how as paste(): 'place' = where it was copied, 'pointer', 'offset' = beside / the view's middle.
+   */
+  async function pasteArea(ac, how = 'offset', pt = pointer) {
+    const s = curSheet();
+    if (!s) { status(t('need.pdf')); return false; }
+    commitEdit(); cancelOps();
+    if (!author && !askedAuthor) await askAuthor();
+    if (tool !== 'select') setTool('select');
+    const cal = store.calibrations.get(s.page.key);
+    const k = ac.real && cal ? ac.real.mmPerPx / cal.mmPerPt : ac.ptPerPx;   // points on this sheet per pixel
+    const [w, h] = [ac.px[0] * k, ac.px[1] * k];
+    const key = 'area|' + ac.at + '|' + s.page.key;
+    pasteRun = pasteRun.key === key ? { key, n: pasteRun.n + 1 } : { key, n: 1 };
+    let center;
+    if (how === 'pointer' && pt) center = view.toUser(pt[0], pt[1]);
+    else {
+      const d = screenStep(PASTE_STEP * (pasteRun.n - 1));
+      const m = view.toUser(view.w / 2, view.h / 2);
+      center = [m[0] + d[0], m[1] + d[1]];
+    }
+    const extra = ac.overlay ? { style: { ...styleFor('image'), opacity: ac.overlay.opacity } } : {};
+    commitNew(newMarkup('image', { rect: placeRect(center, w, h, view.seenRotate), img: ac.src, label: ac.label || t('area.label'), subject: TYPES.image.subject }, extra), t(ac.overlay ? 'area.paste.undo.overlay' : 'area.paste.undo'));
+    status(t(ac.overlay ? 'area.paste.done.overlay' : 'area.paste.done') + ' ' + t(ac.real && cal ? 'area.paste.real' : 'area.paste.paper') + ' ' + t('area.paste.lineup'));
+    return true;
+  }
+  window.markupcraft.pasteArea = pasteArea;   // tests
+
+  // ---- Line up a picture with two points (0.8 D8.15): a point on the picture, where it goes; a second point, where it goes ----
+  function startLineUp() {
+    const s = curSheet();
+    const list = editable().filter((m) => m.type === 'image');
+    if (!s || list.length !== 1 || sel.size !== 1) { status(t('lineup.need')); return; }
+    commitEdit(); cancelOps();
+    if (tool !== 'select') setTool('select');
+    lineUp = { id: list[0].id, pts: [], at: null };
+    updateCursor();
+    status(t('lineup.step1'));
+    view.invalidate();
+  }
+  function lineUpClick(p) {
+    if (!lineUp) return;
+    lineUp.pts.push(p);
+    const n = lineUp.pts.length;
+    if (n < 4) { status(t(['lineup.step2', 'lineup.step3', 'lineup.step4'][n - 1])); view.invalidate(); return; }
+    const lu = lineUp;
+    lineUp = null; updateCursor(); view.invalidate();
+    applyLineUp(lu.id, lu.pts).catch((e) => { console.warn(e); status(t('lineup.failed')); });
+  }
+  /** Carry the picture so its two points land on theirs: scaled, moved and, when the turn is more than a hair, turned in its pixels. */
+  async function applyLineUp(id, [a1, b1, a2, b2]) {
+    const m = store.get(id);
+    if (!m || m.type !== 'image') return;
+    const scr = (q) => view.toScreen(q);
+    const fit = fitTwoPoints(scr(a1), scr(a2), scr(b1), scr(b2));
+    if (!fit) { status(t('lineup.same')); return; }
+    const info = imageInfo(m.img);
+    if (!info) return;
+    const [W, H] = [info.width, info.height];
+    const rw = Math.abs(m.rect[2] - m.rect[0]), rh = Math.abs(m.rect[3] - m.rect[1]);
+    const swapped = Math.abs(rw / rh - W / H) > Math.abs(rw / rh - H / W);
+    const k = Math.sqrt((rw * rh) / (W * H)) * fit.scale;   // points per pixel after the line-up
+    const turn = Math.abs(fit.angle) > (0.1 * Math.PI) / 180;
+    let img = m.img, w2 = W, h2 = H;
+    if (turn) {
+      [w2, h2] = turnedSize(W, H, fit.angle).map((v) => Math.max(1, Math.round(v)));
+      const im = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = m.img; });
+      const c = el('canvas', { width: w2, height: h2 });
+      const g = c.getContext('2d');
+      g.translate(w2 / 2, h2 / 2); g.rotate(fit.angle); g.drawImage(im, -W / 2, -H / 2);
+      img = cleanImage(c.toDataURL('image/png'));
+      if (!img) { status(t('lineup.too_big')); return; }
+    }
+    const c0 = scr([(m.rect[0] + m.rect[2]) / 2, (m.rect[1] + m.rect[3]) / 2]);
+    const c1 = fit.map(c0);
+    const center = view.toUser(c1[0], c1[1]);
+    const [ww, hh] = swapped ? [h2 * k, w2 * k] : [w2 * k, h2 * k];
+    const rect = [center[0] - ww / 2, center[1] - hh / 2, center[0] + ww / 2, center[1] + hh / 2];
+    store.change(t('lineup.undo'), (tx) => tx.update(id, { rect, img }));
+    refreshAll();
+    status(t('lineup.done', { pct: Math.round(fit.scale * 100), deg: Math.round((fit.angle * 180 / Math.PI) * 10) / 10 }));
+  }
+  function paintLineUp(ctx) {
+    const pts = [...lineUp.pts, ...(lineUp.at ? [lineUp.at] : [])].map((q) => view.toScreen(q));
+    ctx.save();
+    ctx.strokeStyle = view.colors.action; ctx.fillStyle = view.colors.action; ctx.lineWidth = 1.5;
+    for (let i = 0; i < pts.length; i++) {
+      const [x, y] = pts[i];
+      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); if (i % 2) ctx.fill(); else ctx.stroke();
+      if (i % 2) { const [px, py] = pts[i - 1]; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    ctx.restore();
+  }
+  window.markupcraft.lineUp = (id, pts) => applyLineUp(id, pts);   // tests
+
+  /** Paste page content (0.7.1 71.6): the Content tool comes on, the paste is drawn into the page and selected. */
+  async function pasteContentClip(cc, how, pt = pointer) {
+    const s = curSheet();
+    commitEdit(); cancelOps();
+    if (tool !== 'content') await setTool('content');
+    await baseUi.ready();
+    const key = cc.source + '|' + cc.at + '|' + s.page.key;
+    pasteRun = pasteRun.key === key ? { key, n: pasteRun.n + 1 } : { key, n: 1 };
+    const steps = how === 'offset' ? (cc.source === TAB && cc.sheet === s.page.key ? pasteRun.n : pasteRun.n - 1) : 0;
+    const [dx, dy] = screenStep(PASTE_STEP * steps);
+    const at = how === 'pointer' && pt ? view.toUser(pt[0], pt[1]) : view.toUser(view.w / 2, view.h / 2);
+    const inView = (q) => { const [x, y] = view.toScreen(q); return x >= 0 && y >= 0 && x <= view.w && y <= view.h; };
+    if (baseUi.paste(cc, how, { at, step: [dx, dy], inView })) status(t('base.paste.done.' + (how === 'place' || how === 'pointer' ? how : 'offset'), { n: cc.n }));
+  }
+
   // ---- a picture from the system clipboard (0.6 DF.6, GJoe_tx): placed as a picture markup ----
   let pasteWait = 0, pasteHow = 'offset';
   document.addEventListener('paste', (e) => {
@@ -1462,6 +1898,13 @@ function init(root) {
     if (!s) { status(t('need.pdf')); return false; }
     commitEdit(); cancelOps();
     if (!author && !askedAuthor) await askAuthor();
+    // a picture the Copy area tool put on the clipboard (same size, copied lately): pasted at its size, as an overlay if it was one
+    const ac = currentAreaClip();
+    if (ac) {
+      let wh = null;
+      try { const bm = await createImageBitmap(file); wh = [bm.width, bm.height]; bm.close?.(); } catch { /* not a picture the browser reads */ }
+      if (wh && sameImage(ac, wh[0], wh[1])) { pasteArea(ac, pasteMode(), pointer); return true; }
+    }
     status(t('image.loading'));
     const src = await pictureFrom(file);
     const info = src ? imageInfo(src) : null;
@@ -1488,6 +1931,10 @@ function init(root) {
 
   /** Copies of the selection a step down and right, as one undo step. The clipboard is left as it was. */
   function duplicate() {
+    if (tool === 'content') {   // page content: a copy beside it; the clipboard is left as it was
+      baseUi.copy().then((cc) => { if (cc && baseUi.paste(cc, 'offset', { step: screenStep(PASTE_STEP) })) status(t('base.dup.done', { n: cc.n })); });
+      return;
+    }
     const s = curSheet();
     const list = editable();
     if (!s || !list.length) { status(sel.size ? t('dup.locked') : t('dup.need')); return; }
@@ -1502,6 +1949,8 @@ function init(root) {
   }
   function selectAll() {
     if (!curSheet()) return;
+    if (tool === 'content') { const all = baseUi.objects() || []; baseUi.select(all.map((x) => x.key)); status(t('base.selected', { n: all.length })); return; }
+    if (tool === 'seltext') { textSel?.selectAll(); return; }
     sel = new Set(pickable().map((m) => m.id));
     refreshSelection();
     status(sel.size ? t('select.all', { n: sel.size }) : t('select.all.none'));
@@ -1545,8 +1994,92 @@ function init(root) {
   const over = ui.over;
   const localXY = (e) => { const r = over.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 
-  // a finger held down makes the browser fire contextmenu (and then cancel the pointer): that is our long press too
-  over.addEventListener('contextmenu', (e) => { e.preventDefault(); if (press) { const p0 = press; clearTimeout(p0.timer); longPress(p0.x, p0.y, true); } });
+  // a finger held down makes the browser fire contextmenu (and then cancel the pointer): that is our long press too.
+  // A mouse's right click opens the context menu (0.7.1 71.6) on release when the right button did not pan; the menu key
+  // and Shift+F10 open it at the selection (or the middle of the view).
+  // Without the right-button pan the menu still waits for the release, and a right drag opens nothing (the browser sends
+  // contextmenu on the press on Linux and macOS, on the release on Windows).
+  let rightDown = null;   // { t, x, y, up, moved, want }
+  over.addEventListener('pointermove', (e) => { if (rightDown && !rightDown.up && Math.hypot(e.clientX - rightDown.x, e.clientY - rightDown.y) > 4) rightDown.moved = true; });
+  over.addEventListener('pointerup', (e) => {
+    if (e.button !== 2 || !rightDown || rightDown.up) return;
+    rightDown.up = performance.now();
+    if (rightDown.want) { const r = rightDown; rightDown = null; if (!r.moved && view.page) { const [x, y] = localXY(e); openCtxMenu(x, y); } }
+  });
+  over.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (press) { const p0 = press; clearTimeout(p0.timer); longPress(p0.x, p0.y, true); return; }
+    if (rightDown && (rightDown.up ? performance.now() - rightDown.up < 600 : true)) {   // from the mouse, not the menu key
+      if (panButton(2) || !view.page) { if (rightDown.up) rightDown = null; return; }   // the pan's release opens it (a right click that did not pan)
+      if (!rightDown.up) { rightDown.want = true; return; }
+      const r = rightDown; rightDown = null;
+      if (!r.moved) { const [x, y] = localXY(e); openCtxMenu(x, y); }
+      return;
+    }
+    if (!view.page) return;
+    const b = tool === 'select' && sel.size ? clipBounds([...sel].map((id) => store.get(id)).filter(Boolean)) : null;
+    const [x, y] = b ? view.toScreen([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]) : [view.w / 2, view.h / 2];
+    openCtxMenu(x, y);
+  });
+
+  // ---- the context menu (0.7.1 71.6, MrBorking): the Edit menu's commands where the pointer is ----
+  let ctxMenu = null;
+  function closeCtxMenu() { if (!ctxMenu) return; ctxMenu.remove(); ctxMenu = null; }
+  function openCtxMenu(sx, sy) {
+    closeCtxMenu(); closeMenus();
+    commitEdit();
+    const p = view.toUser(sx, sy);
+    // right-clicking something not selected selects it first (as other programs do)
+    if (tool === 'content') baseUi.pickAt(p);
+    else if (tool === 'select' || DRAW_TOOLS.has(tool)) {
+      const m = pick(pickable(), p, tolerance(), envOf);
+      if (m && !sel.has(m.id)) { if (tool !== 'select') setTool('select'); sel = new Set([m.id]); refreshSelection(); }
+    }
+    const content = tool === 'content';
+    const has = content ? baseUi.selection.length > 0 : editable().length > 0;
+    const marks = content ? [] : editable();
+    const items = [
+      ['cut', 'menu.cut', has, 'Ctrl+X'], ['copy', 'menu.copy', has, 'Ctrl+C'],
+      ['paste-here', 'ctx.paste_here', hasClip(), 'Ctrl+V'], ['paste-in-place', 'menu.paste_in_place', hasClip(), 'Ctrl+Shift+V'],
+      ['duplicate', 'menu.duplicate', has, 'Ctrl+D'], ['delete', 'menu.delete', has, 'Delete'], null,
+      ['save-stamp', 'menu.save_stamp', has, ''],
+      ...(marks.length ? [['flat', marks.every((m) => m.flat) ? 'ctx.flat.off' : 'ctx.flat.on', true, '']] : []),
+      ['insert-picture-here', 'ctx.insert_picture', !!curSheet(), ''], null,
+      ['select-all', 'menu.select_all', !!curSheet(), 'Ctrl+A'],
+    ];   // i18n-ignore (key names)
+    const list = el('div', { className: 'mc-menu-list mc-ctx', role: 'menu', 'aria-label': t('ctx.label'), dataset: { ctxMenu: '' } });
+    for (const it of items) {
+      if (!it) { list.append(el('hr', {})); continue; }
+      const [a, key, on, kbd] = it;
+      list.append(el('button', { type: 'button', role: 'menuitem', disabled: !on, dataset: { ctx: a }, onclick: () => {
+        closeCtxMenu();
+        if (a === 'paste-here') paste('pointer', [sx, sy]);
+        else if (a === 'insert-picture-here') insertPicture(null, [sx, sy]);
+        else if (a === 'flat') setFlat(marks, !marks.every((m) => m.flat));
+        else act(a);
+        over.focus({ preventScroll: true });
+      } }, t(key), kbd ? el('kbd', {}, kbd) : null));
+    }
+    root.append(list);
+    ctxMenu = list;
+    const r = over.getBoundingClientRect(), w = list.offsetWidth, h = list.offsetHeight;
+    list.style.left = Math.max(4, Math.min(innerWidth - w - 4, r.left + sx)) + 'px';
+    list.style.top = Math.max(4, Math.min(innerHeight - h - 4, r.top + sy)) + 'px';
+    list.querySelector('button:not(:disabled)')?.focus();
+    list.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeCtxMenu(); over.focus({ preventScroll: true }); return; }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault(); e.stopPropagation();
+      const bs = [...list.querySelectorAll('button:not(:disabled)')];
+      const i = bs.indexOf(document.activeElement);
+      bs[(i < 0 ? 0 : i + (e.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length]?.focus();
+    });
+  }
+  document.addEventListener('pointerdown', (e) => { if (ctxMenu && !ctxMenu.contains(e.target)) closeCtxMenu(); }, true);
+  window.addEventListener('blur', closeCtxMenu);
+  window.markupcraft.contextMenu = (x, y) => openCtxMenu(x, y);   // tests
+  window.markupcraft.select = (ids) => { sel = new Set(ids); refreshSelection(); };   // tests
+  window.markupcraft.host = host;   // tests (the recent list)
 
   // ---- touch: one finger draws and selects (the handlers below); two fingers pinch-zoom about their
   // middle and pan. Tools that act on a press (count, note, polyline points, the second click of a
@@ -1569,6 +2102,7 @@ function init(root) {
     if (pending?.kind === 'poly') { tap = null; finishPoly(); view.invalidate(); return; }
     if (tool !== 'select') return;
     const m = pick(pickable(), view.toUser(x, y), tolerance(), envOf);
+    if (m && !m.locked && !(TEXT_TYPES.has(m.type) || m.type === 'note')) { drag = null; view.hidden = null; openCtxMenu(x, y); return; }   // 71.6: a finger's context menu
     if (!m || m.locked || !(TEXT_TYPES.has(m.type) || m.type === 'note')) return;
     drag = null; view.hidden = null;
     sel = new Set([m.id]);
@@ -1649,11 +2183,14 @@ function init(root) {
     if (!view.page) return;
     over.focus({ preventScroll: true });
     const [sx, sy] = localXY(e);
+    // Scroll mode: pressing on another page of the column makes it the page you work on
+    if (view.strip && !drag && !pending && !editing && e.button === 0) { const k = view.stripAt(sx, sy); if (k >= 0 && k !== view.strip.at) view.activate(k); }
     const p = view.toUser(sx, sy);
-    if ((e.button === 1 && panButton(1)) || (e.button === 0 && (spaceDown || tool === 'pan')) || (e.button === 2 && !pending && panButton(2))) {   // IP.3: middle / right pan as the style says
+    if (e.button === 2) rightDown = { t: performance.now(), x: e.clientX, y: e.clientY, up: false, moved: false, want: false };
+    if ((e.button === 1 && panButton(1)) || (e.button === 0 && (spaceDown || tool === 'pan' || tool === 'fill')) || (e.button === 2 && !pending && panButton(2))) {   // IP.3: middle / right pan as the style says
       e.preventDefault();
       over.setPointerCapture(e.pointerId);
-      drag = { kind: 'pan', sx, sy };
+      drag = { kind: 'pan', sx, sy, x0: sx, y0: sy, right: e.button === 2 };
       updateCursor();
       return;
     }
@@ -1663,6 +2200,9 @@ function init(root) {
     try { over.setPointerCapture(e.pointerId); } catch { /* a replayed tap: the finger is already up */ }
     if (cmp.aligning) { alignClick(p); return; }
     if (tool === 'content') { baseUi.down(p, sx, sy, e); view.invalidate(); return; }
+    if (tool === 'seltext') { textSel?.down(p); return; }
+    if (lineUp) { lineUpClick(p); return; }
+    if (tool === 'areacopy') { areaUi?.down(p, sx, sy); return; }
     if (tool === 'record') { fieldUi?.place(p); view.invalidate(true); return; }
     const kind = tool === 'select' ? 'select' : KIND[tool];
     switch (kind) {
@@ -1707,6 +2247,9 @@ function init(root) {
     showCoords(p);
     if (drag?.kind === 'pan') { view.panBy(sx - drag.sx, sy - drag.sy); drag.sx = sx; drag.sy = sy; return; }
     if (tool === 'content' && !drag) { if (!baseUi.move(p, sx, sy, e)) baseUi.hover(p); return; }
+    if (tool === 'seltext' && !drag) { textSel?.move(p); return; }
+    if (tool === 'areacopy' && !drag) { areaUi?.move(sx, sy); return; }
+    if (lineUp && !drag) { lineUp.at = p; view.invalidate(); return; }
     if (!drag) {
       if (pending?.kind === 'two') { pending.b = constrain(pending.a, p, e); view.invalidate(); }
       else if (pending?.kind === 'poly') { const last = pending.pts[pending.pts.length - 2]; pending.pts[pending.pts.length - 1] = constrain(last, p, e); view.invalidate(); }
@@ -1739,6 +2282,8 @@ function init(root) {
 
   over.addEventListener('pointerup', (e) => {
     if (tool === 'content' && !drag && baseUi.busy) { const [ux, uy] = localXY(e); baseUi.up(view.toUser(ux, uy), ux, uy, e); return; }
+    if (tool === 'seltext' && !drag) { const [ux, uy] = localXY(e); textSel?.up(view.toUser(ux, uy)); return; }
+    if (tool === 'areacopy' && !drag) { const [ux, uy] = localXY(e); areaUi?.up(ux, uy); return; }
     if (!drag) return;
     const [sx, sy] = localXY(e);
     const p = view.toUser(sx, sy);
@@ -1746,7 +2291,7 @@ function init(root) {
     drag = null;
     const moved = Math.hypot(sx - d.sx, sy - d.sy) > 4;
     switch (d.kind) {
-      case 'pan': updateCursor(); break;
+      case 'pan': updateCursor(); if (d.right && Math.hypot(sx - d.x0, sy - d.y0) <= 4) openCtxMenu(sx, sy); break;   // a right click that did not pan
       case 'free': finishFree(d.pts); break;
       case 'two':
         if (moved) finishTwo(d.a, constrain(d.a, p, e));
@@ -1768,20 +2313,41 @@ function init(root) {
     if (!view.page) return;
     if (pending?.kind === 'poly') { finishPoly(); return; }
     if (tool === 'content') { const [cx, cy] = localXY(e); baseUi.dblclick(view.toUser(cx, cy)); return; }
+    if (tool === 'seltext') { const [cx, cy] = localXY(e); textSel?.dblclick(view.toUser(cx, cy)); return; }
     if (tool !== 'select') return;
     const [sx, sy] = localXY(e);
-    const m = pick(pickable(), view.toUser(sx, sy), tolerance(), envOf);
+    const p = view.toUser(sx, sy);
+    const m = pick(pickable(), p, tolerance(), envOf);
     if (m && !m.locked) startEdit(m);
+    else if (!m && formUi?.fieldAt(p)) setTool('fill').then(() => formUi.focusAt(p));   // a form field: fill it in
   });
 
+  const padDetector = new PadDetector();
   over.addEventListener('wheel', (e) => {
     if (!view.page) return;
     e.preventDefault();
+    if (padDetector.isSwipe(e)) { view.panBy(-e.deltaX, -e.deltaY); return; }   // D7.56: two fingers pan (the sheet follows them); a pinch and a mouse wheel zoom
     const [sx, sy] = localXY(e);
     let dy = e.deltaY;
     if (e.deltaMode === 1) dy *= 16; else if (e.deltaMode === 2) dy *= 400;
+    // Scroll mode: the wheel scrolls through the pages (Shift: sideways); Ctrl + wheel and a trackpad pinch zoom
+    if (view.strip && !e.ctrlKey && !e.metaKey) {
+      let dx = e.deltaX;
+      if (e.deltaMode === 1) dx *= 16; else if (e.deltaMode === 2) dx *= 400;
+      if (e.shiftKey && !dx) { dx = dy; dy = 0; }
+      view.panBy(-dx, -dy);
+      return;
+    }
     view.zoomAt(Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.0018 * wheelFactor())), sx, sy);   // IP.3: the style's wheel (a pinch stays as it is)
   }, { passive: false });
+  // 0.8 Track ID: hand the view to the input-device layer (assets/js/app-devices-ui.js) — the page view, 2D: pan as a drag does
+  // (view.panBy), zoom as the wheel does (view.zoomAt(f, x, y): factor first, then the point in px inside `over`), fit = Fit page
+  (window.ccViews ||= []).push({
+    el: over, kind: '2d',
+    pan(dx, dy) { if (view.page) view.panBy(dx, dy); },
+    zoom(f, x = view.w / 2, y = view.h / 2) { if (view.page && f > 0) view.zoomAt(f, x, y); },
+    fit() { if (view.page) view.fit('page'); },
+  });
 
   function constrain(from, p, e) { return e.shiftKey ? snap45(from, p) : p; }
 
@@ -1894,6 +2460,7 @@ function init(root) {
 
   function finishBox(a, b) {
     if (!curSheet()) return;
+    if (tool === 'stamp' && (toolPreset?.items || toolPreset?.content)) { placeStampTool(toolPreset, b ? [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] : a); return; }
     if (tool === 'stamp' && !toolPreset && currentPicture()) { placePicture(currentPicture(), a, b); return; }
     if (tool === 'stamp') {
       const label = toolPreset?.label || stampLabel(settings.stamp);
@@ -2124,7 +2691,7 @@ function init(root) {
       const px = m.style.fontSize * view.z;
       ta.style.fontSize = Math.max(9, px) + 'px';
       ta.style.lineHeight = '1.2';
-      ta.style.color = view.color(m.style.color, {});
+      ta.style.color = view.color(m.style.textColor || m.style.color, {});
       ta.style.fontFamily = SCREEN_FONT;
       ta.classList.remove('is-note');
       ta.style.padding = Math.max(1, (m.type === 'text' ? 3 : 4) * view.z) + 'px';
@@ -2195,6 +2762,7 @@ function init(root) {
       if (view.hidden?.has(m.id)) continue;
       view.paint(ctx, displayOf(m, envOf(m)).list);
     }
+    if (view.page) formUi?.paint(ctx, view.page, view.S);   // form buttons with no appearance of their own (0.8)
   };
 
   view.onOver = (ctx) => {
@@ -2267,6 +2835,9 @@ function init(root) {
       }
     }
     if (tool === 'content') baseUi.paintOver(ctx);
+    if (tool === 'seltext') textSel?.paintOver(ctx);
+    if (tool === 'areacopy') areaUi?.paintOver(ctx);
+    if (lineUp) paintLineUp(ctx);
     // drawing previews
     const s = curSheet();
     if (!s) return;
@@ -2325,6 +2896,9 @@ function init(root) {
     const mod = e.ctrlKey || e.metaKey;
     if (k === ' ' && !mod) { if (!spaceDown) { spaceDown = true; updateCursor(); } e.preventDefault(); return; }
     if (tool === 'content' && baseUi.key(e)) return;
+    if (tool === 'seltext' && textSel?.key(e)) return;
+    if (tool === 'areacopy' && areaUi?.key(e)) return;
+    if (lineUp && k === 'Escape') { e.preventDefault(); lineUp = null; updateCursor(); view.invalidate(); status(t('lineup.cancelled')); return; }
     if (e.altKey && k === 'ArrowLeft' && backStack.length) { e.preventDefault(); goBack(); return; }
     if (mod) {
       const lk = k.toLowerCase();
@@ -2405,7 +2979,14 @@ function init(root) {
   ui.stage.addEventListener('drop', (e) => {
     e.preventDefault(); dragDepth = 0; ui.drop.hidden = true;
     const list = [...(e.dataTransfer?.files || [])];
-    if (list.length) openFiles(list);
+    // 0.7.1 71.7: a picture (PNG, JPEG, SVG) dropped on an open sheet becomes a picture markup where it lands; PDFs open
+    const pics = curSheet() ? list.filter((f) => ['png', 'jpeg', 'svg'].includes(pictureKind(f.name, f.type))) : [];
+    const pdfs = list.filter((f) => !pics.includes(f));
+    if (pics.length) {
+      const [x, y] = localXY(e);
+      (async () => { for (const [i, f] of pics.entries()) await insertPicture(f, [x + i * 24, y + i * 24]); })();
+    }
+    if (pdfs.length) openFiles(pdfs);
   });
 
   // ---- tabs ----
@@ -2444,12 +3025,13 @@ function init(root) {
   const baseUi = createBaseUi({
     view, store, t, el, status, over: ui.over, settings, saveSettings, fid, mix, dropTakenAnnots, closePdf,
     curSheet, pdfLib, libs: () => libs, touch: () => touchMode, refresh: () => refreshSelection(),
+    tab: TAB, act: (a) => act(a), toStamp: (cc) => saveStamp({ content: cc }),
     listOf: (m) => displayOf(m, envOf(m)).list,
     // a picture file for "Replace picture" (0.6 DF.14 b): null = nothing picked, '' = not a PNG/JPEG we can use
     pickPicture: async () => {
-      const f = await new Promise((done) => { picPick = done; ui.imageFile.click(); });
+      const f = await pickPictureFile();
       if (!f) return null;
-      return /^image\/(png|jpeg)$/.test(f.type) || /\.(png|jpe?g)$/i.test(f.name) ? await pictureFrom(f) : '';
+      return pictureKind(f.name, f.type) ? await pictureFrom(f) : '';
     },
     fileOf: (key) => files.find((f) => key.startsWith(f.id + ':')) || null,
     reshow: async (f) => {
@@ -2476,8 +3058,32 @@ function init(root) {
     const hasText = types.some((t) => TEXT_TYPES.has(t));
     const fillable = types.some((t) => ['rect', 'ellipse', 'polygon', 'cloud', 'cloudrect', 'text', 'callout', 'area'].includes(t));
     const lineless = types.every((t) => t === 'note');
+    if (window.ccPropGrid) {   // 0.8 PANEL-COMPACT: the style fields in the shared property grid (the form below stays where the shell has no grid)
+      const S = t('props.style'), num = (v) => Math.round(v * 1000) / 1000;
+      const rows = [{ id: 'color', category: S, label: t('props.color'), type: 'color', value: st.color }];
+      if (!lineless) rows.push({ id: 'width', category: S, label: types.includes('highlight') && types.length === 1 ? t('props.width') : t('props.line_width'), type: 'number', value: num(st.width), min: 0, max: 72, step: 0.25 });
+      if (fillable) {
+        rows.push({ id: 'fill', category: S, label: t('props.fill'), type: 'checkbox', value: !!st.fill });
+        if (st.fill) rows.push({ id: 'fillColor', category: S, label: t('props.fill_color'), type: 'color', value: st.fill },
+          { id: 'fillOpacity', category: S, label: t('props.fill_opacity'), type: 'slider', value: Math.round((st.fillOpacity ?? 1) * 100), min: 0, max: 100, step: 5, unit: '%' });
+      }
+      rows.push({ id: 'opacity', category: S, label: t('props.opacity'), type: 'slider', value: Math.round((st.opacity ?? 1) * 100), min: 5, max: 100, step: 5, unit: '%' });
+      if (hasText || types.some((t) => t === 'measure' || t === 'area' || t === 'count')) rows.push({ id: 'fontSize', category: S, label: t('props.text_size'), type: 'number', value: num(st.fontSize), min: 4, max: 144, step: 1 });
+      const host = el('div', { className: 'mc-grid span' });
+      ccPropGrid.create(host, { label: S, key: 'style', rows, onChange: (id, v, info) => {
+        if (info && info.live) return;   // a slider applies where it settles, like the range box it replaces
+        if (id === 'color') apply({ color: v, textColor: undefined });
+        else if (id === 'width') apply({ width: Math.min(72, Math.max(0, Number(v))) });
+        else if (id === 'fill') apply({ fill: v ? (st.fill || mix(st.color, '#ffffff', 0.6)) : null });
+        else if (id === 'fillColor') apply({ fill: v });
+        else if (id === 'fillOpacity') apply({ fillOpacity: Number(v) / 100 });
+        else if (id === 'opacity') apply({ opacity: Number(v) / 100 });
+        else if (id === 'fontSize' && Number(v) >= 4 && Number(v) <= 144) apply({ fontSize: Number(v) });
+      } });
+      return [host];
+    }
     let id = fid();
-    out.push(...field(t('props.color'), el('input', { type: 'color', id, className: 'mc-color', value: st.color, onchange: (e) => apply({ color: e.target.value }) }), id));
+    out.push(...field(t('props.color'), el('input', { type: 'color', id, className: 'mc-color', value: st.color, onchange: (e) => apply({ color: e.target.value, textColor: undefined }) }), id));
     if (!lineless) {
       id = fid();
       out.push(...field(types.includes('highlight') && types.length === 1 ? t('props.width') : t('props.line_width'), el('input', { type: 'number', id, className: 'mc-input mc-num', min: '0', max: '72', step: '0.25', value: String(st.width), onchange: (e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v) && v >= 0) apply({ width: Math.min(72, v) }); } }), id));
@@ -2515,7 +3121,12 @@ function init(root) {
     return [el('label', { for: id, className: 'mc-k' }, t('stamp.label')), el('span', { className: 'mc-stack' }, select, el('label', { for: cid, className: 'visually-hidden' }, t('stamp.custom.label')), custom)];
   }
 
-  function renderProps() {
+  function renderProps() {   // a rebuilt panel gives focus back to the property grid row it was on (0.8)
+    const pd = ui.props.ownerDocument, was = pd.activeElement && ui.props.contains(pd.activeElement) ? pd.activeElement.getAttribute('data-pg-row') : null;
+    renderProps0();
+    if (was) [...ui.props.querySelectorAll('[data-pg-row]')].find((e) => e.getAttribute('data-pg-row') === was)?.focus();
+  }
+  function renderProps0() {
     const box = ui.props;
     box.replaceChildren();
     const s = curSheet();
@@ -2532,6 +3143,10 @@ function init(root) {
         grid.append(el('label', { for: cid, className: 'mc-k' }, t('props.group')), el('input', { type: 'text', id: cid, className: 'mc-input', maxlength: '60', value: toolPreset?.label || settings.countLabel || t('count.default'),
           onchange: (e) => { const v = e.target.value.trim().slice(0, 60) || t('count.default'); if (toolPreset) toolPreset.label = v; else { settings.countLabel = v; saveSettings(); } } }));
       }
+      if (tool === 'stamp' && (toolPreset?.items || toolPreset?.content)) {   // a stamp made from a selection (71.9)
+        box.append(el('p', { className: 'mc-note', dataset: { stampTool: '' } }, t(toolPreset.content ? 'stamp.tool.content' : 'stamp.tool.group', { tool: toolPreset.name, n: toolPreset.items?.length || toolPreset.content.n })));
+        return;
+      }
       if (tool === 'stamp') grid.append(...stampChooser(toolPreset?.label || (isPic(settings.stamp) ? settings.stamp : stampLabel(settings.stamp)), async (v) => {
         if (v === PIC) { if (await choosePicture()) toolPreset = null; renderProps(); return; }
         if (v === SIG) { if (lsGet(LS_SIG, null)?.src || await drawSignature()) { settings.stamp = SIG; saveSettings(); toolPreset = null; status(t('image.signature.ready')); } renderProps(); return; }
@@ -2541,7 +3156,20 @@ function init(root) {
         const pic = currentPicture();
         grid.append(el('span', { className: 'mc-k' }, t('image.preview')), el('span', { className: 'mc-stack' },
           el('img', { className: 'mc-pic-preview', src: pic.src, alt: pic.label }),
-          el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: async () => { if (settings.stamp === SIG) await drawSignature(); else await choosePicture(); renderProps(); } }, settings.stamp === SIG ? t('image.signature.again') : t('image.pick.again'))));
+          el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: async () => { if (settings.stamp === SIG) await drawSignature(); else await choosePicture(); renderProps(); } }, settings.stamp === SIG ? t('image.signature.again') : t('image.pick.again')),
+          ...(settings.stamp === SIG ? [el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { sigUpload: '' }, onclick: async () => { await uploadSignature(); renderProps(); } }, t('image.signature.upload'))] : [])));
+        if (settings.stamp === SIG) {
+          // every signature kept in this browser: click one to use it (0.7.1 71.8)
+          const now = lsGet(LS_SIG, null)?.src;
+          const list = el('ul', { className: 'mc-sig-list', 'aria-label': t('image.signature.list') });
+          for (const sg of signatures()) {
+            list.append(el('li', { className: 'mc-chest-row' },
+              el('button', { type: 'button', className: 'mc-item mc-sig-item', 'aria-pressed': String(sg.src === now), dataset: { sigId: sg.id }, onclick: () => useSignature(sg) },
+                el('img', { className: 'mc-sig-thumb', src: sg.src, alt: '' }), el('span', { className: 'mc-item-title' }, sg.name || t('image.signature.label'))),
+              el('button', { type: 'button', className: 'mc-x', title: t('image.signature.remove'), 'aria-label': t('image.signature.remove.label', { name: sg.name || t('image.signature.label') }), onclick: () => dropSignature(sg) }, el('i', { className: 'bi bi-x-lg', 'aria-hidden': 'true' }))));
+          }
+          grid.append(el('span', { className: 'mc-k' }, t('image.signature.list')), list);
+        }
       }
       grid.append(...styleControls(st, (patch) => {
         if (toolPreset) toolPreset.style = { ...toolPreset.style, ...patch };
@@ -2640,7 +3268,7 @@ function init(root) {
     }
     id = fid();
     grid.append(el('label', { for: id, className: 'mc-k span' }, m.type === 'note' ? t('props.note') : t('props.comment')), el('textarea', { id, className: 'mc-input span', rows: '3', value: m.comment, onchange: (e) => upd(t('undo.comment'), { comment: e.target.value }) }));
-    grid.append(el('p', { className: 'mc-props-sub' }, t('props.style')));
+    if (!window.ccPropGrid) grid.append(el('p', { className: 'mc-props-sub' }, t('props.style')));   // the grid has its own Style heading
     grid.append(...styleControls(m.style, (patch) => upd(t('undo.style'), { style: { ...m.style, ...patch } }), [m.type]));
     wrap.append(grid, threadSection(m));
     // punch item
@@ -2654,8 +3282,10 @@ function init(root) {
       pg.append(el('span', { className: 'span' }, el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => addToPunch([m.id]) }, t('punch.add.one'))));
     }
     wrap.append(pg);
+    if (!m.locked) wrap.append(flatToggle([m]));
     wrap.append(el('div', { className: 'mc-actions' },
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => saveToChest(m) }, t('chest.save.one')),
+      m.locked ? null : el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('stamp.save.title'), dataset: { saveStamp: '' }, onclick: () => saveStamp() }, t('stamp.save')),
       sheets.length > 1 ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => copyToSheets(), dataset: { copySheets: '' } }, t('batch.button')) : null,
       TEXT_TYPES.has(m.type) || m.type === 'note' ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => startEdit(m) }, t('props.edit_on_sheet')) : null,
       m.type === 'area' && !m.locked ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => startCutout(m) }, t('hole.add')) : null,
@@ -2764,14 +3394,33 @@ function init(root) {
     const common = ed.every((m) => m.status === first.status) ? first.status : '';
     grid.append(...field(t('props.status'), el('select', { id, className: 'mc-select', onchange: (e) => e.target.value && patchSel(t('undo.status'), (m) => ({ status: e.target.value, replies: [...m.replies, statusReply(e.target.value, author)] })) },
       common ? null : el('option', { value: '', selected: true }, t('multi.mixed')), ...STATUSES.map((st) => el('option', { value: st, selected: st === common }, stname(st)))), id));
-    grid.append(el('p', { className: 'mc-props-sub' }, t('props.style')));
+    if (!window.ccPropGrid) grid.append(el('p', { className: 'mc-props-sub' }, t('props.style')));   // the grid has its own Style heading
     grid.append(...styleControls(first.style, (patch) => patchSel(t('undo.style'), (m) => ({ style: { ...m.style, ...patch } })), types));
-    wrap.append(grid, el('div', { className: 'mc-actions' },
+    wrap.append(grid, flatToggle(ed), el('div', { className: 'mc-actions' },
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => addToPunch() }, t('punch.add.one')),
+      el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('stamp.save.title'), dataset: { saveStamp: '' }, onclick: () => saveStamp() }, t('stamp.save')),
       sheets.length > 1 ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => copyToSheets(), dataset: { copySheets: '' } }, t('batch.button')) : null,
       intoPageButton(ed),
       el('button', { type: 'button', className: 'btn-line btn-sm-cc mc-danger', onclick: () => deleteSelection() }, t('menu.delete'))));
     return wrap;
+  }
+  /**
+   * "Flatten into the page when saved" (0.7.1 71.7): the markup stays a markup here (move it, resize it, undo); Save and
+   * extract draw it into the page itself, as File › Pages › Save a flattened copy does for every markup.
+   */
+  function flatToggle(list) {
+    const id = fid();
+    const on = list.every((m) => m.flat);
+    const box = el('input', { type: 'checkbox', id, checked: on, dataset: { flat: '' }, onchange: (e) => setFlat(list, e.target.checked) });
+    box.indeterminate = !on && list.some((m) => m.flat);
+    return el('div', { className: 'mc-flat' }, el('label', { for: id, className: 'mc-radio' }, box, ' ', t('flat.mark')), el('p', { className: 'mc-note' }, t('flat.mark.note')));
+  }
+  function setFlat(list, on) {
+    const ids = list.filter((m) => !m.locked).map((m) => m.id);
+    if (!ids.length) return;
+    store.change(t(on ? 'undo.flat.on' : 'undo.flat.off', { n: ids.length }), (tx) => { for (const id of ids) tx.update(id, { flat: on }); });
+    status(t(on ? 'flat.mark.on' : 'flat.mark.off', { n: ids.length }));
+    refreshAll();
   }
   /** "Put into the page" (0.6 DF.14): opaque line work becomes the page's own content, one undo step. */
   function intoPageButton(list) {
@@ -2839,7 +3488,7 @@ function init(root) {
         el('span', { className: 'mc-item-main' },
           el('span', { className: 'mc-item-title' }, (m.punch ? '#' + m.punch.n + ' ' : '') + (m.subject || (m.locked ? m.src?.subtype : tname(m.type)))),
           text || m.comment ? el('span', { className: 'mc-item-text' }, [text, m.comment].filter(Boolean).join(' — ')) : null,
-          el('span', { className: 'mc-item-meta' }, [s ? s.page.title : '', m.author, shortDate(m.created)].filter(Boolean).join(', ')),
+          el('span', { className: 'mc-item-meta' }, (() => { const col = m.author && window.markupcraft.authorColour ? window.markupcraft.authorColour(m.author) : null; return [col ? el('i', { className: 'mc-live-dot', style: 'background:' + col, 'aria-hidden': 'true' }) : null, [s ? s.page.title : '', m.author, shortDate(m.created)].filter(Boolean).join(', ')]; })()),
           store.columns.some((c) => m.fields?.[c.key]) ? el('span', { className: 'mc-item-meta mc-item-fields' }, store.columns.filter((c) => m.fields?.[c.key]).map((c) => c.name + ': ' + m.fields[c.key]).join(', ')) : null),
         el('span', { className: 'mc-item-side' },
           el('span', { className: 'mc-chip mc-st-' + m.status.toLowerCase() }, m.locked ? t('props.read_only') : stname(m.status)),
@@ -3148,14 +3797,56 @@ function init(root) {
     status(t('chest.saved', { tool: made.name }));
   }
 
+  /**
+   * Save a selection as a stamp in the tool chest (0.7.1 71.9): the selected markups, or `content` (a content clip of page
+   * content selected with the Content tool). Using the tool places the whole selection with a click, on any sheet.
+   */
+  async function saveStamp({ content = null } = {}) {
+    const list = content ? [] : editable();
+    if (!content && !list.length) { status(sel.size ? t('stamp.save.locked') : t('stamp.save.need')); return false; }
+    const input = el('input', { type: 'text', id: 'mc-dlg-tool', className: 'mc-input', maxlength: '80', value: content ? t('stamp.save.name.content') : list.length === 1 ? tname(list[0].type) : t('stamp.save.name') });
+    const r = await dialog({
+      title: t('stamp.save.h'), text: t(content ? 'stamp.save.text.content' : 'stamp.save.text', { n: content ? content.n : list.length }),
+      body: [el('label', { className: 'mc-k', for: 'mc-dlg-tool' }, t('chest.dlg.name')), input],
+      buttons: [['cancel', t('dlg.cancel')], ['save', t('chest.dlg.save'), 'btn-plot']], submit: 'save',
+      check: () => (input.value.trim() ? '' : t('chest.dlg.need')),
+    });
+    if (r.key !== 'save') return false;
+    const made = stampTool(input.value.trim(), content ? { content } : { items: makeClip(list, { source: TAB, sheet: curKey() }).items });
+    if (!made) { status(t('stamp.save.bad')); return false; }
+    chest.push(made);
+    persistChest();
+    renderChest();
+    tabTo('chest');
+    status(t('stamp.saved', { tool: made.name }));
+    return true;
+  }
+  window.markupcraft.saveStamp = saveStamp;   // tests
+  /** A click with a stamp made from a selection: the markups centred there (one undo step), or the page content. */
+  function placeStampTool(preset, center) {
+    const s = curSheet();
+    if (!s) return;
+    if (preset.content) {
+      if (baseUi.paste(preset.content, 'pointer', { at: center })) status(t('stamp.placed', { tool: preset.name }));
+      return;
+    }
+    const made = placeClip({ items: preset.items }, { sheet: s.page.key, author, rot: view.seenRotate, center });
+    const ids = [];
+    store.change(t('undo.stamp.place', { tool: preset.name }), (tx) => { for (const m of made) ids.push(tx.add(m).id); });
+    sel = new Set(ids);
+    refreshAll();
+    status(t('stamp.placed', { tool: preset.name }));
+  }
+
   function renderChest() {
     if (activeTab() !== 'chest') return;
     ui.chest.replaceChildren();
     if (!chest.length) { ui.chest.append(el('li', { className: 'mc-note' }, t('chest.empty'))); return; }
     for (const tk of chest) {
       const use = el('button', { type: 'button', className: 'mc-item mc-tool-item', 'aria-pressed': String(toolPreset?.id === tk.id) },
-        el('span', { className: 'mc-item-icon', style: 'color:' + tk.style.color }, el('i', { className: 'bi bi-' + (TYPE_ICON[tk.type] || 'circle'), 'aria-hidden': 'true' })),   // i18n-ignore (icon class)
-        el('span', { className: 'mc-item-main' }, el('span', { className: 'mc-item-title' }, tk.name), el('span', { className: 'mc-item-meta' }, tk.label ? t('chest.meta.label', { type: tname(tk.type), label: tk.label }) : tname(tk.type))));
+        el('span', { className: 'mc-item-icon', style: 'color:' + tk.style.color }, el('i', { className: 'bi bi-' + (tk.items ? 'collection' : tk.content ? 'vector-pen' : TYPE_ICON[tk.type] || 'circle'), 'aria-hidden': 'true' })),   // i18n-ignore (icon class)
+        el('span', { className: 'mc-item-main' }, el('span', { className: 'mc-item-title' }, tk.name), el('span', { className: 'mc-item-meta' },
+          tk.items ? t('chest.meta.group', { n: tk.items.length }) : tk.content ? t('chest.meta.content', { n: tk.content.n }) : tk.label ? t('chest.meta.label', { type: tname(tk.type), label: tk.label }) : tname(tk.type))));
       use.addEventListener('click', () => { setTool(tk.type, clone(tk)); renderChest(); status(t('chest.drawing', { tool: tk.name })); });
       const rm = el('button', { type: 'button', className: 'mc-x', title: t('chest.remove.title'), 'aria-label': t('chest.remove.label', { tool: tk.name }) }, el('i', { className: 'bi bi-x-lg', 'aria-hidden': 'true' }));
       rm.addEventListener('click', async () => {
@@ -3173,7 +3864,7 @@ function init(root) {
     const f = ui.chestFile.files[0];
     ui.chestFile.value = '';
     if (!f) return;
-    if (f.size > 2 * 1048576) { status(t('chest.import.big')); return; }
+    if (f.size > 16 * 1048576) { status(t('chest.import.big')); return; }   // stamps of page content carry a small PDF each (71.9)
     try {
       const { tools, skipped } = parseChest(await f.text());
       if (!tools.length) { status(t('chest.import.none', { file: f.name })); return; }
@@ -3259,6 +3950,7 @@ function init(root) {
     if (cur !== i) await goTo(i);
     if (cmp.oldKey !== oldKey || cmp.newKey !== newKey) { cmp.dx = 0; cmp.dy = 0; cmp.fit = null; }
     cmp.oldKey = oldKey; cmp.newKey = newKey; cmp.on = true;
+    applyStrip();   // comparing shows one page at a time (Scroll mode comes back after)
     cmp.balance = +ui.cmpBalance.value / 100;
     const so = sheetByKey(oldKey);
     cmp.oldProxy = await so.file.doc.getPage(so.page.index + 1);
@@ -3370,6 +4062,7 @@ function init(root) {
     if (!cmp.on) return;
     cmp.on = false; cmp.aligning = null;
     view.setCompare(null);
+    applyStrip();
     ui.cmpTools.hidden = true;
     ui.legend.hidden = true;
     find('[data-act="compare"]').setAttribute('aria-pressed', 'false');
@@ -3469,7 +4162,7 @@ function init(root) {
       const [{ mountWorkspaces }, { createMarkupcraftWorkspace }] = await Promise.all([import('cc-workspace'), import('./workspace-markupcraft.js')]);
       const ws = await createMarkupcraftWorkspace({ root, app: {
         sheets: () => sheets, cur: () => cur, goTo: (i) => goTo(i), files: () => files, dirty: () => anyDirty(), busy: () => !ui.busy.hidden,
-        sel: () => sel, tool: () => tool, setTool: (n) => setTool(n), status: (text) => status(text),
+        sel: () => sel, tool: () => tool, setTool: (n) => setTool(n), status: (text) => status(text), pageMode: () => settings.pageMode,
       } });
       if (!ws) { document.documentElement.removeAttribute('data-cc-ws-boot'); return; }
       ws.attach(mountWorkspaces(ws.adapter));
@@ -3486,22 +4179,38 @@ function init(root) {
     if (refreshRaf) return;
     refreshRaf = requestAnimationFrame(() => {
       refreshRaf = 0;
-      renderProps(); renderList(); renderPunch(); if (activeTab() === 'field') fieldUi?.render(); refreshSheetCounts(); refreshToolbar();
+      renderProps(); renderList(); renderPunch(); if (activeTab() === 'field') fieldUi?.render(); formUi?.render(); refreshSheetCounts(); refreshToolbar();
       renderNav();
       wsSoon();
     });
   }
-  function refreshSelection() { view.invalidate(true); renderProps(); renderList(); renderPunch(); refreshToolbar(); wsSoon(); }
+  const selListeners = new Set();   // the shell's design reasons listen for the selection (shell-mount.js)
+  // 0.8 DC.1 (apps-mount_PART_5): the picked markups are announced to the page (SuperCadCraft hears `cc-pick`); a related pick from another panel comes
+  // back through window.ccPickApply(refs). Both are inert outside Super.
+  let lastPick = '';
+  function announcePick() {
+    const ids = [...sel].map(String), key = ids.join(',');
+    if (key === lastPick) return;
+    lastPick = key;
+    try { window.dispatchEvent(new CustomEvent('cc-pick', { detail: { app: 'markupcraft', ids } })); } catch { /* no window */ }
+  }
+  window.ccPickApply = (refs) => {
+    const ids = (refs || []).map((r) => (r ? String(r.id) : '')).filter((id) => { const m = store.get(id); return m && m.sheet === curKey() && store.open(m); });
+    if (!ids.length) return false;
+    sel = new Set(ids); lastPick = ids.join(','); refreshSelection(); return true;
+  };
+  function refreshSelection() { announcePick(); for (const fn of selListeners) { try { fn(); } catch { /* a listener must not stop the page */ } } view.invalidate(true); renderProps(); renderList(); renderPunch(); refreshToolbar(); wsSoon(); }
   function refreshToolbar() {
     const q = (a) => find('[data-act="' + a + '"]');
     q('undo').disabled = !store.canUndo;
     q('redo').disabled = !store.canRedo;
     const all = (a, off) => { for (const b of findAll('[data-act="' + a + '"]')) b.disabled = off; };
-    const none = !editable().length;
-    for (const a of ['delete', 'cut', 'copy', 'duplicate']) all(a, none);
+    const none = tool === 'content' ? !baseUi.selection.length : !editable().length;   // the Content tool: its own selection (71.6)
+    for (const a of ['delete', 'cut', 'copy', 'duplicate', 'save-stamp']) all(a, none);
+    all('insert-picture', !curSheet());
     for (const a of ['paste', 'paste-in-place']) all(a, !curSheet() || !hasClip());
     all('select-all', !curSheet());
-    all('select-none', !sel.size);
+    all('select-none', tool === 'content' ? !baseUi.selection.length : !sel.size);
     q('save').disabled = !files.length;
     q('close').disabled = !files.length;
     all('print', !files.length);
@@ -3519,13 +4228,133 @@ function init(root) {
   }
   store.on(() => refreshAll());
 
+  // ---- 0.8 EG.64/65/19: what the assistant tools and the Tasks tab need from the page (tasks.js, changes.js, redline.js) ----
+  const sheetLabel = (s) => s.page.sheetNo || s.page.title;
+  async function regionLink(m) {
+    const s = sheetByKey(m.sheet), b = boundsOf(m, envOf(m));
+    if (!s || !b) return null;
+    const snap = regionSnapshot(await segsOf(m.sheet), b);
+    return { kind: 'region', file: s.file.name, sheet: sheetLabel(s), label: (m.text || m.comment || tname(m.type)).slice(0, 120), rect: snap.rect, segs: snap.segs, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') };
+  }
+  /** The lines of the newer revision of a task's sheet: another open file with the same sheet number, the last one opened. */
+  async function regionNow(task, m) {
+    const own = sheetByKey(m.sheet);
+    const cand = sheets.filter((x) => x.file !== own?.file && sheetLabel(x) === task.link.sheet && x.file.name !== task.link.file);
+    const hit = cand[cand.length - 1] || sheets.filter((x) => x.file !== own?.file && x.file.name !== task.link.file && x.page.index === own?.page.index).pop();
+    return hit ? { segs: await segsOf(hit.page.key) } : null;
+  }
+  // EG.64 (decided 2026-10-29): closing on a newer revision is a per-project setting, default off; a project = the set named after its first file.
+  const autoCloseKey = () => 'markupcraft.autoclose:' + setName();
+  const autoCloseOn = () => lsGet(autoCloseKey(), false) === true;
+  const setAutoClose = (on) => lsSet(autoCloseKey(), !!on);
+  async function checkAllTasks() {
+    const { results, missing } = await checkTasks(store, (t, m) => regionNow(t, m).catch(() => null), {});
+    const closed = closeChanged(store, results.filter((r) => !r.baseline), 'MarkupCraft');
+    refreshAll();
+    return { closed, missing, checked: results.length };
+  }
+  async function changesBetween({ old: oldName = '', new: newName = '', sheet = '' } = {}) {
+    if (files.length < 2) throw new Error('Open two plan sets (two PDF files) to compare them.');   // i18n-ignore (read by the assistant)
+    const pick = (q, dflt) => (q ? files.find((f) => f.name.toLowerCase().includes(String(q).toLowerCase())) : dflt);
+    const fo = pick(oldName, files[0]), fn = pick(newName, files[files.length - 1]);
+    if (!fo || !fn || fo === fn) throw new Error('Name two different open files (the earlier and the later revision).');   // i18n-ignore (read by the assistant)
+    const facts = (f) => sheets.filter((x) => x.file === f).map(sheetFacts);
+    const paired = matchSheets(facts(fo), facts(fn));
+    const words = async (key) => { const x = sheetByKey(key); if (!x) return []; const c = await (await x.file.doc.getPage(x.page.index + 1)).getTextContent(); return c.items.filter((i) => i.str && i.str.trim()).map((i) => ({ str: i.str, x: i.transform[4], y: i.transform[5] })); };
+    const pairs = [];
+    for (const p of paired) {
+      const nw = sheetByKey(p.newKey), od = sheetByKey(p.oldKey);
+      const ref = nw || od;
+      if (sheet && !String(sheetLabel(ref) + ' ' + ref.page.title).toLowerCase().includes(String(sheet).toLowerCase())) continue;
+      const cal = store.calibrations.get(p.newKey);
+      const base = { sheetNo: sheetLabel(ref), title: ref.page.title, oldKey: p.oldKey, newKey: p.newKey, view: ref.page.view, mmPerPt: cal?.mmPerPt || 0 };
+      if (!od) { pairs.push({ ...base, state: 'added' }); continue; }
+      if (!nw) { pairs.push({ ...base, state: 'removed' }); continue; }
+      pairs.push({ ...base, d: diffSegments(await segsOf(p.oldKey), await segsOf(p.newKey), { tol: 1.5, step: 2 }), oldText: await words(p.oldKey), newText: await words(p.newKey) });
+    }
+    const res = describeChanges(pairs, { markups: store.all() });
+    return { old: fo.name, new: fn.name, ...res, text: changesText(res) };
+  }
+  async function exportRedline({ revision = '', all = false, ids = null } = {}) {
+    const list = sheets.map((x) => ({ key: x.page.key, sheetNo: x.page.sheetNo || '', title: x.page.title, view: x.page.view, file: x.file.name, mmPerPt: store.calibrations.get(x.page.key)?.mmPerPt || 0 }));
+    const pkg = buildRedline(store.all(), list, { project: setName(), revision, by: author, only: all ? 'all' : 'open', ids });
+    if (!pkg.items.length) { status(t('redline.none')); return { items: 0 }; }
+    dl(JSON.stringify(pkg, null, 1), redlineFileName(pkg), 'application/json');
+    status(t('redline.exported', { n: pkg.items.length }));
+    return { items: pkg.items.length };
+  }
+  // 0.8 H5 / EG.64: the tasks in the JSON file that rides with the drawing, <name>.markups.json
+  function exportSidecar() {
+    const obj = buildSidecar(store.all(), { pdf: files[0] ? files[0].name : '', autoClose: autoCloseOn() });
+    if (!obj.tasks.length) { status(t('tasks.file.none')); return { tasks: 0 }; }
+    dl(sidecarText(obj), setName() + '.markups.json', 'application/json');
+    status(t('tasks.file.saved', { n: obj.tasks.length }));
+    return { tasks: obj.tasks.length };
+  }
+  function openSidecar(text) {
+    const r = readSidecar(text);
+    if (!r.ok) return r;
+    const res = applySidecar(store, r.sidecar, { who: author });
+    if (r.sidecar.autoClose) setAutoClose(true);
+    refreshAll();
+    return { ok: true, ...res };
+  }
+  function applyRedlineAnswers(json) { const r = applyAnswers(store, json, 'CadCraft'); refreshAll(); return r; }
+
   // ---- AI assistants and scripts (0.4 part 2 X.7, session agents; agents.js on host.js's control channel): off until Settings › Assistants ----
   installAgents({ store, author: () => author, styleFor: (ty) => styleFor(ty), measureOf: (m) => valueOf(m),
     sheets: () => sheets.map((x) => ({ key: x.page.key, title: x.page.title, width: x.page.width, height: x.page.height, view: x.page.view, file: x.file?.name || null })),
     current: () => curSheet()?.page.key || null,
     goTo: (key) => { const i = sheets.findIndex((x) => x.page.key === key); return i >= 0 ? goTo(i) : null; },
     // 0.7 AS.5 (session assistants): the page redraws after an assistant's edit; the Markups list's own CSV and BCF
-    refresh: () => refreshAll(), exportCsv: () => exportListCsv(), exportBcf: () => exportBcf() });
+    refresh: () => refreshAll(), exportCsv: () => exportListCsv(), exportBcf: () => exportBcf(),
+    regionLink, regionNow, changes: changesBetween, exportRedline });
+  const actions = installActions({ root, store, find, findAll, status, sheets: () => sheets, sheetByKey, curSheet, jumpTo, getAuthor: () => author, askAuthor, dl, files: () => files,
+    refresh: () => refreshAll(), regionLink, checkAll: checkAllTasks, autoClose: { get: autoCloseOn, set: setAutoClose, project: setName }, changes: changesBetween, exportRedline, exportSidecar, openSidecar, applyAnswers: applyRedlineAnswers, selection: () => [...sel], boundsOf: (m) => boundsOf(m, envOf(m)), sheetOrder: (m) => sheetOrder(m) });
+
+  // ---- the shell's seven modules (0.8 round 3, markup_PART_3; docs/apps/shell-modules.md § Mounting) ----
+  // Calc sheets and design reasons live in the PDF's Info entry /MarkupCraftShell; a change marks the open file as unsaved.
+  const shellData = { calcs: null, reasons: null };
+  let shellOpened = false;
+  const shellPack = () => { shellMount?.beforeSave(); return shellData.calcs || shellData.reasons ? { calcs: shellData.calcs, reasons: shellData.reasons } : null; };
+  const shellMount = mountMarkupShell({
+    store, control: getHost({ app: 'markupcraft' }).control,
+    sel: () => sel, select: (id) => jumpTo(id), onSelection: (fn) => { selListeners.add(fn); return () => selListeners.delete(fn); },
+    label: (m) => [tname(m.type), sheetByKey(m.sheet)?.page.title].filter(Boolean).join(', '),
+    name: () => files[0]?.name || '', dirty: () => anyDirty(),
+    shell: () => shellData,
+    setShell: (key, json, quiet) => {
+      if (key !== 'calcs' && key !== 'reasons') return;
+      const same = JSON.stringify(shellData[key] ?? null) === JSON.stringify(json ?? null);
+      if (same) return;
+      shellData[key] = json ?? null;
+      if (!quiet && files[0]) store.dirtySheets.add(files[0].id + ':0');
+    },
+  });
+  // ---- drafting without sight (0.8 round 3, EG.52; assets/js/app-access.js): the markups in order (sheet by sheet), each said with its sheet, status and text; D counts them ----
+  {
+    const order = () => { const rank = new Map(sheets.map((x, i) => [x.page.key, i])); return store.all().slice().sort((a, b) => (rank.get(a.sheet) ?? 1e9) - (rank.get(b.sheet) ?? 1e9)); };
+    const sayMarkup = (m) => {
+      const text = String((m.type === 'stamp' ? m.label : m.text || valueOf(m)) || '').slice(0, 160);
+      return [t('access.markup.head', { type: tname(m.type), sheet: sheetByKey(m.sheet)?.page.title || '' }), m.status ? stname(m.status) : '', text, m.replies?.length ? t('access.markup.replies', { n: m.replies.length }) : '', m.author ? t('access.markup.by', { author: m.author }) : ''].filter(Boolean).join(', ') + '.';
+    };
+    const goAccess = () => window.ccAccess.mount({
+      stage: ui.over, label: () => t('access.stage'),
+      walk: () => order().map((m) => ({ id: m.id, label: sayMarkup(m) })),
+      describe: () => {
+        const all = store.all();
+        if (!all.length) return t('access.empty', { n: sheets.length });
+        const by = {}; for (const m of all) by[m.status || ''] = (by[m.status || ''] || 0) + 1;
+        return t('access.summary', { n: all.length, sheets: new Set(all.map((m) => m.sheet)).size, by: Object.entries(by).map(([k, v]) => v + ' ' + (k ? stname(k) : t('access.nostatus'))).join(', ') });
+      },
+      selection: () => { const ms = [...sel].map((id) => store.get(id)).filter(Boolean); return ms.length ? t('access.selected', { n: ms.length, what: ms.slice(0, 3).map(sayMarkup).join(' ') }) : t('access.nosel'); },
+      pick: (p, item) => { if (item) { jumpTo(item.id); window.ccAccess.say(t('access.selected', { n: 1, what: item.label })); } else window.ccAccess.say(t('access.nosel')); },
+    });
+    const goStatus = () => window.ccAccess.follow(ui.status, { max: 240 });
+    for (const f of [goAccess, goStatus]) { if (window.ccAccess) f(); else document.addEventListener('cc-access-ready', f, { once: true }); }
+  }
+  window.markupcraft.shellMount = shellMount;
+  window.markupcraft.control = getHost({ app: 'markupcraft' }).control;   // tests and the page's console
 
   // ---- add-ons (0.5 AO.6, session addons; docs/ADDONS-SPEC.md §5.5): MarkupCraft's own loader and API 1.0 (manifest "addons": "own") ----
   startAddons({ store, root, find, author: () => author, status, tabTo,
@@ -3579,12 +4408,14 @@ function init(root) {
     if (f('mcColor')) f('mcColor').value = settings.markColor || '#d0021b';
     radios('mcWeight', settings.weight);
     radios('mcPaste', settings.pasteAt);
+    radios('mcContrast', settings.contrast);
     if (f('mcUnit')) { limitSelect(f('mcUnit'), 'length', { keep: [settings.unit] }); f('mcUnit').value = settings.unit; }   // 0.7 UNITS
     if (f('mcPos')) { limitSelect(f('mcPos'), 'length', { keep: [settings.posUnit] }); f('mcPos').value = settings.posUnit; }
   }
   onUnitsChange(() => syncSettingsForm());   // 0.7 UNITS: Settings › General › Units changed
   function settingsChanged(say) {
     saveSettings();
+    applyContrast();
     syncSettingsForm();
     renderProps();
     if (say) status(say);
@@ -3605,6 +4436,7 @@ function init(root) {
         case 'mcWeight': if (Object.hasOwn(WEIGHTS, tg.value)) { settings.weight = tg.value; settingsChanged(); } break;
         case 'mcPaste': settings.pasteAt = tg.value === 'offset' ? 'offset' : 'pointer'; settingsChanged(); break;
         case 'mcUnit': if (UNITS.some(([u]) => u === tg.value)) { settings.unit = tg.value; settingsChanged(); } break;
+        case 'mcContrast': if (Object.hasOwn(CONTRAST, tg.value)) { settings.contrast = tg.value; settingsChanged(); } break;
         case 'mcPos': settings.posUnit = tg.value === 'mm' ? 'mm' : 'in'; settingsChanged(); break;
         default: break;
       }
@@ -3648,7 +4480,7 @@ function init(root) {
       const nm = store.sheetNames.get(pg.key); if (nm) sheetNames[pg.index] = nm;
     }
     void idx;
-    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, base: baseUi.fileState(f), records: fieldUi ? fieldUi.stateFor(f) : [] };
+    return { v: 1, markups, calibrations, sheetNames, layers: layerList(), columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, base: baseUi.fileState(f), records: fieldUi ? fieldUi.stateFor(f) : [], ocr: ocrState(f.ocr), form: formUi ? formUi.stateFor(f) : [] };
   }
   function track(f) {
     if (f.auto) return;
@@ -3677,7 +4509,9 @@ function init(root) {
     for (const pg of f.pages) store.dirtySheets.add(pg.key);
     baseUi.restore(f, st.base);   // page-content edits (0.6 DF.14)
     fieldUi?.restore(f, st.records);   // field records (0.7 LC.7)
+    formUi?.restore(f, st.form);   // values typed into the form (0.8)
     if (Array.isArray(st.bookmarks)) { f.bookmarks = cleanBookmarks(st.bookmarks); f.bookmarksEdited = true; }
+    if (Array.isArray(st.ocr) && st.ocr.length) f.ocr = cleanOcrState(st.ocr, f.pages.length);   // text read from scans (0.7.1 71.10): no second read
     rebuildSheets();
     await goTo(sheets.findIndex((s) => s.file === f));
     syncAutosave();
@@ -3725,6 +4559,79 @@ function init(root) {
     },
   });
   window.markupcraft.field = fieldUi;
+  // the form's inputs sit over the canvases; they only take the pointer while Fill form is on
+  const formLayer = el('div', { className: 'mc-form-layer', hidden: true, dataset: { formLayer: '' } });
+  ui.canvases.append(formLayer);
+  formUi = installForms({
+    layer: formLayer, view, sheet: curSheet, pdfLib, on: () => tool === 'fill',
+    changed: (f, pages) => {
+      for (const i of pages) { const key = f.pages[i]?.key; if (!key) continue; store.dirtySheets.add(key); view.redrawPage(key); redrawThumb(key); }
+      syncAutosave(); refreshToolbar(); wsSoon();
+    },
+  });
+  window.markupcraft.forms = formUi;
+  window.markupcraft.setPageMode = setPageMode;
+  showPageMode();
+  textSel = installTextSelect({ view, curSheet, sheetText, status, t });
+  areaUi = installAreaCopy({ root, view, curSheet, status, t, tab: TAB,
+    markupLists: (s) => store.onSheet(s.page.key).filter((m) => store.shown(m) && m.type !== 'foreign').map((m) => displayOf(m, envOf(m)).list),
+    calibration: (key) => store.calibrations.get(key) || null,
+    onCopied: (c) => { areaClip = c; pasteRun = { key: '', n: 0 }; refreshToolbar(); } });
+  window.markupcraft.areaCopy = areaUi;
+  ocrUi = installOcr({
+    root, t, el, dialog, status, libs: loadLibs, files: () => files, curSheet, locale: uiLocale,
+    // a page read: its words go with the file (never into the markup store); the file has unsaved work until Save writes them
+    onPage: (f, index, entry) => {
+      (f.ocr ||= new Map()).set(index, entry);
+      const key = f.id + ':' + index;
+      textCache.delete(key);
+      textSel?.forget(key);
+      if (entry.pdf) store.dirtySheets.add(key);
+      syncAutosave(); refreshToolbar(); view.invalidate();
+    },
+    onResult: (f, index, what) => {
+      const pages = window.markupcraftProblems?.state.ocr;
+      if (!pages) return;
+      const key = f.pages[index]?.key;
+      if (!key) return;
+      if (what === 'ok') delete pages[key]; else pages[key] = what;
+      problemsPush();
+    },
+  });
+  window.markupcraft.ocr = ocrUi;
+  // ---- Problems (0.8 P.6; docs/0.8-PROBLEMS-SPEC.md § 10): pages pdf.js could not draw, pictures it could not draw, pages the text reader
+  // failed on or found no words on — kept per sheet (page.key) and pushed to the shell's ⚠ panel (manifest "problems"). Accepting is for
+  // this session only (the adapter has no saveAccepted: a PDF has no place for it). Markers are on the page (pageMarkers, 0.8 round 3).
+  let problemsPush = () => {};
+  if (document.getElementById('cc-problems')) {
+    const state = { render: {}, ocr: {} };
+    const go = () => {
+      const P = window.ccProblems;
+      if (!P) return;
+      const src = P.source({ id: 'markupcraft.pages', kind: 'import', label: t('problems.src.pages') });
+      const tasksSrc = P.source({ id: 'markupcraft.tasks', kind: 'check', label: t('problems.src.tasks') });
+      const pushTasks = () => tasksSrc.set(taskProblems(store.all(), { titleOf: (k) => sheetByKey(k)?.page.title || k }, { t }));
+      store.on(pushTasks); pushTasks();
+      problemsPush = () => {
+        const keys = new Set(sheets.map((s) => s.page.key));
+        for (const part of [state.render, state.ocr]) for (const k of Object.keys(part)) if (!keys.has(k)) delete part[k];
+        src.set(pageProblems({ ...state, titleOf: (k) => sheetByKey(k)?.page.title || k }, { t }));
+      };
+      P.adapter({
+        t,
+        file: () => files[0]?.name || '',
+        select: (p) => { const i = sheets.findIndex((s) => s.page.key === p.about[0]?.id); if (i >= 0) goTo(i); },
+      });
+      problemsPush();
+      // ⚠ over the page: on the markup a task is about, else at the page's corner; follows zoom, pan and the open sheet
+      P.markers(pageMarkers({ view, stage: ui.stage, canvas: ui.base, curKey, boundsOfId: (id) => { const m = store.get(id); return m ? boundsOf(m, envOf(m)) : null; },
+        viewOf: (key) => sheetByKey(key)?.page.view || null }));
+      store.on(() => P.redraw?.());
+      P.registerTools?.(getHost({ app: 'markupcraft' }).control);   // the assistants' problems tools (problems-08-mounts.md)
+    };
+    window.markupcraftProblems = { state, push: () => problemsPush() };   // for tests (tools/problems-test/browser-markupcraft.mjs)
+    if (window.ccProblems) go(); else document.addEventListener('cc-problems-ready', go, { once: true });
+  }
   renderAuthor();
   rebuildSheets();
   refreshAll();

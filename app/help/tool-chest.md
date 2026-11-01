@@ -29,6 +29,10 @@ While a chest tool is on, changes you make in {{ui:Properties}} before drawing a
 
 Result: the tool is added at the end of the chest, and the {{ui:Tools}} tab opens to show it.
 
+## Stamps made from a selection
+
+Select several markups (or page content with the {{ui:Content}} tool) and choose {{ui:Save selection as a stamp…}} in {{ui:More}} or in the right-click menu. The chest gets one stamp that holds them all ("Stamp: 3 markups together"). Click it, then click on any sheet: the markups land together, centered where you click, as new markups with your name; page content is drawn into the page there. These stamps are saved and shared with the chest like any tool.
+
 ## Remove a tool
 
 Choose the × at the end of the tool's row, then {{ui:Remove}}. Markups already drawn with it stay as they are.

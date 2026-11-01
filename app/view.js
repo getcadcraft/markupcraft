@@ -17,6 +17,15 @@
  *
  * Colors follow the page theme (html[data-space]); in Model space the sheet itself is drawn in the
  * theme's colors (pdf.js page colors) unless `sheetInTheme` is off.
+ *
+ * Form fields (0.8) are drawn with pdf.js AnnotationMode ENABLE_STORAGE: a value typed in MarkupCraft (form-ui.js puts it in
+ * the document's annotationStorage) shows on the sheet, the thumbnails and snapshots, like the file's own values.
+ *
+ * Scroll mode (0.8, `setStrip`): every page of one file in a column, one under the other. The ACTIVE page is the one the rest
+ * of the view works on (this.page, S, toUser, the markups, the overlay) — the page under the pointer when it is pressed, else
+ * the one in the middle of the stage. The others are drawn around it (low-resolution picture first, then a crisp one when the
+ * view settles; only the pages near the screen keep pictures) with their saved markups (`onBaseOther`). Switching the active
+ * page keeps everything where it is on screen; the app hears `onActivate(page)`.
  */
 
 import { mul, inv, apply, I } from './geom.js';
@@ -26,6 +35,10 @@ import { combine } from './compare.js';
 
 export const PX_PER_PT = 96 / 72;   // "100 %" = actual size on a 96 dpi screen
 const LOWRES_MAX = 2400;
+const STRIP_LOW_MAX = 1400;      // the other pages' first pictures are smaller
+const STRIP_GAP = 14;            // px between pages in Scroll mode
+/** pdf.js AnnotationMode: 0 = off, 3 = annotation appearances + form values from the document's annotationStorage */
+const ANNOT_ON = 3;
 
 export class View {
   constructor(stage, base, over) {
@@ -42,6 +55,11 @@ export class View {
     this.onView = null;       // () → zoom/pan changed
     this.raf = 0; this.dirtyBase = true; this.dirtyOver = true;
     this.renderToken = 0;
+    this.strip = null;        // Scroll mode: { items: [{ page, load, proxy, low, crisp }], at, layout }
+    this.onBaseOther = null;  // (ctx, view, page, S) → paint another page's saved markups (Scroll mode)
+    this.onActivate = null;   // (page) → the active page changed by scrolling or pressing on another page
+    this.lockActive = null;   // () → true while the active page must not change (a drag, a shape being drawn)
+    this.stripStamp = 0; this.stripTimer = 0;
     this.theme();
     new MutationObserver(() => { this.theme(); this.low = null; this.crisp = null; this.reloadLow(); this.scheduleCrisp(0); })
       .observe(document.documentElement, { attributes: true, attributeFilter: ['data-space'] });
@@ -125,6 +143,7 @@ export class View {
     this.vp1 = this.vpOf(this.proxy, 1);
     this.T1 = this.vp1.transform.slice();
     this.low = null; this.crisp = null;
+    if (this.strip) { this.strip.layout = null; for (const it of this.strip.items) { it.low = null; it.crisp = null; it.T1 = null; } }
     this.update();
     const [sx, sy] = this.toScreen(mid);
     this.panBy(this.w / 2 - sx, this.h / 2 - sy);
@@ -135,11 +154,15 @@ export class View {
   /** keepPicture: the same sheet drawn again (its own content was edited, 0.6 DF.14): the old picture stays until the new one is ready. */
   async setPage(page, proxy, { keepView = false, extraRot = 0, keepPicture = false } = {}) {
     this.cancelRender();
+    // the same page again (its content was edited) stays in the column; any other page leaves Scroll mode (the app sets it again)
+    if (this.strip && this.strip.items[this.strip.at]?.page.key === page.key) { const it = this.strip.items[this.strip.at]; it.proxy = proxy; it.T1 = null; }
+    else this.strip = null;
     this.page = page; this.proxy = proxy;
     this.extraRot = extraRot;
     this.vp1 = this.vpOf(proxy, 1);
     this.T1 = this.vp1.transform.slice();
     if (!keepPicture) { this.low = null; this.crisp = null; }
+    this.failed = null;
     if (!keepView) this.fit('page'); else this.update();
     await this.reloadLow();
     this.scheduleCrisp(0);
@@ -147,7 +170,7 @@ export class View {
 
   clear() {
     this.cancelRender();
-    this.page = null; this.proxy = null; this.low = null; this.crisp = null; this.compare = null;
+    this.page = null; this.proxy = null; this.low = null; this.crisp = null; this.compare = null; this.strip = null;
     this.invalidate(true);
   }
 
@@ -202,13 +225,206 @@ export class View {
   panBy(dx, dy) { this.ox += dx; this.oy += dy; this.update(); }
 
   update() {
-    // keep some of the sheet on screen
+    // keep some of the sheet on screen (Scroll mode: some of the column)
     const pw = this.vpw * this.z, ph = this.vph * this.z, keep = 60;
     this.ox = Math.min(this.w - keep, Math.max(keep - pw, this.ox));
-    this.oy = Math.min(this.h - keep, Math.max(keep - ph, this.oy));
+    if (this.strip && !this.compare) {
+      const L = this.stripLayout(), a = this.strip.at;
+      const top = this.oy - (L.tops[a] * this.z + a * STRIP_GAP), total = L.total * this.z + (L.n - 1) * STRIP_GAP;
+      const t2 = Math.min(this.h - keep, Math.max(keep - total, top));
+      this.oy += t2 - top;
+    } else this.oy = Math.min(this.h - keep, Math.max(keep - ph, this.oy));
     this.invalidate(true);
     this.scheduleCrisp();
+    if (this.strip) { this.followMiddle(); this.stripStamp++; clearTimeout(this.stripTimer); this.stripTimer = setTimeout(() => this.pumpStrip(), 160); }
     this.onView?.();
+  }
+
+  // ---- Scroll mode ----
+  /**
+   * items: [{ page, load: () → Promise<PDFPageProxy> }] — the pages of one file in order; `at` = the one shown now (this.page).
+   * null leaves Scroll mode.
+   */
+  setStrip(items, at = 0) {
+    if (!items || items.length < 2 || !this.page) { this.strip = null; this.update(); return; }
+    this.strip = { items: items.map((x) => ({ page: x.page, load: x.load, proxy: null, low: null, crisp: null, T1: null })), at, layout: null };
+    this.strip.items[at].proxy = this.proxy;
+    this.update();
+    this.pumpStrip();
+  }
+  /** The column at zoom 1: each page's size as shown (turned) and its top, in points. */
+  stripLayout() {
+    const s = this.strip;
+    if (s.layout) return s.layout;
+    const w = [], h = [], tops = [];
+    let y = 0, maxW = 0;
+    for (const it of s.items) {
+      const rot = (((it.page.rotate || 0) + (this.extraRot || 0)) % 180 + 180) % 180 === 90;
+      const pw = rot ? it.page.height : it.page.width, ph = rot ? it.page.width : it.page.height;
+      w.push(pw); h.push(ph); tops.push(y); y += ph; maxW = Math.max(maxW, pw);
+    }
+    return (s.layout = { w, h, tops, total: y, maxW, n: s.items.length });
+  }
+  /** Where page k of the column is on screen (CSS px): the column is centered on the active page. */
+  stripRect(k) {
+    const L = this.stripLayout(), a = this.strip.at, z = this.z;
+    return { x: this.ox + ((L.w[a] - L.w[k]) / 2) * z, y: this.oy + (L.tops[k] - L.tops[a]) * z + (k - a) * STRIP_GAP, w: L.w[k] * z, h: L.h[k] * z };
+  }
+  /** The pages of the column on screen (and `margin` px around it), in order. */
+  stripVisible(margin = 0) {
+    const out = [];
+    if (!this.strip) return out;
+    for (let k = 0; k < this.strip.items.length; k++) {
+      const r = this.stripRect(k);
+      if (r.y + r.h >= -margin && r.y <= this.h + margin && r.x + r.w >= -margin && r.x <= this.w + margin) out.push(k);
+      else if (r.y > this.h + margin) break;
+    }
+    return out;
+  }
+  /** The page of the column under a point on screen, or -1 (a gap, beside the pages, not in Scroll mode). */
+  stripAt(sx, sy) {
+    if (!this.strip || this.compare) return -1;
+    for (const k of this.stripVisible()) { const r = this.stripRect(k); if (sx >= r.x && sx <= r.x + r.w && sy >= r.y && sy <= r.y + r.h) return k; }
+    return -1;
+  }
+  /** user space → screen for page k of the column. */
+  stripS(k) {
+    const it = this.strip.items[k];
+    if (!it.proxy) return null;
+    it.T1 ||= this.vpOf(it.proxy, 1).transform.slice();
+    const r = this.stripRect(k);
+    return mul([this.z, 0, 0, this.z, r.x, r.y], it.T1);
+  }
+  /** Make page k the active one, where it is on screen. false when it can't yet (its page is still loading). */
+  activate(k) {
+    const s = this.strip;
+    if (!s || k === s.at || k < 0 || k >= s.items.length || this.lockActive?.()) return false;
+    const it = s.items[k];
+    if (!it.proxy) return false;
+    const r = this.stripRect(k);
+    const old = s.items[s.at];
+    old.low = this.low; old.crisp = this.crisp && !this.crisp.compare ? this.crisp : null;
+    this.cancelRender();
+    s.at = k;
+    this.page = it.page; this.proxy = it.proxy;
+    this.vp1 = this.vpOf(it.proxy, 1); this.T1 = this.vp1.transform.slice();
+    this.low = it.low; this.crisp = it.crisp; it.low = null; it.crisp = null;
+    this.failed = null;
+    this.ox = r.x; this.oy = r.y;
+    if (!this.low) this.reloadLow();
+    this.scheduleCrisp(0);
+    this.invalidate(true);
+    this.onActivate?.(it.page);
+    return true;
+  }
+  /** Scrolling: the page in the middle of the stage becomes the active one. */
+  followMiddle() {
+    const s = this.strip;
+    if (!s || this.compare || this.lockActive?.()) return;
+    let best = s.at, bestD = Infinity;
+    for (const k of this.stripVisible()) {
+      const r = this.stripRect(k);
+      const d = r.y <= this.h / 2 && r.y + r.h >= this.h / 2 ? 0 : Math.min(Math.abs(r.y - this.h / 2), Math.abs(r.y + r.h - this.h / 2));
+      if (d < bestD) { bestD = d; best = k; }
+    }
+    if (best !== s.at && s.items[best].proxy) this.activate(best);
+  }
+  /** Go to page k of the column: it becomes active with its top near the top of the stage, at the same zoom. */
+  async stripGo(k) {
+    const s = this.strip;
+    if (!s || k < 0 || k >= s.items.length) return false;
+    const it = s.items[k];
+    if (!it.proxy) { try { it.proxy = await it.load(); } catch { return false; } if (this.strip !== s) return false; }
+    if (k !== s.at) {
+      const r = this.stripRect(k);
+      this.oy += 16 - r.y;
+      const held = this.lockActive; this.lockActive = null;
+      this.activate(k);
+      this.lockActive = held;
+    } else this.oy = 16;
+    this.update();
+    return true;
+  }
+  /** One page drawn again (a form value changed): its pictures are made afresh. */
+  redrawPage(key) {
+    if (this.page?.key === key) { this.reloadLow(); this.scheduleCrisp(0); }
+    for (const it of this.strip?.items || []) if (it.page.key === key && it !== this.strip.items[this.strip.at]) { it.low = null; it.crisp = null; }
+    if (this.strip) this.pumpStrip();
+  }
+  /** Load and draw the column's pages near the screen, one at a time; pictures far away are let go. */
+  async pumpStrip() {
+    const s = this.strip;
+    if (!s || this.stripBusy) return;
+    this.stripBusy = true;
+    try {
+      for (let guard = 0; guard < 400 && this.strip === s; guard++) {
+        const near = new Set(this.stripVisible(this.h * 1.5));
+        s.items.forEach((it, k) => { if (k !== s.at && !near.has(k)) { it.low = null; it.crisp = null; } });
+        const job = this.stripJob(s, [...near]);
+        if (!job) break;
+        await job();
+        this.invalidate(true);
+      }
+    } finally { this.stripBusy = false; }
+  }
+  stripJob(s, near) {
+    const seen = new Set(this.stripVisible());
+    const order = [...seen, ...near.filter((k) => !seen.has(k))].filter((k) => k !== s.at);
+    for (const k of order) {
+      const it = s.items[k];
+      if (it.failed) continue;
+      if (!it.proxy) return async () => { try { it.proxy = await it.load(); } catch { it.failed = true; } if (this.strip === s) this.followMiddle(); };
+      if (!it.low) return () => this.renderStripLow(it);
+    }
+    for (const k of seen) {
+      const it = s.items[k];
+      if (k !== s.at && it.proxy && !it.failed && it.crisp?.stamp !== this.stripStamp) return () => this.renderStripCrisp(it, k);
+    }
+    return null;
+  }
+  async renderStripLow(it) {
+    const r0 = this.vpOf(it.proxy, 1);
+    const sc = Math.min(STRIP_LOW_MAX / Math.max(r0.width, r0.height), 2);
+    const vp = this.vpOf(it.proxy, sc);
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    try {
+      await it.proxy.render({ canvas: c, canvasContext: c.getContext('2d', { willReadFrequently: this.themed }), viewport: vp, annotationMode: this.annotModeOf(it.page), background: '#ffffff' }).promise;
+      this.themeize(c);
+      it.low = { canvas: c, s: sc };
+    } catch (e) { if (e?.name !== 'RenderingCancelledException') it.failed = true; }
+  }
+  async renderStripCrisp(it, k) {
+    const stamp = this.stripStamp, dpr = this.dpr, z = this.z;
+    const r = this.stripRect(k);
+    const W = Math.round(this.w * dpr), H = Math.round(this.h * dpr);
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    try {
+      await it.proxy.render({ canvas: c, canvasContext: c.getContext('2d', { willReadFrequently: this.themed }), viewport: this.vpOf(it.proxy, z * dpr), transform: [1, 0, 0, 1, r.x * dpr, r.y * dpr], annotationMode: this.annotModeOf(it.page), background: '#ffffff' }).promise;
+      this.themeize(c);
+      it.crisp = { canvas: c, z, ox: r.x, oy: r.y, dpr, stamp };
+    } catch (e) { if (e?.name !== 'RenderingCancelledException') it.crisp = { stamp }; }
+  }
+  /** The other pages of the column (Scroll mode), under the active one's drawing. */
+  drawStrip(b) {
+    const s = this.strip;
+    for (const k of this.stripVisible()) {
+      if (k === s.at) continue;
+      const it = s.items[k], r = this.stripRect(k);
+      b.fillStyle = this.colors.paper;
+      b.fillRect(r.x, r.y, r.w, r.h);
+      b.save();
+      b.beginPath(); b.rect(r.x, r.y, r.w, r.h); b.clip();
+      b.imageSmoothingEnabled = true; b.imageSmoothingQuality = 'high';
+      if (it.low) { const q = this.z / it.low.s; b.drawImage(it.low.canvas, r.x, r.y, it.low.canvas.width * q, it.low.canvas.height * q); }
+      if (it.crisp?.canvas) { const c = it.crisp, q = this.z / c.z; b.drawImage(c.canvas, r.x - c.ox * q, r.y - c.oy * q, (c.canvas.width / c.dpr) * q, (c.canvas.height / c.dpr) * q); }
+      const S = this.stripS(k);
+      if (S) this.onBaseOther?.(b, this, it.page, S);
+      b.restore();
+      b.lineWidth = 1; b.strokeStyle = this.colors.line;
+      b.strokeRect(Math.round(r.x) - 0.5, Math.round(r.y) - 0.5, Math.round(r.w) + 1, Math.round(r.h) + 1);
+    }
   }
 
   // ---- rendering ----
@@ -231,17 +447,76 @@ export class View {
     const vp = this.vpOf(proxy, s);
     const c = document.createElement('canvas');
     c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    // a big scan can take seconds: the sheet says it is being drawn instead of looking blank (0.7.1, blank-page reports)
+    this.drawing = proxy; this.drawingSince = performance.now();
+    const slow = setTimeout(() => { if (this.drawing === proxy) this.invalidate(true); }, 400);
     try {
       await proxy.render({ canvas: c, canvasContext: c.getContext('2d', { willReadFrequently: this.themed }), viewport: vp, annotationMode: this.annotMode(), background: '#ffffff' }).promise;
       this.themeize(c);
-    } catch (e) { if (e?.name !== 'RenderingCancelledException') console.warn(e); return; }
-    if (proxy === this.proxy) { this.low = { canvas: c, s }; this.invalidate(true); }
+    } catch (e) {
+      if (e?.name !== 'RenderingCancelledException') { console.warn(e); if (proxy === this.proxy) this.fail(e); }
+      return;
+    } finally { clearTimeout(slow); if (this.drawing === proxy) { this.drawing = null; this.invalidate(true); } }
+    if (proxy === this.proxy) { this.low = { canvas: c, s }; this.failed = null; this.invalidate(true); this.checkImages(proxy); }
   }
 
-  annotMode() {
-    // pdf.js AnnotationMode: 0 = off, 1 = draw annotation appearances
-    return this.page?.annotMode === 'disable' ? 0 : 1;
+  /**
+   * pdf.js leaves a picture it cannot decode out of the page without an error (a damaged or unsupported JPX, JBIG2 or JPEG
+   * stream): the page then looks blank. After drawing, the page's picture objects are looked at; one that came back empty
+   * is a picture that could not be drawn, and the sheet says so. `imageOps` (pdf.js OPS ids of the picture-painting
+   * operators) is set by the page.
+   */
+  async checkImages(proxy) {
+    if (!this.imageOps?.size) return;
+    let ol;
+    try { ol = await proxy.getOperatorList({ annotationMode: this.annotMode() }); } catch { return; }
+    let total = 0, bad = 0;
+    const waits = [];
+    ol.fnArray.forEach((fn, k) => {
+      const id = ol.argsArray[k]?.[0];
+      if (!this.imageOps.has(fn) || typeof id !== 'string') return;
+      total++;
+      const store = id.startsWith('g_') ? proxy.commonObjs : proxy.objs;
+      // a picture that fails to decode can resolve (to null) only after the page was drawn without it
+      waits.push(new Promise((done) => {
+        const t = setTimeout(() => done(undefined), 8000);
+        try { store.get(id, (v) => { clearTimeout(t); done(v); }); } catch { clearTimeout(t); done(undefined); }
+      }).then((v) => { if (v === null) bad++; }));
+    });
+    await Promise.all(waits);
+    if (bad && proxy === this.proxy) {
+      this.failed = { kind: 'image', n: bad, total, message: '' };
+      this.invalidate(true);
+      this.onFail?.(this.failed);
+    }
   }
+
+  /** A page pdf.js could not draw: say so on the sheet (never a silent blank) and tell the page (onFail). */
+  fail(e) {
+    this.failed = { message: String(e?.message || e || '') };
+    this.invalidate(true);
+    this.onFail?.(this.failed);
+  }
+  /** The message drawn on a sheet that could not be drawn, or is still being drawn. */
+  paintNotice(b, text) {
+    const pw = this.vpw * this.z, ph = this.vph * this.z;
+    const size = Math.max(11, Math.min(16, pw / 30));
+    b.save();
+    b.font = '600 ' + size + 'px ' + SCREEN_FONT;
+    b.textAlign = 'center'; b.textBaseline = 'middle';
+    const lines = String(text).split('\n');
+    const cx = this.ox + pw / 2, cy = this.oy + Math.min(ph / 2, Math.max(40, ph * 0.2));
+    const wMax = Math.max(...lines.map((l) => b.measureText(l).width)) + size * 2;
+    b.fillStyle = this.colors.sheet; b.globalAlpha = 0.92;
+    b.fillRect(cx - wMax / 2, cy - (lines.length * size * 1.4) / 2 - size * 0.6, wMax, lines.length * size * 1.4 + size * 1.2);
+    b.globalAlpha = 1; b.fillStyle = this.colors.ink;
+    lines.forEach((l, i) => b.fillText(l, cx, cy + (i - (lines.length - 1) / 2) * size * 1.4));
+    b.restore();
+  }
+
+  annotMode() { return this.annotModeOf(this.page); }
+  /** pdf.js AnnotationMode for a page: off when every annotation on it became a markup, else appearances + form values. */
+  annotModeOf(page) { return page?.annotMode === 'disable' ? 0 : ANNOT_ON; }
 
   scheduleCrisp(delay = 140) {
     clearTimeout(this.crispTimer);
@@ -277,7 +552,7 @@ export class View {
       }
       this.invalidate(true);
     } catch (e) {
-      if (e?.name !== 'RenderingCancelledException') console.warn(e);
+      if (e?.name !== 'RenderingCancelledException') { console.warn(e); if (!this.low && proxy === this.proxy) this.fail(e); }
     }
   }
 
@@ -315,6 +590,7 @@ export class View {
       b.fillRect(0, 0, this.base.width, this.base.height);
       if (this.page) {
         b.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (this.strip && !this.compare) this.drawStrip(b);
         const pw = this.vpw * this.z, ph = this.vph * this.z;
         b.fillStyle = this.compare ? this.colors.sheet : this.colors.paper;
         b.fillRect(this.ox, this.oy, pw, ph);
@@ -329,6 +605,11 @@ export class View {
         if (this.crisp && (!!this.crisp.compare === !!this.compare)) {
           const c = this.crisp, k = this.z / c.z;
           b.drawImage(c.canvas, this.ox - c.ox * k, this.oy - c.oy * k, (c.canvas.width / c.dpr) * k, (c.canvas.height / c.dpr) * k);
+        }
+        // nothing to show yet, or nothing at all: say why (the page's words come from onNotice, the app's language)
+        if (!this.compare && (this.failed || (!this.low && !this.crisp && this.drawing && performance.now() - this.drawingSince > 350))) {
+          const text = this.onNotice?.(this.failed ? 'failed' : 'drawing', this.failed);
+          if (text) this.paintNotice(b, text);
         }
         b.restore();
         b.lineWidth = 1;
@@ -454,7 +735,7 @@ export class View {
     const c = document.createElement('canvas');
     c.width = Math.max(1, Math.ceil(w * sc)); c.height = Math.max(1, Math.ceil(h * sc));
     const ctx = c.getContext('2d');
-    await proxy.render({ canvas: c, canvasContext: ctx, viewport: proxy.getViewport({ scale: sc }), transform: [1, 0, 0, 1, -x0 * sc, -y0 * sc], annotationMode: page?.annotMode === 'disable' ? 0 : 1, background: '#ffffff' }).promise;
+    await proxy.render({ canvas: c, canvasContext: ctx, viewport: proxy.getViewport({ scale: sc }), transform: [1, 0, 0, 1, -x0 * sc, -y0 * sc], annotationMode: this.annotModeOf(page), background: '#ffffff' }).promise;
     const S = mul([sc, 0, 0, sc, -x0 * sc, -y0 * sc], vp1.transform);
     for (const list of lists) this.paint(ctx, list, { S, dpr: 1, z: sc, light: true });
     return c;
@@ -467,7 +748,7 @@ export class View {
     const vp = proxy.getViewport({ scale: s });
     canvas.width = Math.max(1, Math.floor(vp.width)); canvas.height = Math.max(1, Math.floor(vp.height));
     canvas.style.aspectRatio = vp.width + ' / ' + vp.height;
-    await proxy.render({ canvas, canvasContext: canvas.getContext('2d'), viewport: vp, annotationMode: 1, background: '#ffffff' }).promise;
+    await proxy.render({ canvas, canvasContext: canvas.getContext('2d'), viewport: vp, annotationMode: ANNOT_ON, background: '#ffffff' }).promise;
   }
 }
 

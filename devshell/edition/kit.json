@@ -74,6 +74,17 @@
             "name": "PDF.js",
             "spdx": "Apache-2.0",
             "url": "https://github.com/mozilla/pdf.js"
+        },
+        "tessdata": {
+            "name": "tessdata_fast (Tesseract language data)",
+            "spdx": "Apache-2.0",
+            "url": "https://github.com/tesseract-ocr/tessdata_fast"
+        },
+        "tesseract": {
+            "name": "tesseract.js + tesseract.js-core (Tesseract OCR in WebAssembly)",
+            "spdx": "Apache-2.0",
+            "url": "https://github.com/naptha/tesseract.js",
+            "note": "MarkupCraft Read text (OCR, 0.7.1). The core also holds Leptonica, zlib, libpng, libjpeg (IJG), libtiff and libwebp (permissive; listed in its NOTICE)."
         }
     },
     "embedded": {

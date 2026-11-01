@@ -39,10 +39,13 @@ export const COMMANDS = [
   C('pages.insert-blank', 'pages', 'bi-file-earmark', A('page-insert-blank')),
   C('pages.delete', 'pages', 'bi-trash', A('page-delete')),
   C('pages.extract', 'pages', 'bi-box-arrow-up-right', A('page-extract')),
+  C('pages.ocr', 'pages', 'bi-text-paragraph', A('ocr')),   // 0.7.1 71.10: Read text (OCR)
 
   C('tool.select', 'tools', 'bi-cursor', TL('select'), { defKeys: ['V'] }),
   C('tool.pan', 'tools', 'bi-hand-index-thumb', TL('pan'), { defKeys: ['H'] }),
   C('tool.content', 'tools', 'bi-vector-pen', TL('content'), { defKeys: ['B'] }),   // 0.6 DF.14
+  C('tool.seltext', 'tools', 'bi-cursor-text', A('seltext')),   // 0.7.1 71.10: Select text (Edit › More)
+  C('tool.fill', 'tools', 'bi-input-cursor-text', TL('fill'), { defKeys: ['F'] }),   // 0.8: fill in a PDF's form
   C('tool.pen', 'draw', 'bi-pencil', TL('pen'), { defKeys: ['P'] }),
   C('tool.highlight', 'draw', 'bi-highlighter', TL('highlight'), { defKeys: ['I'] }),
   C('tool.line', 'draw', 'bi-slash-lg', TL('line'), { defKeys: ['L'] }),
@@ -71,6 +74,11 @@ export const COMMANDS = [
   C('edit.cut', 'edit', 'bi-scissors', A('cut'), { defKeys: ['Ctrl+X'] }),
   C('edit.paste-in-place', 'edit', 'bi-clipboard-check', A('paste-in-place'), { defKeys: ['Ctrl+Shift+V'] }),
   C('edit.paste-picture', 'edit', 'bi-image', A('paste-picture')),   // 0.6 DF.6 (Ctrl+V takes a picture too)
+  C('edit.insert-picture', 'edit', 'bi-file-earmark-image', A('insert-picture')),   // 0.7.1 71.7 (PNG, JPEG, SVG, a PDF page)
+  C('edit.copy-area', 'edit', 'bi-bounding-box-circles', A('copy-area')),   // 0.8 D8.15: Copy area (rectangle, ellipse, freeform; picture or overlay)
+  C('edit.line-up', 'edit', 'bi-pin-angle', A('line-up')),   // 0.8 D8.15: a picture lined up with two points
+  C('edit.save-stamp', 'edit', 'bi-collection', A('save-stamp')),
+  C('edit.clean-pen', 'edit', 'bi-vector-pen', A('clean-pen')),   // 0.8 EG.55: pen strokes become lines, circles, arcs, rectangles                   // 0.7.1 71.9 (a selection → the tool chest)
   C('edit.duplicate', 'edit', 'bi-files', A('duplicate'), { defKeys: ['Ctrl+D'] }),
   C('edit.delete', 'edit', 'bi-trash', A('delete'), { defKeys: ['Delete'], fixed: true }),
   C('edit.select-all', 'edit', 'bi-check2-all', A('select-all'), { defKeys: ['Ctrl+A'] }),
@@ -83,6 +91,7 @@ export const COMMANDS = [
   C('view.zoom-out', 'view', 'bi-zoom-out', N('zoom-out')),
   C('view.fit-page', 'view', 'bi-arrows-fullscreen', N('fit-page'), { defKeys: ['Ctrl+0'] }),
   C('view.fit-width', 'view', 'bi-arrows-expand', N('fit-width'), { defKeys: ['Ctrl+9'] }),
+  C('view.page-mode', 'view', 'bi-view-stacked', N('page-mode')),   // 0.8: Scroll pages / one page at a time
   C('view.turn-ccw', 'view', 'bi-arrow-counterclockwise', N('view-ccw')),
   C('view.turn-cw', 'view', 'bi-arrow-clockwise', N('view-cw')),
   C('view.takeoff', 'view', 'bi-box-arrow-up-right', '[data-handoff-pdf]', { optional: true }),
@@ -131,7 +140,7 @@ const sm = (id) => ({ id, size: 'sm' });
 const rtab = (label, panels) => ({ label: 'input.m.' + label, panels: panels.map(([l, items]) => ({ label: 'input.m.' + l, items })) });
 const RIBBON_TABS = [
   rtab('r-markup', [
-    ['r-select', [lg('tool.select'), sm('tool.pan'), sm('tool.content')]],
+    ['r-select', [lg('tool.select'), sm('tool.pan'), sm('tool.content'), sm('tool.seltext'), sm('tool.fill')]],
     ['r-draw', [lg('tool.pen'), lg('tool.highlight'), sm('tool.line'), sm('tool.arrow'), sm('tool.arc'), sm('tool.rect'), sm('tool.ellipse'), sm('tool.polyline'), sm('tool.polygon')]],
     ['r-revise', [lg('tool.cloudrect'), lg('tool.cloud')]],
     ['r-annotate', [lg('tool.callout'), lg('tool.text'), sm('tool.note'), sm('tool.stamp')]],
@@ -141,7 +150,7 @@ const RIBBON_TABS = [
     ['r-measure', [lg('tool.measure'), lg('tool.area'), sm('tool.angle'), sm('tool.count')]],
   ]),
   rtab('r-edit', [
-    ['r-clipboard', [lg('edit.paste'), sm('edit.cut'), sm('edit.copy'), sm('edit.duplicate'), sm('edit.paste-in-place'), sm('edit.paste-picture'), sm('edit.delete')]],
+    ['r-clipboard', [lg('edit.paste'), sm('edit.cut'), sm('edit.copy'), sm('edit.duplicate'), sm('edit.paste-in-place'), sm('edit.paste-picture'), sm('edit.insert-picture'), sm('edit.copy-area'), sm('edit.line-up'), sm('edit.save-stamp'), sm('edit.clean-pen'), sm('edit.delete')]],
     ['r-selection', [sm('edit.select-all'), sm('edit.select-none'), sm('edit.find')]],
   ]),
   rtab('r-review', [
@@ -155,33 +164,33 @@ const RIBBON_TABS = [
   rtab('r-pages', [
     ['r-output', [lg('file.print'), sm('file.save-flat'), sm('pages.slip-sheet')]],
     ['r-arrange', [sm('pages.rotate-cw'), sm('pages.rotate-ccw'), sm('pages.move-up'), sm('pages.move-down')]],
-    ['r-insert', [sm('pages.insert-pdf'), sm('pages.insert-blank'), sm('pages.delete'), sm('pages.extract')]],
+    ['r-insert', [sm('pages.insert-pdf'), sm('pages.insert-blank'), sm('pages.delete'), sm('pages.extract'), sm('pages.ocr')]],
     ['r-handoff', [lg('view.takeoff')]],
   ]),
   rtab('r-view', [
     ['r-sheets', [lg('view.prev'), lg('view.next')]],
-    ['r-zoom', [sm('view.zoom-in'), sm('view.zoom-out'), sm('view.fit-page'), sm('view.fit-width')]],
+    ['r-zoom', [sm('view.zoom-in'), sm('view.zoom-out'), sm('view.fit-page'), sm('view.fit-width'), sm('view.page-mode')]],
     ['r-turn', [sm('view.turn-ccw'), sm('view.turn-cw')]],
     ['r-panels', [lg('panel.props')]],
   ]),
 ];
 const L = (k) => 'input.lbl.ribbon.' + k;
 const RIBBON_LABELS = {
-  'tool.select': 'tool.select', 'tool.pan': 'tool.pan', 'tool.content': 'tool.content', 'tool.pen': 'tool.pen', 'tool.highlight': 'tool.highlight',
+  'tool.select': 'tool.select', 'tool.pan': 'tool.pan', 'tool.content': 'tool.content', 'tool.seltext': 'tool.seltext', 'tool.fill': 'tool.fill', 'tool.pen': 'tool.pen', 'tool.highlight': 'tool.highlight',
   'tool.line': 'tool.line', 'tool.arrow': 'tool.arrow', 'tool.arc': 'tool.arc', 'tool.rect': 'tool.rect', 'tool.ellipse': 'tool.ellipse',
   'tool.polyline': 'tool.polyline', 'tool.polygon': 'tool.polygon', 'tool.cloudrect': 'tool.cloudrect', 'tool.cloud': 'tool.cloud',
   'tool.callout': 'tool.callout', 'tool.text': 'tool.text', 'tool.note': 'tool.note', 'tool.stamp': 'tool.stamp', 'tool.calibrate': 'tool.calibrate',
   'tool.measure': 'tool.measure', 'tool.angle': 'tool.angle', 'tool.area': 'tool.area', 'tool.count': 'tool.count',
   'edit.paste': 'tool.paste', 'edit.cut': 'menu.cut', 'edit.copy': 'tool.copy', 'edit.duplicate': 'menu.duplicate', 'edit.paste-in-place': 'menu.paste_in_place',
-  'edit.paste-picture': L('picture'), 'edit.delete': 'menu.delete', 'edit.select-all': 'menu.select_all', 'edit.select-none': 'menu.select_none', 'edit.find': L('find'),
+  'edit.paste-picture': L('picture'), 'edit.insert-picture': 'menu.insert_picture', 'edit.copy-area': 'menu.copy_area', 'edit.line-up': 'menu.line_up', 'edit.save-stamp': 'menu.save_stamp', 'edit.delete': 'menu.delete', 'edit.select-all': 'menu.select_all', 'edit.select-none': 'menu.select_none', 'edit.find': L('find'),
   'panel.list': 'tab.list', 'panel.punch': 'tab.punch', 'panel.field': 'tab.field', 'panel.chest': 'tab.chest', 'panel.compare': 'tab.compare', 'panel.props': 'tab.props',
   'markups.csv': 'list.csv', 'markups.xlsx': 'list.xlsx', 'markups.summary': L('summary'), 'markups.legend': 'legend.add', 'markups.bcf': L('bcf'), 'markups.bcf-import': 'bcfin.button',
   'punch.add': L('punch-add'), 'punch.csv': 'punch.csv', 'chest.save': L('chest-save'), 'chest.import': 'chest.import', 'chest.export': 'chest.export',
   'compare.start': 'compare.start', 'compare.stop': L('compare-stop'),
   'file.print': 'tool.print', 'file.save-flat': L('flatten'), 'pages.slip-sheet': L('slip'), 'pages.rotate-cw': L('rotate-cw'), 'pages.rotate-ccw': L('rotate-ccw'),
   'pages.move-up': L('move-up'), 'pages.move-down': L('move-down'), 'pages.insert-pdf': L('insert-pdf'), 'pages.insert-blank': L('insert-blank'),
-  'pages.delete': L('delete'), 'pages.extract': L('extract'), 'view.takeoff': L('takeoff'),
-  'view.prev': L('prev'), 'view.next': L('next'), 'view.zoom-in': 'nav.zoom_in', 'view.zoom-out': 'nav.zoom_out', 'view.fit-page': 'nav.fit_page', 'view.fit-width': 'nav.fit_width',
+  'pages.delete': L('delete'), 'pages.extract': L('extract'), 'pages.ocr': L('ocr'), 'view.takeoff': L('takeoff'),
+  'view.prev': L('prev'), 'view.next': L('next'), 'view.zoom-in': 'nav.zoom_in', 'view.zoom-out': 'nav.zoom_out', 'view.fit-page': 'nav.fit_page', 'view.fit-width': 'nav.fit_width', 'view.page-mode': 'nav.page_mode',
   'view.turn-ccw': L('turn-ccw'), 'view.turn-cw': L('turn-cw'),
 };
 
@@ -195,10 +204,10 @@ export const STYLES = {
     format: 'cadcraft-input', version: 1, id: 'review', name: 'input.style.review', builtin: true, layout: 'menubar',
     menus: [
       m('file', ['file.new', 'file.open', '-', 'file.save', 'file.save-flat', 'file.print', '-', 'file.close', '-', 'app.settings', 'app.palette', 'app.help']),
-      m('edit', ['edit.undo', 'edit.redo', '-', 'edit.cut', 'edit.copy', 'edit.paste', 'edit.paste-in-place', 'edit.paste-picture', 'edit.duplicate', 'edit.delete', '-', 'edit.select-all', 'edit.select-none', '-', 'edit.find']),
-      m('view', ['view.prev', 'view.next', '-', 'view.zoom-in', 'view.zoom-out', 'view.fit-page', 'view.fit-width', '-', 'view.turn-ccw', 'view.turn-cw', '-', 'tool.pan']),
-      m('document', ['pages.rotate-cw', 'pages.rotate-ccw', 'pages.move-up', 'pages.move-down', '-', 'pages.insert-pdf', 'pages.insert-blank', 'pages.delete', 'pages.extract', '-', 'pages.slip-sheet', 'view.takeoff']),
-      m('markup', ['tool.select', 'tool.content', '-', 'tool.pen', 'tool.highlight', 'tool.line', 'tool.arrow', 'tool.arc', 'tool.rect', 'tool.ellipse', 'tool.polyline', 'tool.polygon', '-', 'tool.cloudrect', 'tool.cloud', '-', 'tool.callout', 'tool.text', 'tool.note', 'tool.stamp']),
+      m('edit', ['edit.undo', 'edit.redo', '-', 'edit.cut', 'edit.copy', 'edit.paste', 'edit.paste-in-place', 'edit.paste-picture', 'edit.insert-picture', 'edit.copy-area', 'edit.line-up', 'edit.duplicate', 'edit.delete', '-', 'edit.save-stamp', 'edit.clean-pen', '-', 'edit.select-all', 'edit.select-none', '-', 'edit.find']),
+      m('view', ['view.prev', 'view.next', 'view.page-mode', '-', 'view.zoom-in', 'view.zoom-out', 'view.fit-page', 'view.fit-width', '-', 'view.turn-ccw', 'view.turn-cw', '-', 'tool.pan']),
+      m('document', ['pages.rotate-cw', 'pages.rotate-ccw', 'pages.move-up', 'pages.move-down', '-', 'pages.insert-pdf', 'pages.insert-blank', 'pages.delete', 'pages.extract', '-', 'pages.ocr', 'pages.slip-sheet', 'view.takeoff']),
+      m('markup', ['tool.select', 'tool.content', 'tool.seltext', 'tool.fill', '-', 'tool.pen', 'tool.highlight', 'tool.line', 'tool.arrow', 'tool.arc', 'tool.rect', 'tool.ellipse', 'tool.polyline', 'tool.polygon', '-', 'tool.cloudrect', 'tool.cloud', '-', 'tool.callout', 'tool.text', 'tool.note', 'tool.stamp']),
       m('measure', ['tool.calibrate', '-', 'tool.measure', 'tool.angle', 'tool.area', 'tool.count']),
       m('review', REVIEW_MENU),
       m('window', ['panel.props', 'panel.list', 'panel.punch', 'panel.field', 'panel.chest', 'panel.compare']),

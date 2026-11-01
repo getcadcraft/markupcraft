@@ -22,6 +22,8 @@ import { t } from './i18n.js';
 import { cleanFields, cleanColumns } from './columns.js';
 import { cleanImage } from './imagestamp.js';
 import { cleanAddonData } from './addons.js';
+import { cleanTask } from './tasks.js';   // 0.8 EG.64
+import { cleanVoice, cleanDecision } from './voice.js';   // 0.8 EG.66
 
 /** Markup types. `name` (what the UI calls it) and `subject` (the default PDF /Subj) come from the language file:
  *  type.<type> and subject.<type>. */
@@ -110,6 +112,7 @@ export function makeMarkup(fields) {
     fields: cleanFields(fields.fields),   // custom column values (0.4 K19)
     xd: cleanXd(fields.xd),               // add-ons' own data, by add-on id (0.5 AO.6); kept untouched without the add-on
     link: String(fields.link ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60),   // the sheet it jumps to (0.4 K9)
+    flat: fields.flat === true ? true : undefined,   // flattened into the page when saved; a markup until then (0.7.1 71.7)
     subject: fields.subject ?? (TYPES[t]?.subject || ''),
     comment: fields.comment ?? '',
     author: fields.author ?? '',
@@ -117,6 +120,9 @@ export function makeMarkup(fields) {
     modified: fields.modified || fields.created || now,
     status: STATUSES.includes(fields.status) ? fields.status : 'Open',
     punch: fields.punch ? { n: +fields.punch.n || 0, assignee: String(fields.punch.assignee || ''), due: String(fields.punch.due || ''), status: PUNCH_STATUSES.includes(fields.punch.status) ? fields.punch.status : 'Open' } : null,
+    task: cleanTask(fields.task),           // 0.8 EG.64: a markup that acts (tasks.js)
+    voice: cleanVoice(fields.voice),        // 0.8 EG.66: a recorded note (voice.js)
+    decision: cleanDecision(fields.decision),   // 0.8 EG.66: a decision pinned on the plan
     locked: !!fields.locked,
     src: fields.src || null,
     replies: Array.isArray(fields.replies) ? fields.replies.map(cleanReply).filter(Boolean) : [],

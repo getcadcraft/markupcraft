@@ -39,7 +39,7 @@ function itemOf(m) {
     rect: m.rect ? m.rect.slice() : null,
     rot: m.rot || 0,
     style: { ...(m.style || {}) },
-    text: m.text || '', label: m.label || '', subject: m.subject || '', comment: m.comment || '', layer: m.layer || '', link: m.link || '', legend: m.legend, fields: { ...(m.fields || {}) }, img: m.type === 'image' ? m.img : '', holes: m.holes?.length ? m.holes.map((h) => h.map((p) => [p[0], p[1]])) : undefined, xd: m.xd ? JSON.parse(JSON.stringify(m.xd)) : undefined,
+    text: m.text || '', label: m.label || '', subject: m.subject || '', comment: m.comment || '', layer: m.layer || '', link: m.link || '', legend: m.legend, fields: { ...(m.fields || {}) }, img: m.type === 'image' ? m.img : '', holes: m.holes?.length ? m.holes.map((h) => h.map((p) => [p[0], p[1]])) : undefined, xd: m.xd ? JSON.parse(JSON.stringify(m.xd)) : undefined, flat: m.flat === true ? true : undefined,
   };
 }
 
@@ -63,12 +63,14 @@ export function cleanItem(d) {
     fillOpacity: clampN(s.fillOpacity, 0, 1),
     opacity: clampN(s.opacity, 0.05, 1),
     fontSize: clampN(s.fontSize, 2, 300),
+    textColor: HEX.test(s.textColor) ? s.textColor.toLowerCase() : undefined,
+    bold: s.bold === true ? true : undefined,
   };
   for (const k of Object.keys(style)) if (style[k] === undefined) delete style[k];
   const m = makeMarkup({
     sheet: '', type: d.type, pts: d.pts || null, rect: d.rect || null,
     rot: [0, 90, 180, 270].includes(d.rot) ? d.rot : 0, style,
-    text: str(d.text, 20000), label: str(d.label, 200), subject: str(d.subject, 200), comment: str(d.comment, 20000), layer: str(d.layer, 60), link: str(d.link, 60), legend: d.legend, fields: d.fields, img: d.type === 'image' ? cleanImage(d.img) : '', holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd,
+    text: str(d.text, 20000), label: str(d.label, 200), subject: str(d.subject, 200), comment: str(d.comment, 20000), layer: str(d.layer, 60), link: str(d.link, 60), legend: d.legend, fields: d.fields, img: d.type === 'image' ? cleanImage(d.img) : '', holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, flat: d.flat === true,
   });
   return geometryOk(m) ? itemOf(m) : null;
 }

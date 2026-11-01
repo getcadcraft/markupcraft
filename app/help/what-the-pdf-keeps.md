@@ -49,6 +49,10 @@ Every one is saved with:
 
 Text is written in Helvetica, which every PDF viewer has. Letters outside the Western European set (Windows-1252) print as "?" in the copy; the save message counts them.
 
+## Calc sheets and reasons
+
+Calc sheets and reasons are kept in a private entry of the PDF named `/MarkupCraftShell`. Other PDF programs ignore it. An older MarkupCraft also ignores it, and drops it the next time it saves that file.
+
 ## What happens to comments that were already there
 
 When you open a PDF that already has comments:

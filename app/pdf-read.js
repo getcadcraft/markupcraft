@@ -4,7 +4,7 @@
  *
  * `openPdf(env, bytes, { fileId, name })` → a file record:
  *   { id, name, size, bytes (the original, untouched), doc (pdf.js document used for drawing),
- *     pages: [{ index, key, label, sheetNo, title, view, rotate, width, height, annotMode }],
+ *     pages: [{ index, key, label, sheetNo, title, view, rotate, width, height, annotMode }], hasForm (fillable fields: form-ui.js),
  *     markups (editable, from annotations), calibrations {sheetKey: cal}, removeRefs (ids to drop on save), layers (K3),
  *     notes: [...] }
  * env = { pdfjs, pdfLib, docOptions } — the libraries are passed in (the page uses the vendored builds,
@@ -27,12 +27,13 @@ import { makeMarkup, geometryOk, cleanReply, statusText, STATUSES, TYPES } from 
 import { t } from './i18n.js';
 import { validCalibration } from './units.js';
 import { unpackRecords } from './records.js';
-import { PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_RECORDS_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
+import { PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_RECORDS_KEY, PRIVATE_SHELL_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
 import { readTitleBlock } from './titleblock.js';
 import { cleanImage } from './imagestamp.js';
 import { cleanHoles } from './holes.js';
 import { readOutline } from './bookmarks.js';
 import { BLANK_KEY, blankInfo } from './blank.js';
+import { freeTextLook, apTextLook } from './freetext.js';
 
 export const EDITABLE_SUBTYPES = new Set(['Square', 'Circle', 'Line', 'PolyLine', 'Polygon', 'Ink', 'FreeText', 'Text', 'Stamp']);
 const IGNORED_SUBTYPES = new Set(['Popup', 'Link', 'Widget']);
@@ -110,11 +111,33 @@ export function extrasOf(lib, ctx, id) {
     const v = dict.get(lib.PDFName.of(k));
     if (v !== undefined) out[k] = plain(lib, ctx.lookup(v));
   }
+  // a text box's look (0.7.1 71.4): its default style, rich text and what its appearance stream draws
+  if (plain(lib, dict.get(lib.PDFName.of('Subtype'))) === 'FreeText') {
+    for (const k of ['DS', 'RC']) { const v = dict.get(lib.PDFName.of(k)); if (v !== undefined) out[k] = plain(lib, ctx.lookup(v)); }
+    try { out.APText = apLook(lib, ctx, dict); } catch { out.APText = null; }
+  }
   return out;
 }
 
-/** Font size from a /DA string ("/Helv 12 Tf 1 0 0 rg"). */
-function daSize(da) { const m = /([\d.]+)\s+Tf/.exec(String(da || '')); return m ? Math.max(4, Math.min(144, +m[1])) : 12; }
+/** The text colour and size an annotation's normal appearance shows (freetext.js apTextLook), or null. */
+function apLook(lib, ctx, dict) {
+  const ap = ctx.lookupMaybe(dict.get(lib.PDFName.of('AP')), lib.PDFDict);
+  let n = ap ? ctx.lookup(ap.get(lib.PDFName.of('N'))) : null;
+  if (n instanceof lib.PDFDict && !(n instanceof lib.PDFRawStream)) {
+    // appearance states: the one /AS names
+    const as = dict.get(lib.PDFName.of('AS'));
+    n = as ? ctx.lookup(n.get(as)) : null;
+  }
+  const form = (s) => {
+    if (!(s instanceof lib.PDFRawStream)) return null;
+    const bytes = lib.decodePDFRawStream(s).decode();
+    const res = ctx.lookupMaybe(s.dict.get(lib.PDFName.of('Resources')), lib.PDFDict);
+    const xo = res ? ctx.lookupMaybe(res.get(lib.PDFName.of('XObject')), lib.PDFDict) : null;
+    return { bytes, xobject: (name) => (xo ? form(ctx.lookup(xo.get(lib.PDFName.of(name)))) : null) };
+  };
+  const f = form(n);
+  return f ? apTextLook(f.bytes, f.xobject) : null;
+}
 
 /** Restore one of our own markups from its private JSON; null when the JSON is not usable. */
 export function fromPrivate(json, a, sheet) {
@@ -135,6 +158,8 @@ export function fromPrivate(json, a, sheet) {
     fillOpacity: Number.isFinite(style.fillOpacity) ? Math.max(0, Math.min(1, style.fillOpacity)) : undefined,
     opacity: Number.isFinite(style.opacity) ? Math.max(0.05, Math.min(1, style.opacity)) : undefined,
     fontSize: Number.isFinite(style.fontSize) ? Math.max(2, Math.min(300, style.fontSize)) : undefined,
+    textColor: /^#[0-9a-f]{6}$/i.test(style.textColor) ? style.textColor : undefined,
+    bold: style.bold === true ? true : undefined,
   };
   for (const k of Object.keys(clean)) if (clean[k] === undefined) delete clean[k];
   const mk = makeMarkup({
@@ -142,7 +167,7 @@ export function fromPrivate(json, a, sheet) {
     sheet, type: d.type, pts: d.pts || null, rect: d.rect || null, rot: [0, 90, 180, 270].includes(d.rot) ? d.rot : 0,
     style: clean, text: String(d.text ?? ''), label: String(d.label ?? ''), subject: String(d.subject ?? ''), comment: String(d.comment ?? ''),
     author: String(d.author ?? ''), created: String(d.created || ''), modified: String(d.modified || ''),
-    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd,
+    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, task: d.task, voice: d.voice, decision: d.decision, flat: d.flat === true,
   });
   return geometryOk(mk) ? mk : null;
 }
@@ -233,7 +258,13 @@ export function annotToMarkup(a, x, sheet, rot = 0) {
       const rd = Array.isArray(x.RD) && x.RD.length === 4 ? x.RD : [0, 0, 0, 0];
       const rect = [r[0] + rd[0], r[1] + rd[3], r[2] - rd[2], r[3] - rd[1]];
       if (rect[2] - rect[0] < 1 || rect[3] - rect[1] < 1) return foreign();
-      const s = { ...style, fontSize: daSize(x.DA), width: x.IT === 'FreeTextCallout' ? Math.max(0.5, width) : width };
+      // the text's own colour and size (freetext.js): /C is the box's border (or fill), never the text — a pale border
+      // used to give pale text, barely visible on white paper (71.4)
+      const look = freeTextLook({ ap: x.APText, rc: x.RC, ds: x.DS, da: x.DA });
+      const w = x.IT === 'FreeTextCallout' ? Math.max(0.5, width) : width;
+      const s = { ...style, fontSize: look.size, width: w, color: a.color && w > 0 ? color : look.color };
+      if (s.color !== look.color) s.textColor = look.color;
+      if (look.bold) s.bold = true;
       const text = str(a.contentsObj);
       if (x.IT === 'FreeTextCallout' && Array.isArray(x.CL) && x.CL.length >= 4) {
         const cl = pairs(x.CL);
@@ -278,6 +309,9 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   // field records (0.7 LC.7): untrusted JSON by page index, cleaned by records.js; mapped to sheet keys below
   let records = [];
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_RECORDS_KEY) : custom?.[PRIVATE_RECORDS_KEY]; records = unpackRecords(raw ? String(raw) : '', doc.numPages); } catch { records = []; }
+  // the shell's calc sheets and design reasons (0.8 round 3): untrusted JSON, the modules clean it
+  let shell = null;
+  try { const raw = custom instanceof Map ? custom.get(PRIVATE_SHELL_KEY) : custom?.[PRIVATE_SHELL_KEY]; const v = raw ? JSON.parse(String(raw)) : null; if (v && typeof v === 'object' && !Array.isArray(v)) shell = { calcs: v.calcs ?? null, reasons: v.reasons ?? null }; } catch { shell = null; }
   // File › New (blank.js): the paper and grid of a blank set, so "Add a blank page" matches it
   const blank = blankInfo(custom instanceof Map ? custom.get(BLANK_KEY) : custom?.[BLANK_KEY]);
   const pages = [];
@@ -298,7 +332,9 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     onProgress?.(i + 1, doc.numPages);
   }
 
-  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, blank, records, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
+  const record = { id: fileId, name, size: bytes.length, bytes, doc, pages, markups: [], calibrations: {}, sheetNames: {}, removeRefs: new Set(), layers, columns, blank, records, shell, bookmarks: await readOutline(doc), notes: [], foreignCount: 0, cleaned: false, replyCount: 0 };
+  // a fillable form (0.8): form-ui.js reads it with pdf-lib only for the files that have one
+  record.hasForm = raw.some((list) => list.some((a) => a.subtype === 'Widget' && a.fieldType && a.fieldType !== 'Sig'));
   const needLib = ours || raw.some((list) => list.some((a) => EDITABLE_SUBTYPES.has(a.subtype)));
   if (!needLib) return record;
 
@@ -337,7 +373,9 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     for (const a of raw[i]) {
       const x = ldoc ? extrasOf(lib, ctx, a.id) : {};
       const r = annotToMarkup(a, x, pg.key, pg.rotate);
-      if (!r) { if (a.subtype === 'Widget' && a.hasAppearance) pageHasForeign[i] = true; continue; }
+      // a form field keeps being drawn on a page whose other annotations became markups (0.8: with or without an appearance
+      // of its own — pdf.js draws a text field's value itself, and form-ui.js the buttons that have none)
+      if (!r) { if (a.subtype === 'Widget') pageHasForeign[i] = true; continue; }
       if (r.reply) { replies.push(r.reply); continue; }
       if (r.foreign) { pageHasForeign[i] = true; record.markups.push(r.foreign); record.foreignCount++; byRef.set(a.id, r.foreign); continue; }
       const list = r.markups || [r.markup];

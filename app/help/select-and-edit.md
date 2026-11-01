@@ -64,6 +64,12 @@ Pasted copies are new markups: they get your name, today's date, the status Open
 
 **Between tabs:** what you copy is also kept in this browser, so another MarkupCraft tab in the same browser can paste it. Copying markups does not use the computer's clipboard: you cannot paste them into another program, and text you copied elsewhere does not paste as a markup.
 
+**Right-click menu:** right-click a markup (or empty paper) for {{ui:Cut}}, {{ui:Copy}}, {{ui:Paste here}}, {{ui:Paste in place}}, {{ui:Duplicate}}, {{ui:Delete}}, {{ui:Save selection as a stamp…}}, {{ui:Flatten into the page when saved}}, {{ui:Insert a picture here…}} and {{ui:Select all}}. Right-clicking a markup that is not selected selects it first. Dragging with the right button still pans. On a touch screen, a long press on a markup opens the same menu (on text, it starts editing the text). The menu key or {{key:Shift+F10}} opens it at the selection.
+
+Page content selected with the {{ui:Content}} tool copies and pastes too: see [Change the page's own lines, pictures and text](topic:page-content).
+
+To copy part of the page itself as a picture (a rectangle, an ellipse or a freeform shape), or as a see-through overlay for another sheet or app, see [Copy an area of the page, or an overlay](topic:copy-an-area).
+
 ## Delete
 
 Press {{key:Delete}} or {{key:Backspace}}, choose {{ui:More}} then {{ui:Delete}} in the toolbar, or {{ui:Delete}} in {{ui:Properties}}. The status bar says how many were deleted. Read-only comments from the file are never deleted ("kept as in the file").

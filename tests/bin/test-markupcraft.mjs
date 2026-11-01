@@ -70,6 +70,9 @@ const vdM = await imp('vecdiff.js');
 const legM = await imp('legend.js');
 const bmM = await imp('bookmarks.js');
 const blankM = await imp('blank.js');
+const ftM = await imp('freetext.js');
+const ocrM = await imp('ocr.js');
+const tselM = await imp('textselect.js');
 const i18n = await imp('i18n.js');
 const EN = JSON.parse(fs.readFileSync(path.join(APP, 'lang/en.json'), 'utf8'));
 i18n.init({ locale: 'en', strings: EN });   // the language file (0.4 item 0.5): every module's words come from it
@@ -503,6 +506,207 @@ section("Another program's annotations");
   ok(subs === 'FreeText,Highlight,Ink,Ink,Line,Link,Square,Stamp', 'saved: theirs rewritten as ours, read-only ones and the link kept, old state reply replaced', subs);
   ok(outAnn.filter((a) => a.subtype === 'Square').length === 1 && keep.length === 5, 'no duplicate square');
   fs.writeFileSync(path.join(OUTDIR, 'other-program.pdf'), other);
+}
+
+// ------------------------------------------------------------------------------------------------
+section('Text boxes from another program: the text keeps its own colour and size (0.7.1 71.4)');
+{
+  // what other markup programs write in a FreeText: /C = the border (or fill), the text colour in /DA, /DS, /RC and the
+  // appearance stream. Reading the text colour from /C gave a pale-bordered box pale text, barely visible on white paper.
+  const da = ftM.parseDA('0 0 1 rg /Helv 10 Tf');
+  ok(da.color === '#0000ff' && da.size === 10, '/DA: rg colour and Tf size', da);
+  ok(ftM.parseDA('0.2 g /Helv 0 Tf').color === '#333333' && ftM.parseDA('0.2 g /Helv 0 Tf').size === undefined, '/DA: gray, and size 0 (auto) is not a size');
+  ok(ftM.parseDA('/Helv 12 Tf 0 1 0 0 k').color === '#ff00ff', '/DA: CMYK');
+  const ds = ftM.parseCss('font: bold 16pt Arial; text-align:left; color:#1E48C8');
+  ok(ds.color === '#1e48c8' && ds.size === 16 && ds.bold === true, '/DS: the font shorthand (bold, size) and colour', ds);
+  ok(ftM.parseCss('font-size:12px; color: rgb(255, 0, 0)').size === 9 && ftM.parseCss('color:#f00').color === '#ff0000', '/DS: px sizes, rgb() and #rgb');
+  const rc = ftM.parseRC('<?xml version="1.0"?><body xmlns="http://www.w3.org/1999/xhtml" style="font-size:9pt;color:#000000"><p style="color:#008000"><span style="font-size:14pt">Fix</span></p></body>');
+  ok(rc.color === '#008000' && rc.size === 14, '/RC: the innermost style speaks first (span size, p colour over body)', rc);
+  const enc = (t) => new TextEncoder().encode(t);
+  ok(ftM.apTextLook(enc('1 1 0.8 rg 0 0 100 20 re f BT 0 0 0 rg /Helv 12 Tf 2 5 Td (Hi) Tj ET'))?.color === '#000000', 'appearance: the fill drawn first is not the text colour');
+  ok(ftM.apTextLook(enc('q 2 0 0 2 0 0 cm BT /Helv 1 Tf 6 0 0 6 0 0 Tm 1 0 0 rg (Hi) Tj ET Q'))?.size === 12, 'appearance: size through cm and Tm');
+  ok(ftM.apTextLook(enc('BT 3 Tr 1 1 1 rg /F1 10 Tf (hidden) Tj 0 Tr 0 0 1 rg (Hi) Tj ET'))?.color === '#0000ff', 'appearance: invisible text (Tr 3) is skipped');
+  ok(ftM.apTextLook(enc('0.9 g 0 0 10 10 re f')) === null, 'appearance with no text → nothing from it');
+  ok(ftM.freeTextLook({}).color === '#000000' && ftM.freeTextLook({}).size === 12, 'nothing anywhere → black 12 pt, never a faint default');
+
+  const src = await PDFLib.PDFDocument.load(planBytes);
+  const ctx = src.context;
+  const page = src.getPage(0);
+  const S = (x) => PDFLib.PDFString.of(x);
+  const T = (x) => PDFLib.PDFHexString.fromText(x);
+  const form = (ops, bbox, res) => ctx.register(ctx.flateStream(ops, { Type: 'XObject', Subtype: 'Form', BBox: bbox, ...(res ? { Resources: res } : {}) }));
+  const ft = (rect, extra) => ctx.register(ctx.obj({ Type: 'Annot', Subtype: 'FreeText', Rect: rect, F: 4, T: T('Other Tool User'), ...extra }));
+  // A: the reporter's case — pale border, no border width, black text in every source + an appearance stream
+  const a = ft([100, 100, 300, 140], { Contents: T('Pale border, black text'), C: [0.85, 0.85, 0.85], BS: { W: 0 }, DA: S('0 0 0 rg /Helv 12 Tf'),
+    DS: S('font: Helvetica 12pt; text-align:left; margin:3pt; line-leading:13.8pt; color:#000000'),
+    RC: S('<?xml version="1.0"?><body xmlns="http://www.w3.org/1999/xhtml" xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/" xfa:spec="2.0.2"><p dir="ltr"><span style="font-family:Helvetica;font-size:12pt;color:#000000">Pale border, black text</span></p></body>'),
+    AP: { N: form('1 1 0.8 rg 100 100 200 40 re f BT 0 0 0 rg /Helv 12 Tf 103 125 Td (Pale border, black text) Tj ET', [100, 100, 300, 140], { Font: { Helv: { Type: 'Font', Subtype: 'Type1', BaseFont: 'Helvetica' } } }) } });
+  // B: red border, blue text, no appearance
+  const b = ft([100, 200, 300, 240], { Contents: T('Red box, blue text'), C: [1, 0, 0], BS: { W: 1 }, DA: S('0 0 1 rg /Helv 10 Tf') });
+  // C: pale auto-size /DA; the appearance draws red 9 pt text inside a form it calls
+  const inner = form('BT /Helv 1 Tf 9 0 0 9 403 125 Tm 1 0 0 rg (From the appearance) Tj ET', [400, 100, 600, 140]);
+  const c = ft([400, 100, 600, 140], { Contents: T('From the appearance'), BS: { W: 0 }, DA: S('0.9 0.9 0.9 rg /Helv 0 Tf'),
+    AP: { N: form('1 1 0 rg 400 100 200 40 re f /Fm0 Do', [400, 100, 600, 140], { XObject: { Fm0: inner } }) } });
+  // D: only /DS has the look; E: only /RC; F: nothing but a size
+  const d = ft([400, 200, 600, 240], { Contents: T('Style string'), BS: { W: 0 }, DA: S('/Helv 0 Tf'), DS: S('font: bold 16pt Arial; color:#1E48C8') });
+  const e = ft([100, 300, 300, 340], { Contents: T('Rich text'), BS: { W: 0 }, DA: S('/Helv 11 Tf'), RC: S('<body><p style="color:#008000"><span style="font-size:14pt">Rich text</span></p></body>') });
+  const f = ft([400, 300, 600, 340], { Contents: T('Plain'), DA: S('/Helv 12 Tf') });
+  page.node.set(PDFLib.PDFName.of('Annots'), ctx.obj([a, b, c, d, e, f]));
+  const other = await src.save();
+  fs.writeFileSync(path.join(OUTDIR, 'freetext-other-programs.pdf'), other);
+  const rec = await open(other, 'freetext.pdf');
+  const by = (txt) => rec.markups.find((m) => m.text === txt);
+  const A = by('Pale border, black text'), B = by('Red box, blue text'), C = by('From the appearance'), D = by('Style string'), E = by('Rich text'), F = by('Plain');
+  ok(rec.markups.length === 6 && rec.markups.every((m) => m.type === 'text'), 'six text boxes, all editable', rec.markups.map((m) => m.type));
+  const textOf = (m) => shapesM.shapes(m, {}).find((i) => i.k === 'text');
+  ok(A.style.color === '#000000' && !A.style.textColor && textOf(A).color === '#000000' && A.style.fontSize === 12, 'pale border with no width → black text (not the border grey)', A.style);
+  const lum = (h) => { const v = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  ok(1.05 / (lum(textOf(A).color) + 0.05) >= 4.5, 'and it reads on white paper (Paper space): contrast ≥ 4.5', textOf(A).color);
+  ok(B.style.color === '#ff0000' && B.style.textColor === '#0000ff' && textOf(B).color === '#0000ff' && B.style.fontSize === 10 && B.style.width === 1, 'red border kept, text blue from /DA, 10 pt', B.style);
+  ok(shapesM.shapes(B, {}).some((i) => i.k === 'path' && i.stroke === '#ff0000'), 'the border still draws red');
+  ok(C.style.color === '#ff0000' && C.style.fontSize === 9, 'the appearance stream wins over a pale auto-size /DA (form XObject followed, Tm size)', C.style);
+  ok(D.style.color === '#1e48c8' && D.style.fontSize === 16 && D.style.bold === true && textOf(D).bold === true, '/DS alone: colour, size, bold', D.style);
+  ok(E.style.color === '#008000' && E.style.fontSize === 14, '/RC alone: colour and size', E.style);
+  ok(F.style.color === '#000000' && F.style.fontSize === 12, 'no colour anywhere → black, not the red markup default', F.style);
+  // save: the text colour goes to /DA and /DS; reopen keeps the two colours apart
+  const { bytes: out } = await writer.writeMarkedUp(PDFLib, other, { pages: [{ index: 0, markups: rec.markups, cal: null }], removeRefs: rec.removeRefs });
+  fs.writeFileSync(path.join(OUTDIR, 'freetext-saved.pdf'), out);
+  const outAnn = await quiet(async () => (await (await getDoc(out)).getPage(1)).getAnnotations());
+  const bOut = outAnn.find((x) => x.contentsObj?.str === 'Red box, blue text');
+  ok(bOut && Array.from(bOut.defaultAppearanceData?.fontColor || []).join() === '0,0,255' && Array.from(bOut.color || []).join() === '255,0,0', 'saved: /C red (border), the text blue in what other readers read', { fc: bOut && Array.from(bOut.defaultAppearanceData?.fontColor || []), c: bOut && Array.from(bOut.color || []) });
+  const rec2 = await open(out, 'freetext-saved.pdf');
+  const B2 = rec2.markups.find((m) => m.text === 'Red box, blue text'), D2 = rec2.markups.find((m) => m.text === 'Style string');
+  ok(B2?.style.textColor === '#0000ff' && B2.style.color === '#ff0000' && D2?.style.bold === true, 'reopen: our copy keeps text colour and bold', [B2?.style, D2?.style]);
+  // copy and paste keep them too
+  const pasted = clipM.cleanClip(JSON.stringify(clipM.makeClip([B, D], { sheet: 'f1:0' })));
+  ok(pasted && pasted.items[0].style.textColor === '#0000ff' && pasted.items[1].style.bold === true, 'the clipboard keeps the text colour and bold', pasted?.items?.map((i) => i.style));
+}
+
+// ------------------------------------------------------------------------------------------------
+section('Read text from scans: OCR with the vendored Tesseract, Find, Select text, the saved text layer (0.7.1 71.10)');
+{
+  ok(ocrM.langFor('de') === 'deu' && ocrM.langFor('zh-Hant') === 'chi_tra' && ocrM.langFor('pt-BR') === 'por' && ocrM.langFor('xx') === 'eng', 'interface language → Tesseract language');
+  ok(ocrM.defaultLangs('es-MX').join('+') === 'spa+eng' && ocrM.defaultLangs('en').join() === 'eng', 'the page language, then English');
+  ok(ocrM.cleanLangs(['deu', 'deu', 'evil/../x', 'eng', 'fra', 'ita']).join('+') === 'deu+eng+fra' && ocrM.cleanLangs('x').join() === 'eng', 'untrusted language lists are cleaned');
+  ok(Object.values(ocrM.OCR_LANGS).every((c) => ocrM.OCR_CODES.includes(c)) && ocrM.OCR_CODES.every((c) => Object.hasOwn(EN, 'ocr.lang.' + c)), 'every language has its name in lang/en.json');
+  const DATA = path.join(ROOT, 'public_html/assets/vendor/tessdata/current');
+  ok(ocrM.OCR_CODES.every((c) => fs.existsSync(path.join(DATA, c + '.traineddata.gz'))), 'every language\'s data is vendored (tessdata_fast)');
+  ok(near(ocrM.ocrScale(612, 792), 300 / 72) && ocrM.ocrScale(2592, 3456) * 3456 <= 6000.01 && ocrM.ocrScale(14400, 14400) * 14400 <= 6000.01, 'pages are read at 300 dpi, big sheets capped at 6000 px a side');
+  ok(ocrM.hasText([{ str: ' ' }, { str: 'A' }]) && !ocrM.hasText([{ str: '  ' }]) && !ocrM.hasText([]), 'a page with text of its own is skipped');
+
+  // autosave keeps the text read from a scan (owner 2026-10-26): the state goes through IndexedDB and is checked like a file
+  const entry = { items: [{ str: 'Egress', transform: [10, 0, 0, 10, 72, 700], width: 40, height: 10, hasEOL: true, ocr: true, conf: 96 }], pdf: new TextEncoder().encode('%PDF-1.7 tesseract'), matrix: [1, 0, 0, 1, 0, 0], langs: ['eng'], words: 1, conf: 96 };
+  const back = ocrM.cleanOcrState(structuredClone(ocrM.ocrState(new Map([[2, entry]]))), 5);
+  ok(back.get(2)?.items[0].str === 'Egress' && back.get(2).pdf.length === entry.pdf.length && back.get(2).matrix.join() === '1,0,0,1,0,0' && back.get(2).words === 1, 'autosave: the text read from a scan survives the round trip');
+  const evil = ocrM.cleanOcrState([{ index: 9, items: [] }, { index: 1, items: [{ str: 'x', transform: [1, 2], width: 1 }, { str: 1 }], pdf: new Uint8Array([1, 2, 3]), matrix: [1, 0, 0, 1, 0, 0] }, 'junk'], 5);
+  ok(!evil.has(9) && evil.get(1)?.items.length === 0 && evil.get(1).pdf === null, 'autosave: pages past the end, bad items and a non-PDF text layer are dropped');
+  const mf = JSON.parse(fs.readFileSync(path.join(APP, 'manifest.json'), 'utf8'));
+  ok(/tessdata\/current\/eng\.traineddata\.gz$/.test(mf.ocrData) && /tesseract\/current\/core\/$/.test(mf.ocrCore), 'manifest: the engine folder, and only the English data file (Save for offline adds the interface language)');
+
+  let T = null;
+  try { T = (await import(pathToFileURL(path.join(TOOLS, 'tesseract.js/src/index.js')).href)).default; } catch { T = null; }
+  if (!T) console.log('  (tesseract.js not installed in tools/markupcraft-test: the OCR run is skipped; npm install there)');
+  else {
+    const scans = new Uint8Array(fs.readFileSync(path.join(ROOT, 'fixtures/pdf/scan-filters.pdf')));
+    const meta = JSON.parse(fs.readFileSync(path.join(ROOT, 'fixtures/pdf/scan-filters.json'), 'utf8'));
+    // a copy with the turned 300 dpi page also turned a quarter (/Rotate 90): the words must still land on the sheet right
+    // (a scanner that stored the page sideways and set /Rotate 90 so it shows upright)
+    const turned = await PDFLib.PDFDocument.load(scans);
+    const [emb] = await turned.embedPdf(scans, [7]);
+    const side = turned.insertPage(7, [792, 612]);
+    side.drawPage(emb, { x: 792, y: 0, rotate: PDFLib.degrees(90) });
+    side.setRotation(PDFLib.degrees(90));
+    turned.removePage(8);
+    const turnedBytes = await turned.save();
+    const worker = await quiet(() => T.createWorker('eng', T.OEM.LSTM_ONLY, { langPath: DATA, gzip: true, cacheMethod: 'none' }));
+    const readPage = async (bytes, n) => {
+      const doc = await getDoc(bytes), pg = await doc.getPage(n);
+      const vp1 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: ocrM.ocrScale(vp1.width, vp1.height) });
+      const c = createCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+      await quiet(() => pg.render({ canvas: c, canvasContext: c.getContext('2d'), viewport: vp, background: '#ffffff', annotationMode: pdfjs.AnnotationMode.DISABLE }).promise);
+      await worker.setParameters({ user_defined_dpi: String(Math.round(72 * vp.scale)) });
+      const { data } = await worker.recognize(c.toBuffer('image/png'), { pdfTextOnly: true }, { text: false, blocks: true, pdf: true });
+      const mb = ocrM.mediaBox(data.pdf);
+      return { items: ocrM.ocrItems(data.blocks, vp.transform), pdf: new Uint8Array(data.pdf), matrix: ocrM.ocrMatrix(vp.transform, c.width, c.height, mb[0], mb[1]), view: pg.view };
+    };
+    const words = (s) => s.toLowerCase().split(/\s+/).map((w) => w.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '')).filter(Boolean);
+    const recall = (truth, got) => { const bag = new Map(); for (const w of words(truth)) bag.set(w, (bag.get(w) || 0) + 1); let hit = 0; for (const w of words(got)) { const n = bag.get(w) || 0; if (n) { hit++; bag.set(w, n - 1); } } return hit / words(truth).length; };
+    const truth = meta.lines_300.map((l) => l.text).join('\n');
+    for (const [label, bytes] of [['upright', scans], ['turned a quarter', turnedBytes]]) {
+      const r = await readPage(bytes, 8);
+      const idx = findM.textIndex(r.items);
+      const rc = recall(truth, idx.text);
+      ok(rc >= 0.98, `${label}: Tesseract reads the scanned page (${(rc * 100).toFixed(1)} % of words)`, idx.text.slice(0, 120));
+      const hits = findM.findHits(idx, 'egress', {});
+      const inside = (b) => b[0] >= r.view[0] - 1 && b[1] >= r.view[1] - 1 && b[2] <= r.view[2] + 1 && b[3] <= r.view[3] + 1;
+      ok(hits.length >= 7 && hits.every((h) => inside(h.rect)), `${label}: Find "egress" → ${hits.length} hits, each boxed on the sheet`, hits.length);
+      // the title "SECTION R311" sits near the top of the page as printed (box from the fixture's own pixel box)
+      const sec = findM.findHits(idx, 'SECTION R311', { matchCase: true })[0];
+      const want = meta.lines_300[0].box;   // pixels at 300 dpi of the unturned 8.5 × 11 in page, y down
+      let userWant = [want[0] * 72 / 300, 792 - want[3] * 72 / 300, want[2] * 72 / 300, 792 - want[1] * 72 / 300];
+      if (bytes !== scans) userWant = [792 - userWant[3], userWant[0], 792 - userWant[1], userWant[2]];   // drawn a quarter turn round, at x = 792
+      const cx = (sec.rect[0] + sec.rect[2]) / 2, cy = (sec.rect[1] + sec.rect[3]) / 2;
+      ok(sec && Math.abs(cx - (userWant[0] + userWant[2]) / 2) < 12 && Math.abs(cy - (userWant[1] + userWant[3]) / 2) < 12, `${label}: the hit box is where the words are printed (within a few points; the picture is turned 1.2°)`, { got: sec?.rect.map(Math.round), want: userWant.map(Math.round) });
+      // Select text: drag from the first word to "garage." picks the first paragraph, lines kept
+      const ws = tselM.wordsOf(idx);
+      const a = ws.findIndex((w) => idx.text.slice(w.start, w.end) === 'R311.1'), b = ws.findIndex((w) => idx.text.slice(w.start, w.end) === 'garage.');
+      const pick = tselM.between(ws, [(ws[a].box[0] + ws[a].box[2]) / 2, (ws[a].box[1] + ws[a].box[3]) / 2], [(ws[b].box[0] + ws[b].box[2]) / 2, (ws[b].box[1] + ws[b].box[3]) / 2]);
+      const copied = tselM.selectionText(idx, ws, pick);
+      ok(copied.startsWith('R311.1 Means of egress.') && copied.endsWith('garage.') && copied.split('\n').length === 7, `${label}: Select text copies the paragraph, its seven lines kept`, copied.slice(0, 80));
+      ok(tselM.inBox(ws, sec.rect).length >= 1 && tselM.wordAt(ws, [cx, cy]) >= 0, `${label}: a box or a click picks words`);
+      // Save: the text-only page drawn into the sheet; other readers find the words where they are printed
+      const { bytes: saved, report } = await writer.writeMarkedUp(PDFLib, bytes, { pages: [], ocr: [{ index: 7, pdf: r.pdf, matrix: r.matrix }] });
+      ok(report.ocr === 1, `${label}: Save writes one text layer`);
+      const sd = await getDoc(saved), sp = await sd.getPage(8);
+      const tItems = (await quiet(() => sp.getTextContent())).items;
+      const sIdx = findM.textIndex(tItems);
+      ok(recall(truth, sIdx.text) >= 0.98 && ocrM.hasText(tItems), `${label}: reopened, pdf.js reads the words as the page's own text (so it is not read again)`);
+      const sHit = findM.findHits(sIdx, 'SECTION R311', { matchCase: true })[0];
+      ok(sHit && Math.abs((sHit.rect[0] + sHit.rect[2]) / 2 - cx) < 6 && Math.abs((sHit.rect[1] + sHit.rect[3]) / 2 - cy) < 6, `${label}: and in the same place as before saving`, { saved: sHit?.rect.map(Math.round), before: sec.rect.map(Math.round) });
+      const ann = await quiet(() => sp.getAnnotations());
+      ok(ann.length === 0, `${label}: the text layer is not a markup (no annotation)`);
+      const ops = await quiet(() => sp.getOperatorList());
+      const before = await quiet(async () => (await (await getDoc(bytes)).getPage(8)).getOperatorList());
+      ok(ops.fnArray.filter((f) => f === pdfjs.OPS.paintImageXObject).length === before.fnArray.filter((f) => f === pdfjs.OPS.paintImageXObject).length, `${label}: the scan itself is untouched`);
+      const tmp = path.join(OUTDIR, 'ocr-' + label.replace(/\W+/g, '-') + '.pdf');
+      fs.writeFileSync(tmp, saved);
+      const { spawnSync } = await import('node:child_process');
+      const pt = spawnSync('pdftotext', ['-f', '8', '-l', '8', tmp, '-'], { encoding: 'utf8' });
+      if (!pt.error) ok(/Means of egress/.test(pt.stdout) && /riser height/.test(pt.stdout), `${label}: poppler (pdftotext) reads the text layer too`, pt.stdout.slice(0, 80));
+    }
+    await worker.terminate();
+  }
+}
+
+// ------------------------------------------------------------------------------------------------
+section('Scanned pages that went blank elsewhere: every hard kind of picture draws (0.7.1, second report)');
+{
+  const HARD = path.join(ROOT, '../testfiles/generated/markup/scan-hard-cases.pdf');
+  if (!fs.existsSync(HARD)) console.log('  (no testfiles/generated/markup/scan-hard-cases.pdf: make it with tools/markupcraft-test/make-scan-pdfs.py --hard <jbig2enc>)');
+  else {
+    const labels = JSON.parse(fs.readFileSync(HARD.replace(/\.pdf$/, '.json'), 'utf8')).pages;
+    const ink = async (bytes, n) => {
+      const d = await quiet(() => pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false, standardFontDataUrl: STD_FONTS, wasmUrl: path.join(TOOLS, 'pdfjs-dist/wasm/') }).promise);
+      const pg = await d.getPage(n), vp = pg.getViewport({ scale: 1 });
+      const c = createCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+      await quiet(() => pg.render({ canvas: c, canvasContext: c.getContext('2d'), viewport: vp, background: '#ffffff' }).promise);
+      const px = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let dark = 0; for (let i = 0; i < px.length; i += 4) if (px[i] < 160) dark++;
+      return 100 * dark / (px.length / 4);
+    };
+    const bytes = new Uint8Array(fs.readFileSync(HARD));
+    // the 10200 × 13200 JPEG takes minutes in Node's canvas; the browser test draws it
+    for (let i = 0; i < labels.length; i++) {
+      if (/gray JPEG \(1200/.test(labels[i])) continue;
+      const d = await ink(bytes, i + 1);
+      ok(d > 0.3 && d < 30, labels[i] + ': drawn (' + d.toFixed(2) + ' % ink)');
+    }
+    const broken = new Uint8Array(fs.readFileSync(HARD.replace(/\.pdf$/, '-broken-xref.pdf')));
+    ok((await ink(broken, 1)) > 0.3 && (await ink(broken, 3)) > 0.3, 'a broken cross-reference table: pdf.js rebuilds it and draws the pages');
+    // the saved copy (pdf-lib loads and writes the file) keeps every picture
+    const { bytes: saved } = await writer.writeMarkedUp(PDFLib, bytes, { pages: [{ index: 0, markups: [model.makeMarkup({ sheet: 'f1:0', type: 'rect', rect: [100, 100, 200, 200], author: 'T' })], cal: null }] });
+    ok((await ink(saved, 1)) > 0.3 && (await ink(saved, 2)) > 0.3 && (await ink(saved, 4)) > 0.3, 'saving a marked-up copy keeps the JBIG2 (with JBIG2Globals) and 16-bit JPX pictures');
+  }
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1608,6 +1812,179 @@ section('Base content: the page\'s own content (0.6 DF.14; spike docs/spikes/pdf
     const items = (await quiet(() => pg2.getTextContent())).items.map((i) => i.str).join('');
     ok(items.replace(/\s/g, '').includes('Boilerroom'), 'pdf.js reads "Boiler room" too', items.slice(0, 80));
   } else console.log('  (chromium.pdf not made: the subset-font check is skipped)');
+}
+
+section('0.7.1: copy and paste page content (71.6), pictures from files (71.7), signatures (71.8), stamps from a selection (71.9)');
+{
+  const bc = await imp('base-content.js');
+  const be = await imp('base-edit.js');
+  const cc = await imp('content-clip.js');
+  const corpusM = await import(pathToFileURL(path.join(ROOT, 'tools/markupcraft-test/base-corpus.mjs')).href);
+  const awk = new Uint8Array(corpusM.awkward());
+  const kitchen = new Uint8Array(fs.readFileSync(PLAN));
+  const words = async (bytes, page = 1) => { const d = await getDoc(bytes); const pg = await d.getPage(page); const s = (await quiet(() => pg.getTextContent())).items.map((i) => i.str).join(' '); return s; };
+  const count = (s, w) => s.split(w).length - 1;
+
+  // 71.6: what the Content tool selected → a one-page PDF holding only that
+  const ad = await PDFLib.PDFDocument.load(awk);
+  const apc = bc.readPage(PDFLib, ad, 0);
+  const alist = be.shown(apc, be.emptyBase());
+  const hello = alist.find((x) => x.kind === 'text' && x.obj.text.startsWith('Hello'));
+  const kerned = alist.find((x) => x.kind === 'text' && x.obj.text === 'Kerned Text');
+  const picIt = alist.find((x) => x.kind === 'picture' && !x.obj.inline);
+  const iso = cc.isolateState(apc, be.emptyBase(), [hello.key, kerned.key, picIt.key]);
+  const leaves = apc.objects.filter((o) => ['path', 'image', 'text'].includes(o.kind) && !(o.kind === 'path' && o.clip));
+  ok(Object.keys(iso.o).length === leaves.length - 3 && !iso.o[hello.key] && Object.values(iso.o).every((e) => e.del), 'isolate: every other path, picture and run of text is taken out; clips stay', Object.keys(iso.o).length);
+  const clip = await cc.copyContent(PDFLib, awk, 0, apc, be.emptyBase(), [hello, kerned, picIt], { source: 'tab-a', sheet: 'f1:0', rotate: 0 });
+  ok(!clip.refused && clip.format === cc.CONTENT_FORMAT && clip.n === 3 && clip.kinds.text === 2 && clip.kinds.picture === 1, 'copy: a content clip of 3 objects (2 lines of text, 1 picture)', clip.refused || clip.kinds);
+  const mini = Buffer.from(clip.pdf, 'base64');
+  const mw = await words(new Uint8Array(mini));
+  ok(mw.includes('Hello') && mw.replace(/\s/g, '').includes('KernedText') && !mw.includes('Scaled') && !mw.includes('inner'), 'the copied PDF has the selected words in their own font, and nothing else', mw);
+  const md = await PDFLib.PDFDocument.load(mini);
+  ok(md.getPageCount() === 1 && !md.getPage(0).node.get(PDFLib.PDFName.of('Annots')) && near(md.getPage(0).getMediaBox().width, clip.box[2] - clip.box[0], 0.01), 'one page, the copied box only, no annotations');
+  ok(clip.box[0] <= hello.box[0] && clip.box[2] >= Math.max(kerned.box[2], picIt.box[2]) && clip.box[3] >= hello.box[3], 'the box holds every selected object', clip.box);
+
+  // the clipboard is untrusted when read back (another tab, a tampered localStorage)
+  const back = cc.cleanContentClip(JSON.stringify(clip));
+  ok(back && back.pdf === clip.pdf && nearArr(back.box, clip.box) && back.n === 3, 'a clip survives its JSON round trip');
+  ok(cc.cleanContentClip({ ...clip, format: 'x' }) === null && cc.cleanContentClip({ ...clip, pdf: 'PGh0bWw+' }) === null && cc.cleanContentClip({ ...clip, pdf: clip.pdf.slice(0, 40) + '<script>' }) === null
+    && cc.cleanContentClip({ ...clip, box: [5, 5, 5, 9] }) === null && cc.cleanContentClip('{"format":') === null && cc.cleanContentClip({ ...clip, pdf: 'JVBERi0' + 'A'.repeat(9e6) }) === null,
+    'tampered clips are refused: wrong format, not a PDF, not base64, an empty box, broken JSON, too big');
+  ok(cc.cleanContentClip({ ...clip, n: -4, kinds: { text: 'x', evil: 9 }, rotate: 93 }).n === 1 && JSON.stringify(cc.cleanContentClip({ ...clip, kinds: { text: 'x', evil: 9 } }).kinds) === '{}' && cc.cleanContentClip({ ...clip, rotate: 93 }).rotate === 90, 'counts and kinds are clamped, the rotation snaps to a quarter turn');
+
+  // paste: offset, in place, at a point, turned for a page turned differently
+  const cx = (clip.box[0] + clip.box[2]) / 2, cy = (clip.box[1] + clip.box[3]) / 2;
+  const off = cc.pasteContent(back, { rotate: 0, delta: [250, -300] }, 'pa');
+  const cen = cc.pasteContent(back, { rotate: 0, center: [100, 100] }, 'pb');
+  const turned = cc.pasteContent(back, { rotate: 90, center: [300, 300] }, 'pc');
+  const at = (a, x, y) => bc.apply(a.T, x, y);
+  ok(nearArr(at(off, cx, cy), [cx + 250, cy - 300]) && nearArr(at(cen, cx, cy), [100, 100]) && nearArr(cc.pasteContent(back, { rotate: 0, delta: [0, 0] }).T, [1, 0, 0, 1, 0, 0]), 'paste beside, at a point, in place (no move)');
+  ok(nearArr(at(turned, cx, cy), [300, 300]) && nearArr(at(turned, cx + 10, cy), [300, 310]), 'onto a page turned a quarter: the content turns with it, so it reads the same way on screen', at(turned, cx + 10, cy));
+
+  // the page's edits keep the paste; Save and the working copy draw it as a form
+  let st = be.withAdded(be.emptyBase(), [off]);
+  const cl = be.cleanBase(JSON.parse(JSON.stringify(st)));
+  ok(cl.add.length === 1 && cl.add[0].kind === 'pdf' && cl.add[0].pdf === clip.pdf, 'the sheet\'s edits keep a paste (autosave, undo)');
+  const bad = be.cleanBase({ add: [{ ...off, T: [0, 0, 0, 0, 1, 1] }, { ...off, pdf: 'AAAA' }, { ...off, box: ['x', 0, 1, 1] }, { ...off, kind: 'pdf', pdf: 5 }] });
+  ok(bad.add.length === 0, 'tampered pastes are dropped (squashed matrix, not a PDF, bad box)');
+  ok(be.cleanBase({ add: Array.from({ length: be.LIMITS.pasted + 5 }, (_, i) => ({ ...off, id: 'p' + i })) }).add.length === be.LIMITS.pasted, 'at most ' + be.LIMITS.pasted + ' pastes a sheet');
+  const sh = be.shown(apc, st, ['shape']);
+  const pi = sh.find((x) => x.key === 'a:pa');
+  ok(pi && pi.kind === 'pasted' && near(pi.box[0], clip.box[0] + 250, 0.01) && near(pi.box[3], clip.box[3] - 300, 0.01), 'a paste is listed and picked as one piece, whatever kinds are being picked', pi && pi.box);
+  ok(be.hitTest(sh, [cx + 250, cy - 300], 1)?.key === 'a:pa', 'and hit at its middle');
+  const moved = be.withMove(st, ['a:pa'], bc.translate(10, 20));
+  ok(nearArr(at(moved.add[0], cx, cy), [cx + 260, cy - 280]) && be.withDelete(moved, ['a:pa']).add.length === 0, 'moved (its matrix), deleted');
+  const w1 = await be.buildWorking(PDFLib, awk, new Map([[0, st]]));
+  const t1 = await words(w1.bytes);
+  ok(!w1.refused.length && count(t1, 'Hello') === 2 && count(t1.replace(/\s/g, ''), 'KernedText') === 2 && count(t1, 'Scaled') === 1, 'the working copy: the pasted words are there twice, the rest once', t1);
+  // on another file (the kitchen sheet): the fonts and the picture come along
+  const kw = await be.buildWorking(PDFLib, kitchen, new Map([[0, be.withAdded(be.emptyBase(), [cc.pasteContent(back, { rotate: 0, center: [600, 800] }, 'pk'), cc.pasteContent(back, { rotate: 0, center: [600, 500] }, 'pk2')])]]));
+  const kt = await words(kw.bytes);
+  const kd = await PDFLib.PDFDocument.load(kw.bytes);
+  const xo = kd.getPage(0).node.Resources().lookup(PDFLib.PDFName.of('XObject'));
+  const pasteNames = xo.keys().map((k) => k.decodeText()).filter((n) => n.startsWith('McPaste'));
+  ok(!kw.refused.length && count(kt, 'Hello') === 2 && pasteNames.length === 2 && xo.lookup(PDFLib.PDFName.of(pasteNames[0])) === xo.lookup(PDFLib.PDFName.of(pasteNames[1])), 'pasted into another PDF twice: both show, one embedded copy', { kt, pasteNames });
+  {
+    const { spawnSync } = await import('node:child_process');
+    const f = path.join(OUTDIR, 'pasted-content.pdf'); fs.writeFileSync(f, kw.bytes);
+    const pp = spawnSync('pdftotext', [f, '-'], { encoding: 'utf8' });
+    if (pp.status === 0) ok(count(pp.stdout, 'Hello') === 2, 'poppler reads the pasted words too', pp.stdout); else console.log('  (poppler not installed: skipped)');
+  }
+  // a copy of a paste (nested), and Save writes markups into the copy with the paste in it
+  const kpc = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(kitchen), 0);
+  const kst = be.withAdded(be.emptyBase(), [cc.pasteContent(back, { rotate: 0, center: [600, 800] }, 'pk')]);
+  const ksel = be.shown(kpc, kst).filter((x) => x.key === 'a:pk');
+  const clip2 = await cc.copyContent(PDFLib, kitchen, 0, kpc, kst, ksel, { rotate: 0 });
+  ok(!clip2.refused && (await words(new Uint8Array(Buffer.from(clip2.pdf, 'base64')))).includes('Hello') && clip2.kinds.pasted === 1, 'a paste can be copied again (its words come along)');
+  const kitchenLines = be.shown(kpc, be.emptyBase()).slice(100, 140);
+  const clip3 = await cc.copyContent(PDFLib, kitchen, 0, kpc, be.emptyBase(), kitchenLines, { rotate: 0 });
+  ok(!clip3.refused && Buffer.from(clip3.pdf, 'base64').length < 20000 && clip3.kinds.shape === 40, '40 lines of the kitchen plan copy as a small PDF', Buffer.from(clip3.pdf, 'base64').length);
+  ok((await cc.copyContent(PDFLib, kitchen, 0, kpc, be.emptyBase(), [])).refused === 'empty', 'nothing selected: nothing copied');
+  const enc = await PDFLib.PDFDocument.create(); enc.addPage(); enc.context.trailerInfo.Encrypt = enc.context.obj({ Filter: 'Standard' });
+  const encBytes = await enc.save();
+  const encPc = bc.readPage(PDFLib, await PDFLib.PDFDocument.load(encBytes, { ignoreEncryption: true }), 0);
+  ok((await cc.copyContent(PDFLib, encBytes, 0, encPc, be.emptyBase(), [{ key: '1', kind: 'shape', box: [0, 0, 10, 10] }])).refused === 'encrypted', 'an encrypted file refuses (as every page edit does)');
+  const { bytes: saved } = await writer.writeMarkedUp(PDFLib, w1.bytes, { pages: [{ index: 0, markups: [model.makeMarkup({ sheet: 'f1:0', type: 'rect', rect: [20, 20, 80, 60], author })], cal: null }] });
+  ok(count(await words(saved), 'Hello') === 2, 'Save writes the markups into the copy with the paste in it');
+
+  // 71.7: pictures from files; "flatten into the page when saved"
+  ok(picM.pictureKind('a.PNG') === 'png' && picM.pictureKind('x', 'image/jpeg') === 'jpeg' && picM.pictureKind('logo.svg') === 'svg' && picM.pictureKind('stamp.pdf') === 'pdf' && picM.pictureKind('a.gif') === null && picM.pictureKind('a.exe', 'text/html') === null, 'picture kinds: PNG, JPEG, SVG, PDF; nothing else');
+  const fm = model.makeMarkup({ sheet: 'f1:0', type: 'image', rect: [100, 100, 200, 150], img: (() => { const c = createCanvas(20, 10); const g = c.getContext('2d'); g.fillStyle = '#1e48c8'; g.fillRect(0, 0, 20, 10); return 'data:image/png;base64,' + c.toBuffer('image/png').toString('base64'); })(), label: 'logo', author, flat: true });
+  ok(fm.flat === true && model.makeMarkup({ type: 'rect', rect: [0, 0, 1, 1], flat: 'yes' }).flat === undefined, 'the flag is kept only when true');
+  const fc = clipM.placeClip(clipM.cleanClip(JSON.stringify(clipM.makeClip([fm]))), { sheet: 'f1:0' })[0];
+  ok(fc.flat === true, 'copy and paste keep it');
+  const keep = model.makeMarkup({ sheet: 'f1:0', type: 'cloudrect', rect: [300, 300, 400, 380], author });
+  const { bytes: fb, report: fr } = await writer.writeMarkedUp(PDFLib, kitchen, { pages: [{ index: 0, markups: [fm, keep], cal: null }], flatten: new Set([fm.id]) });
+  const fdoc = await PDFLib.PDFDocument.load(fb);
+  const fann = (fdoc.getPage(0).node.Annots()?.asArray() || []).map((r) => fdoc.context.lookup(r).get(PDFLib.PDFName.of('Subtype')).decodeText());
+  ok(fr.flattened === 1 && fr.written === 1 && fann.length === 1 && fann[0] === 'Square', 'Save with the flagged picture: it is drawn into the page, the other markup stays an annotation', { fr, fann });
+  const { bytes: kb } = await writer.writeMarkedUp(PDFLib, kitchen, { pages: [{ index: 0, markups: [fm], cal: null }] });
+  const kre = await open(kb, 'k.pdf', 'f1');
+  ok(kre.markups.length === 1 && kre.markups[0].flat === true, 'written as a markup (a page operation), it reopens still flagged');
+
+  // 71.8: a signature on paper; the signature list
+  const sp = new Uint8ClampedArray([255, 255, 255, 255, 250, 250, 248, 255, 20, 30, 90, 255, 160, 160, 170, 255]);
+  picM.clearPaper(sp);
+  ok(sp[3] === 0 && sp[7] === 0 && sp[11] === 255 && sp[15] > 0 && sp[15] < 255, 'white paper becomes see-through, dark ink stays solid, grey is part-way', [...sp]);
+  const big = new Uint8ClampedArray(10 * 6 * 4); big[(3 * 10 + 4) * 4 + 3] = 255; big[(4 * 10 + 7) * 4 + 3] = 200;
+  ok(JSON.stringify(picM.inkBox(big, 10, 6)) === '[4,3,8,5]' && picM.inkBox(new Uint8ClampedArray(16), 2, 2) === null, 'trimmed to the ink');
+  const sigs = picM.cleanSignatures([{ id: 'a', src: fm.img, name: 'Mine\u0007' }, { id: 'a', src: fm.img }, { src: 'data:text/html,<b>' }, null, ...Array.from({ length: 12 }, (_, i) => ({ id: 's' + i, src: fm.img, name: 'x'.repeat(200) }))]);
+  ok(sigs.length === picM.MAX_SIGNATURES && sigs[0].name === 'Mine' && sigs.every((x) => x.name.length <= 60) && new Set(sigs.map((x) => x.id)).size === sigs.length, 'the saved list is cleaned: pictures only, ids once, short names, at most ' + picM.MAX_SIGNATURES);
+
+  // 71.9: a selection as a stamp in the tool chest
+  const g1 = model.makeMarkup({ sheet: 'f1:0', type: 'cloudrect', rect: [100, 100, 200, 160], author });
+  const g2 = model.makeMarkup({ sheet: 'f1:0', type: 'text', rect: [110, 170, 260, 190], text: 'See detail', author });
+  const tool = chestM.stampTool('Detail tag', { items: clipM.makeClip([g1, g2]).items });
+  ok(tool && tool.type === 'stamp' && tool.items.length === 2 && tool.name === 'Detail tag', 'markups → a stamp tool holding them');
+  const placed = clipM.placeClip({ items: tool.items }, { sheet: 'f1:1', author: 'Ann', center: [500, 500] });
+  const pb = clipM.clipBounds(placed);
+  ok(placed.length === 2 && near((pb[0] + pb[2]) / 2, 500) && near((pb[1] + pb[3]) / 2, 500) && placed.every((m) => m.author === 'Ann' && m.sheet === 'f1:1'), 'placing it: the markups together, centred on the click, new markups');
+  const ctool = chestM.stampTool('Kitchen detail', { content: clip3 });
+  ok(ctool && ctool.content && ctool.content.pdf === clip3.pdf, 'page content → a stamp tool holding the content clip');
+  const round = chestM.parseChest(chestM.exportChest([tool, ctool]));
+  ok(round.tools.length === 2 && round.tools[0].items.length === 2 && round.tools[1].content.n === 40, 'both survive the chest file (export → import)');
+  const tampered = chestM.parseChest(JSON.stringify({ format: chestM.CHEST_FORMAT, version: 1, tools: [{ ...tool, items: [{ type: 'rect', rect: ['x'] }] }, { ...ctool, content: { ...ctool.content, pdf: 'PHN2Zz4=' } }, { ...tool, items: [...tool.items, { type: 'foreign' }] }] }));
+  ok(tampered.tools.length === 1 && tampered.tools[0].items.length === 2 && tampered.skipped === 2, 'tampered stamps are dropped (bad markups, content that is not a PDF); bad items inside a good one are left out', tampered);
+}
+
+section('Copy area: a picture that knows its size, overlays, line up (0.8 D8.15)');
+{
+  const ac = await imp('areaclip.js');
+  const zlib = await import('node:zlib');
+  // a real PNG of w × h (RGBA, rows filter 0) as a data URL
+  const crcT = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = (b) => { let c = 0xffffffff; for (const x of b) c = crcT[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const out = Buffer.alloc(12 + data.length); out.writeUInt32BE(data.length, 0); out.write(type, 4, 'latin1'); data.copy(out, 8); out.writeUInt32BE(crc(out.subarray(4, 8 + data.length)), 8 + data.length); return out; };
+  const png = (w, h) => { const hd = Buffer.alloc(13); hd.writeUInt32BE(w, 0); hd.writeUInt32BE(h, 4); hd[8] = 8; hd[9] = 6;
+    const raw = Buffer.alloc((w * 4 + 1) * h, 255); for (let y = 0; y < h; y++) raw[y * (w * 4 + 1)] = 0;
+    return 'data:image/png;base64,' + Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]), chunk('IHDR', hd), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]).toString('base64'); };
+  const src = png(40, 20);
+  ok(JSON.stringify(ac.pngSize(src)) === '[40,20]' && ac.pngSize('data:image/jpeg;base64,/9j/') === null && ac.pngSize(png(9000, 2)) === null, 'the PNG\'s own header gives its size; not a PNG, or too big a side → refused');
+  const clip = ac.makeAreaClip({ source: 'tab-1', sheet: 'f1:0', label: 'Copied area', src, ptPerPx: 0.48, real: { mmPerPx: 0.48 * 25.4 / 72 * 50, unit: 'mm' }, overlay: { opacity: 0.4, tint: '#D0312D' }, shape: 'ellipse' });
+  ok(clip && clip.format === ac.AREA_FORMAT && clip.px[0] === 40 && clip.overlay.tint === '#d0312d' && clip.overlay.opacity === 0.4 && clip.shape === 'ellipse', 'a clip: format, pixel size from the PNG, the overlay colour cleaned');
+  const back = ac.cleanAreaClip(JSON.stringify(clip));
+  ok(back && back.src === src && back.real.mmPerPx === clip.real.mmPerPx && back.at === clip.at, 'it survives localStorage (JSON round trip)');
+  ok(ac.cleanAreaClip({ ...clip, ptPerPx: -1 }) === null && ac.cleanAreaClip({ ...clip, src: 'javascript:alert(1)' }) === null && ac.cleanAreaClip({ ...clip, format: 'x' }) === null && ac.cleanAreaClip('{oops') === null, 'tampered clips are refused (size, picture, format, not JSON)');
+  const odd = ac.cleanAreaClip({ ...clip, shape: 'star', real: { mmPerPx: 'big' }, overlay: { opacity: 9, tint: 'red' }, label: 'a\u0000b' });
+  ok(odd && odd.shape === 'rect' && odd.real === null && odd.overlay.opacity === 1 && odd.overlay.tint === '' && odd.label === 'ab', 'odd fields are cleaned: shape, scale, strength, colour, control characters');
+  const mm = ac.sizeMm(clip, { use: 'real' }), pmm = ac.sizeMm(clip, { use: 'paper' });
+  ok(near(mm[0], 40 * 0.48 * 25.4 / 72 * 50) && near(pmm[0], 40 * 0.48 * 25.4 / 72) && ac.sizeMm(odd, { use: 'real' }) === null, 'size in mm: the drawing\'s own (a 1:50 sheet) and on paper; no scale → no real size');
+  const now = Date.parse(clip.at);
+  ok(ac.sameImage(clip, 40, 20, { now }) && !ac.sameImage(clip, 41, 20, { now }) && !ac.sameImage(clip, 40, 20, { now: now + 7 * 3600e3 }), 'a clipboard picture is this clip when it has its size and the copy is recent');
+  const px = new Uint8ClampedArray([255, 255, 255, 255, 0, 0, 0, 255, 120, 120, 120, 255]);
+  ac.overlayPixels(px, { tint: '#1e48c8' });
+  ok(px[3] === 0 && px[7] === 255 && px[4] === 0x1e && px[6] === 0xc8 && px[11] > 0 && px[11] < 255 && px[8] === 0x1e, 'overlay: paper see-through, ink solid, grey half; every pixel in the overlay colour');
+  const own = new Uint8ClampedArray([200, 0, 0, 255]); ac.overlayPixels(own);
+  ok(own[0] > 150 && own[1] === 0 && own[3] > 200, 'overlay without a colour keeps the lines\' own colours');
+  const [w, h, d] = ac.pixelsFor(36 * 72, 24 * 72, 300);
+  ok(Math.max(w, h) <= ac.AREA_MAX_PX && d < 300 && near(w / h, 1.5, 0.01) && JSON.stringify(ac.pixelsFor(72, 36, 150)) === '[150,75,150]', 'render size: a whole 36 × 24 in sheet at 300 dpi is lowered to fit; a small area keeps its dpi');
+  const e = ac.ellipsePoints([0, 0, 10, 4], 8);
+  ok(e.length === 8 && near(e[0][0], 10) && near(e[0][1], 2) && JSON.stringify(ac.shapeBox(e).map((v) => Math.round(v))) === '[0,0,10,4]', 'an ellipse in its box');
+  const fit = ac.fitTwoPoints([0, 0], [10, 0], [100, 100], [100, 120]);
+  const q = fit.map([10, 0]);
+  ok(near(fit.scale, 2) && near(fit.angle, Math.PI / 2) && near(q[0], 100) && near(q[1], 120) && ac.fitTwoPoints([1, 1], [1, 1], [0, 0], [1, 0]) === null, 'two points: scale 2 and a quarter turn carry one pair onto the other; one point twice → null');
+  const ts = ac.turnedSize(10, 4, Math.PI / 2);
+  ok(near(ts[0], 4) && near(ts[1], 10), 'a picture turned a quarter: its box swaps sides');
 }
 
 section('Language files (0.4 item 0.5)');

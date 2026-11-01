@@ -43,6 +43,12 @@ A browser tab can't open a connection for an assistant: in the browser apps the 
 | `markup_add` | Edit | Adds a rectangle, cloud, ellipse, text box, note, line or arrow to a sheet |
 | `markup_status`, `markup_reply` | Edit | Sets a markup's status (logged in its thread, signed by the assistant); adds a comment to a thread |
 | `markups_export` | Export | The {{ui:Markups}} list's own CSV or BCF of what the list shows (its filters as you set them); in Studio it can write the file to a folder you allowed |
+| `tasks_list` | Read | The markups that are tasks: assignee (person or assistant), due day, state, link, how it closed. `assignee: "assistant"` lists the work waiting for an assistant |
+| `task_set`, `task_clear` | Edit | Make a markup a task or change it (title, assignee, due, state, link); take the task off |
+| `tasks_check` | Edit | Close tasks whose linked drawing area or model element really changed; pass the element states you read from the other app |
+| `revisions_changes` | Read | The plain list of what changed between two open plan sets, to put in your own words |
+| `pins_list`, `decision_add` | Read, Edit | Voice notes (length, who, when, caption; never the sound, no transcript) and decisions; pin a decision and replace an earlier one |
+| `redline_export`, `redline_answer` | Export, Edit | Write the redline file for the drafter; apply the drafter's answers |
 
 A markup an assistant adds names it as the author: the name the assistant program gives itself, followed by "(assistant)", or by "(assistant for <your name>)" once you have set your reviewer name. Its status changes and replies are signed the same way. Each is one undo step. Saving the marked-up PDF stays with you: use {{ui:Save}} as usual.
 

@@ -26,6 +26,18 @@ A shape inside a clipped area is picked only where it shows.
 
 {{ui:Put back as it was}} undoes every change to the selected objects at once; {{ui:Put this page back as it was}} does it for the whole page.
 
+## Copy, cut and paste page content
+
+Select lines, pictures or text with the {{ui:Content}} tool, then:
+
+- {{key:Mod+C}} copies, {{key:Mod+X}} cuts (copies and takes them out of the page), {{key:Mod+D}} puts a copy beside them.
+- {{key:Mod+V}} pastes as page content, beside the original or where the pointer is (as [Settings](topic:settings) say); {{key:Mod+Shift+V}} pastes in exactly the same place. Paste on another page, in another open PDF or in another MarkupCraft tab of this browser.
+- The {{ui:Edit}} group's menu and the right-click menu have the same commands.
+
+A paste keeps lines as lines, words as words in their own font, and pictures as pictures. It is one piece: move it, resize it by its squares, delete it, or {{key:Mod+Z}} it away. It becomes part of the page in the copy you save. Whatever you copied last, markups or page content, is what {{key:Mod+V}} pastes.
+
+What the copy holds is cut to the box round the selection: something MarkupCraft can't take out of the copy (see below) and that sits inside that box comes along.
+
 ## Move a line's points
 
 Double-click a line or curve (or select it and choose {{ui:Edit points}}). Its points show as squares and its curve handles as circles. Drag a point or a handle; a point brings the handles next to it along, so the curve keeps its shape around it. Press {{key:Esc}}, or click away from the line, when you are done.
@@ -34,7 +46,7 @@ Rectangles have no points to drag: resize them with the squares around them.
 
 ## Replace a picture
 
-Select a picture and choose {{ui:Replace picture…}}, then pick a PNG or JPEG file. The new picture fills the old one's place, keeping its own proportions.
+Select a picture and choose {{ui:Replace picture…}}, then pick a PNG, JPEG or SVG file (or a PDF: its first page). The new picture fills the old one's place, keeping its own proportions.
 
 ## Change the words of a line of text
 

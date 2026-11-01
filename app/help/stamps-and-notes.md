@@ -39,18 +39,18 @@ The date on a stamp is the date in Coordinated Universal Time (UTC). Late in the
 
 The tool chest comes with an "Approved as noted" stamp tool, and you can save any stamp (its wording and color) as a tool of its own. See [The tool chest](topic:tool-chest).
 
-Image stamps, signature stamps and stamps with filled-in fields (date received, project number) are not built yet.
+Stamps with filled-in fields (date received, project number) are not built yet.
 
 ## Stamp a picture or your signature
 
 The stamp list in {{ui:Properties}} ends with two more choices:
 
-- {{ui:Picture…}} asks for a PNG or JPEG on this computer, such as a company seal or a logo. Large pictures are scaled down to 1600 pixels on their longer side.
-- {{ui:My signature…}} opens a signature box: sign with a mouse, a pen or a finger, and choose {{ui:Use this signature}}. {{ui:Clear}} starts again.
+- {{ui:Picture…}} asks for a PNG, JPEG or SVG file on this computer, or a page of a PDF, such as a company seal or a logo. Large pictures are scaled down to 1600 pixels on their longer side; an SVG or a PDF page becomes a picture of that size.
+- {{ui:My signature…}} opens a signature box: sign with a mouse, a pen or a finger, and choose {{ui:Use this signature}}. {{ui:Clear}} starts again. {{ui:Use a picture of a signature…}} takes a scan or photo of your signature instead: MarkupCraft makes the white paper see-through and trims the picture to the ink (for a PNG it asks first).
 
 Then click the sheet to place it (a picture 3 in wide, a signature 2 in wide), or drag a box to fit it inside; the proportions are kept. Resize it with its handles like any markup ({{key:Shift}} keeps the proportions).
 
-The last picture and your signature are kept in this browser, so they are ready next time; {{ui:Choose another picture…}} and {{ui:Sign again…}} replace them. See [What stays in this browser](topic:browser-storage).
+The last picture is kept in this browser, so it is ready next time; {{ui:Choose another picture…}} replaces it. Every signature you draw or load is kept in {{ui:Your signatures}} (up to eight, newest first): click one to use it, or × to remove it. See [What stays in this browser](topic:browser-storage).
 
 In the saved PDF a picture is a stamp comment showing the image, so any PDF viewer shows and prints it. A signature drawn here is a picture of your signature, not a certified digital signature.
 
@@ -59,6 +59,16 @@ In the saved PDF a picture is a stamp comment showing the image, so any PDF view
 Copy a picture in another program, or take a screenshot to the clipboard, then press {{key:Mod+V}} over the sheet. It lands where the pointer is, at most 3 in wide or tall with its proportions kept, as a picture markup you can move and resize. In the saved PDF it is a stamp comment showing the image, like the pictures above.
 
 {{ui:More}} › {{ui:Paste a picture}} in the {{ui:Edit}} group does the same from the menu; the browser may ask first. When the clipboard holds no picture, {{key:Mod+V}} pastes copied markups as before.
+
+## Insert a picture from a file
+
+Choose {{ui:More}} › {{ui:Insert a picture from a file…}} in the {{ui:Edit}} group (or {{ui:Insert a picture here…}} in the right-click menu), and pick a PNG, JPEG or SVG file or a PDF (a PDF with several pages asks which one). You can also drag a PNG, JPEG or SVG file onto the sheet: it lands where you drop it. The picture is a markup, at most 3 in wide or tall: move and resize it like any other.
+
+To make a picture part of the page, tick {{ui:Flatten into the page when saved}} in {{ui:Properties}}. See [Save a flattened copy](topic:flatten).
+
+## Make a stamp from a selection
+
+Select markups (or page content with the {{ui:Content}} tool) and choose {{ui:Save selection as a stamp…}} in {{ui:More}}, in the right-click menu or {{ui:Save as a stamp…}} in {{ui:Properties}}. Give it a name. It goes into the tool chest: click it there, then click on any sheet to place everything you selected, together, centered where you click. See [The tool chest](topic:tool-chest).
 
 ## Sticky notes
 

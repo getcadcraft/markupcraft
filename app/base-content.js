@@ -450,7 +450,7 @@ export function objectEdits(pc, obj, e = {}) {
   if (!c) return { edits: [], refused: 'unknown', missing: [] };
   const T = e.T && !isIdentity(e.T) ? e.T : null;
   if (obj.kind === 'clip' || (obj.kind === 'path' && obj.clip)) return { edits: [], refused: 'clip', missing: [] };
-  if (obj.kind === 'shading') return { edits: [], refused: 'shading', missing: [] };
+  if (obj.kind === 'shading' && !e.del) return { edits: [], refused: 'shading', missing: [] };   // taking one out is one op (71.6 copies)
   const first = c.ops[obj.first], last = c.ops[obj.last];
   if (obj.kind === 'text') {
     if (e.del) return { ...textRun(pc, obj, { T: null, str: '' }), edits: tag(textRun(pc, obj, { T: null, str: '' }).edits) };
@@ -576,7 +576,10 @@ function textRun(pc, obj, { T, str, fallback = null }) {
     const end = obj.startX + obj.adv;
     if (obj.size && obj.th && Math.abs(end) > 1e-6) parts.push('[' + num(-end * 1000 / (obj.size * obj.th)) + '] TJ');
   }
-  return { edits: [{ key: c.key, s: o.s, e: o.e, bytes: ascii(parts.join(' ')) }], missing, runs };
+  // a run written tight against its neighbours ("(a)'(b)'") keeps a space each side, or two rewritten runs would run together
+  const ws = (b) => b === undefined || b === 0x20 || b === 0x0a || b === 0x0d || b === 0x09 || b === 0x0c || b === 0x00;
+  const pad = (ws(c.bytes[o.s - 1]) ? '' : ' ') + parts.join(' ') + (ws(c.bytes[o.e]) ? '' : ' ');
+  return { edits: [{ key: c.key, s: o.s, e: o.e, bytes: ascii(pad) }], missing, runs };
 }
 
 /**

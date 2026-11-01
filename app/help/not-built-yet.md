@@ -3,7 +3,7 @@ title: What is not built yet
 summary: What this build of MarkupCraft does not do yet, and what to do instead today.
 section: trouble
 order: 20
-keywords: missing, roadmap, planned, limitation, not supported, coming, feature request, sessions, cloud, digital signature, ocr, web links
+keywords: missing, roadmap, planned, limitation, not supported, coming, feature request, sessions, cloud, digital signature, web links
 ---
 
 MarkupCraft is in development. This is what the current build does **not** do, so you can plan around it. It describes today's build, not promises.
@@ -58,11 +58,9 @@ MarkupCraft is in development. This is what the current build does **not** do, s
 
 | Not built yet | Do this today |
 |---|---|
-| Reading text from scanned sheets (OCR) | Scans are named by file and page; use {{ui:Rename sheet}}. A test found sheet numbers in plotter fonts misread, so it is not built. |
 | Undoing a page change (rotate, move, insert, delete) | Close without saving and open the original PDF again. See [Print, and change the pages](topic:pages-and-printing). |
 | Closing one file of a set | {{ui:Close}} closes the whole set; reopen the files you need. |
 | Saving a set as a project to reopen in one step | Open the same PDFs again. |
-| Searching scanned sheets (no text in the PDF) | Name the sheets with {{ui:Rename sheet}}; {{ui:Find text}} searches only sheets with text. |
 | Printing to a chosen scale, or several sheets per paper | Use your browser's printer dialog, or print the saved copy from another PDF viewer. |
 
 ## Lists and exports

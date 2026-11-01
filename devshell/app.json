@@ -23,11 +23,13 @@
         "noble-curves": "2.4.0",
         "noble-hashes": "2.4.0",
         "pdf-lib": "1.17.1",
-        "pdfjs": "6.3.289"
+        "pdfjs": "6.3.289",
+        "tessdata": "4.1.0",
+        "tesseract": "7.0.0"
     },
     "origin": "https://getcadcraft.com",
     "packed": {
-        "at": "2026-10-25T02:49:07Z",
+        "at": "2026-11-01T17:07:39Z",
         "build": "dev"
     }
 }

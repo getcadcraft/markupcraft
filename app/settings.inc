@@ -9,6 +9,7 @@
  *               typed name wins until cleared ("Use my account name").
  *   mcColor     the color of new pens, lines, arrows, shapes, clouds, callouts and text (markupcraft.settings.markColor)
  *   mcWeight    thin / normal / heavy lines on new markups (× 0.5 / 1 / 1.5 of each tool's width)
+ *   mcContrast  page contrast: normal / stronger / strongest, a view-only filter on the sheet (markupcraft.settings.contrast)
  *   mcPaste     Ctrl+V pastes at the pointer (when it is on the sheet) or beside the copy (markupcraft.settings.pasteAt)
  *   mcUnit      the unit "Sheet scale" offers first for lengths and areas (markupcraft.settings.unit)
  *   mcPos       the status bar's position on the sheet in inches or millimeters (markupcraft.settings.posUnit)
@@ -39,6 +40,15 @@
     <?php endforeach; ?>
   </div>
   <p class="shell-hint-text"><?= Lang::e('set.new.hint') ?></p>
+</fieldset>
+<fieldset class="shell-set">
+  <legend><?= Lang::e('set.contrast.h') ?></legend>
+  <div class="shell-seg mc-set-seg2" role="radiogroup" aria-label="<?= Lang::e('set.contrast.label') ?>">
+    <?php foreach (['normal', 'stronger', 'strongest'] as $__c): ?>
+    <label><input type="radio" name="mcContrast" value="<?= $__c ?>"> <?= Lang::e('set.contrast.' . $__c) ?></label>
+    <?php endforeach; ?>
+  </div>
+  <p class="shell-hint-text"><?= Lang::e('set.contrast.hint') ?></p>
 </fieldset>
 <fieldset class="shell-set">
   <legend><?= Lang::e('set.paste.h') ?></legend>

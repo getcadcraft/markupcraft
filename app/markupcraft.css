@@ -160,6 +160,8 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-over.is-draw { cursor: crosshair; }
 .mc-over.is-pan { cursor: grab; }
 .mc-over.is-panning { cursor: grabbing; }
+.mc-over.is-text { cursor: text; }   /* 0.7.1 71.10 Select text */
+.mc-ocr-bar { width: 100%; height: .6rem; accent-color: var(--action); }
 .mc-edit {
   position: absolute;
   z-index: 4;
@@ -173,6 +175,19 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
+/* 0.8 Fill form (form-ui.js): the PDF's fields as inputs over the sheet, placed in px by the script (screen positions) */
+.mc-form-layer { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.mc-ff {
+  position: absolute; box-sizing: border-box; margin: 0; padding: 0 .2em; pointer-events: auto;
+  font-family: Helvetica, Arial, sans-serif; line-height: 1.15; color: var(--ink);
+  background: color-mix(in srgb, var(--action) 12%, var(--sheet)); border: 1px solid color-mix(in srgb, var(--action) 45%, transparent); border-radius: 0;
+}
+.mc-ff:focus { outline: var(--pen-2) solid var(--action); outline-offset: 0; background: var(--sheet); }
+.mc-ff:disabled { color: var(--ink-2); background: var(--sheet-2); cursor: not-allowed; }   /* opaque: the page's own text must not show through */
+textarea.mc-ff { resize: none; padding-top: .1em; white-space: pre-wrap; }
+input.mc-ff-check, input.mc-ff-radio { padding: 0; accent-color: var(--action); cursor: pointer; }
+select.mc-ff { padding: 0; }
+.mc-navbtn[data-act="page-mode"][aria-pressed="true"] { border-color: var(--action); background: var(--sheet); color: var(--action); }
 .mc-edit.is-note { font: inherit; font-size: .875rem; line-height: 1.35; color: var(--ink); padding: .4rem .5rem; overflow: auto; border-radius: var(--radius); background: var(--sheet-2); }
 .mc-hint {
   position: absolute;
@@ -291,6 +306,7 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-props { display: grid; grid-template-columns: fit-content(42%) minmax(0, 1fr); gap: .4rem .6rem; align-items: center; font-size: .8125rem; margin: 0; }
 .mc-k { color: var(--ink-2); font-weight: 500; font-size: .8125rem; }
 .mc-props .span { grid-column: 1 / -1; }
+.mc-grid { min-width: 0; }   /* 0.8: the shared property grid inside a .mc-props form */
 .mc-props .v { font-variant-numeric: tabular-nums; font-weight: 700; }
 .mc-props-sub { grid-column: 1 / -1; margin: .5rem 0 0; padding-top: .55rem; border-top: var(--pen-1) solid var(--grid); font-size: .75rem; font-weight: 700; color: var(--ink-2); }
 .mc-props + .mc-props { margin-top: .4rem; }
@@ -551,3 +567,44 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc .tbx-ig { flex-shrink: 1; }
 .mc .tbx-ig-tool .tbx-ig-body { flex-wrap: nowrap; min-width: 0; }
 .mc .tbx-ig-body > .mc-statbtn { max-width: 14rem; }
+
+/* 0.7.1 (71.6 context menu, 71.7 flatten on save, 71.8 signature list) */
+.mc-menu-list.mc-ctx { position: fixed; z-index: 60; top: 0; right: auto; min-width: 14rem; max-width: calc(100vw - .5rem); }
+.mc-flat { margin: .5rem 0; }
+.mc-flat .mc-note { margin: .15rem 0 0; }
+.mc-sig-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+.mc-sig-item { display: flex; align-items: center; gap: .5rem; }
+.mc-sig-item[aria-pressed="true"] { outline: var(--pen-2) solid var(--action); outline-offset: -2px; }
+.mc-sig-thumb { width: 4.5rem; height: 1.75rem; object-fit: contain; background: #fff; border: var(--pen-1) solid var(--line); flex: none; }
+
+/* Live review (0.8 SU.910): the reviewers' strip and the colour beside an author */
+.mc-live-people { position: absolute; top: .5rem; right: .5rem; z-index: 5; display: flex; flex-wrap: wrap; gap: .25rem; max-width: 60%; justify-content: flex-end; }
+.mc-live-person { display: inline-flex; align-items: center; gap: .35rem; padding: .15rem .5rem; font-size: .75rem; color: var(--ink); background: var(--sheet); border: 1px solid var(--line); border-radius: 2px; }
+.mc-live-person:disabled { opacity: 1; cursor: default; }
+.mc-live-where { color: var(--ink-2); }
+.mc-live-dot { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .25rem; flex: none; }
+.mc-live-person .mc-live-dot { margin-right: 0; }
+
+/* 0.8 EG.64/65/66: the Tasks and Notes lists and the plain list of changes */
+.mc-act .mc-item { display: flex; align-items: flex-start; gap: .5rem; width: 100%; text-align: left; }
+.mc-act .mc-item-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: .125rem; }
+.mc-act .mc-actions { margin-top: .25rem; }
+.mc-act .mc-chip { flex: 0 0 auto; }
+.mc-changes { white-space: pre-wrap; max-height: 20rem; overflow: auto; font-size: .8125rem; line-height: 1.4; border: 1px solid var(--mc-line, currentColor); padding: .5rem; margin: 0 0 .5rem; }
+
+/* 0.8 D8.15: the Copy area bar, over the sheet while the tool is on (areacopy-ui.js) */
+.mc-areabar {
+  position: absolute; top: .5rem; left: 0; right: 0; margin: 0 auto; width: max-content; z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .75rem; max-width: calc(100% - 1rem);
+  padding: .4rem .6rem; background: var(--sheet-2); border: var(--pen-2) solid var(--ink); border-radius: var(--radius);
+  box-shadow: 0 .25rem .75rem rgb(0 0 0 / .18); font-size: .8125rem;
+}
+.mc-areabar[hidden] { display: none; }
+.mc-areabar-row { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.mc-areabar [aria-pressed="true"] { background: var(--action); border-color: var(--action); color: var(--sheet); }
+.mc-areabar .mc-area-sel { width: auto; }
+.mc-areabar input[type="range"] { width: 6rem; }
+.mc-areabar output { min-width: 2.5rem; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .mc-areabar span { display: none; } }
+.mc-areabar :is(.btn-line, .btn-plot) { padding: .15rem .55rem; font-size: .8125rem; min-height: 0; line-height: 1.5; }
+.mc-areabar .mc-select { padding-block: .1rem; }

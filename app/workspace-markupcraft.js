@@ -5,7 +5,8 @@
  * fills them with MarkupCraft's own things, starting from the shell's fromInput() (the Ribbon style in input-markupcraft.js, the
  * toolbar's groups, every tool run through the registry = the app's own button):
  *
- *   views       the sheets of the open set (a tab per opened sheet, or a tab for every sheet); going to one = the app's goTo
+ *   views       the sheets of the open set (a tab per opened sheet, or a tab for every sheet); going to one = the app's goTo.
+ *               Scroll mode (0.8, app.pageMode() 'scroll'): a tab per FILE — its pages scroll in one column inside it
  *   palettes    properties (the right panel's Properties pane), browser (the sheets list + the markups list), panel (the left
  *               panel's own content: find, bookmarks, spaces, layers); while they show, the right panel's Properties and Markups
  *               tabs step aside and come back after
@@ -14,7 +15,7 @@
  *   status      the status bar (position, messages, scale, author) moves into the layout's status bar
  *
  *   createMarkupcraftWorkspace({ root, app }) → { adapter, attach(engine), refresh() } | null (no input registry)
- *   app = { sheets(), cur(), goTo(i), files(), dirty(), busy(), sel(), tool(), status(text) } — read live from markupcraft.js
+ *   app = { sheets(), cur(), goTo(i), files(), dirty(), busy(), sel(), tool(), status(text), pageMode() } — read live from markupcraft.js
  */
 import { fromInput } from '/assets/js/app-workspace-input.js';   // the shell's (import map), loaded with the engine
 import { t } from './i18n.js';
@@ -36,7 +37,10 @@ export async function createMarkupcraftWorkspace({ root, app }) {
 
   // ---- the views: the sheets ----
   const sheetView = (s) => ({ id: s.page.key, kind: 'sheet', name: s.page.title || s.page.key, icon: 'bi-file-earmark' });
-  const curKey = () => app.sheets()[app.cur()]?.page.key || null;
+  const scroll = () => app.pageMode?.() === 'scroll';
+  const fileView = (f) => ({ id: 'file:' + f.id, kind: 'sheet', name: f.name, icon: 'bi-files' });
+  // the open view's id: the sheet's key, or in Scroll mode its file's
+  const curKey = () => { const s = app.sheets()[app.cur()]; return s ? (scroll() ? 'file:' + s.file.id : s.page.key) : null; };
   const mode = () => ctx?.block('viewtabs')?.mode || null;
 
   // ---- the palettes: Properties, the browser (sheets + markups), the left panel's own content ----
@@ -113,11 +117,21 @@ export async function createMarkupcraftWorkspace({ root, app }) {
       panel: { label: t('ws.panel') },
     },
     views: {
-      list: () => (app.files().length ? app.sheets().map(sheetView) : []),
+      list: () => (app.files().length ? (scroll() ? app.files().map(fileView) : app.sheets().map(sheetView)) : []),
       current: curKey,
-      token: () => app.files().map((f) => f.id).join('|') || null,
+      token: () => { const ids = app.files().map((f) => f.id).join('|'); return ids ? ids + (scroll() ? '#scroll' : '') : null; },   // i18n-ignore (a key)
       initial: curKey,
-      go: (id) => { const i = app.sheets().findIndex((s) => s.page.key === id); if (i >= 0 && i !== app.cur()) app.goTo(i); },
+      go: (id) => {
+        const s = app.sheets(), at = s[app.cur()];
+        if (String(id).startsWith('file:')) {   // Scroll mode: the file's tab goes to its first page unless it is already open
+          if (at?.file.id === id.slice(5)) return;
+          const i = s.findIndex((x) => x.file.id === id.slice(5));
+          if (i >= 0) app.goTo(i);
+          return;
+        }
+        const i = s.findIndex((x) => x.page.key === id);
+        if (i >= 0 && i !== app.cur()) app.goTo(i);
+      },
     },
     hide: [],
     entered(c) {

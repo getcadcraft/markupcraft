@@ -4,19 +4,31 @@
     "markupcraft.css"
   ],
   "module": "markupcraft.js",
+  "propgrid": true,
   "imports": {
     "pdfjs-dist": "/assets/vendor/pdfjs/current/build/pdf.min.mjs",
     "pdf-lib": "/assets/vendor/pdf-lib/current/pdf-lib.esm.min.js",
     "@noble/curves/": "/assets/vendor/noble-curves/current/",
     "@noble/hashes/": "/assets/vendor/noble-hashes/current/",
-    "@noble/ciphers/": "/assets/vendor/noble-ciphers/current/"
+    "@noble/ciphers/": "/assets/vendor/noble-ciphers/current/",
+    "tesseract.js": "/assets/vendor/tesseract/current/tesseract.esm.min.js"
   },
   "pdfWorker": "/assets/vendor/pdfjs/current/build/pdf.worker.min.mjs",
   "pdfCmaps": "/assets/vendor/pdfjs/current/cmaps/",
   "pdfFonts": "/assets/vendor/pdfjs/current/standard_fonts/",
   "pdfWasm": "/assets/vendor/pdfjs/current/wasm/",
   "pdfIcc": "/assets/vendor/pdfjs/current/iccs/",
+  "ocrWorker": "/assets/vendor/tesseract/current/worker.min.js",
+  "ocrCore": "/assets/vendor/tesseract/current/core/",
+  "ocrData": "/assets/vendor/tessdata/current/eng.traineddata.gz",
   "phone": true,
+  "devices": true,
+  "calc": true,
+  "reasons": true,
+  "teamwork": true,
+  "totals": true,
+  "lessons": true,
+  "problems": true,
   "panels": [
     "move",
     "window"
@@ -30,9 +42,16 @@
   "workspaces": {
     "layouts": [
       "docked",
-      "toolbox"
+      "toolbox",
+      "autorev"
     ],
     "adapter": "workspace-markupcraft.js"
   },
-  "hardware": true
+  "hardware": true,
+  "ai-suggest": true,
+  "ai-activity": true,
+  "ai-ask": true,
+  "access": true,
+  "fields": true,
+  "engines": true
 }

@@ -17,6 +17,10 @@ A flattened copy carries the markups as part of the drawing, not as comments. Ev
 
 Result: your browser downloads "<name> (flattened).pdf". The markups in MarkupCraft stay editable, and your original PDF is unchanged.
 
+## Flatten some markups every time you save
+
+To make a picture, a signature or any markup part of the page in the copy you save, select it and tick {{ui:Flatten into the page when saved}} in {{ui:Properties}} (or choose it in the right-click menu). Here it stays a markup: you can still move, resize or delete it. Each time you save (and when you extract pages), it is drawn into the page itself, and the status bar says how many were. Untick it to save it as a markup again.
+
 ## Good to know
 
 - Replies, statuses and punch items of a flattened markup are not kept in the copy: it is a picture of the markup now.

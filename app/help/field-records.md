@@ -51,6 +51,6 @@ A merge is one undo step.
 
 ## Limits
 
-- Records are not shared by Studio Live co-editing yet; use Merge.
+- Records are not shared by Live TeamWork yet; use Merge.
 - There are no teams, notifications or cloud projects for records in this version.
 - Pages deleted from the PDF take their records with them (the page confirmation counts them).

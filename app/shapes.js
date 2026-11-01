@@ -159,7 +159,7 @@ export function shapes(m, env = {}) {
   const textItem = (box, lines, size, extra = {}) => ({ k: 'text', lines, box, size, bold: false, color: s.color, rot: m.rot || 0, align: 'left', valign: 'top', pad: 4, lh: LINE_H, alpha: s.opacity ?? 1, ...extra });
   const wrapIn = (box, text, size, pad) => {
     const f = frame(m.rot || 0, box);
-    return wrapText(text, size, f.W - 2 * pad);
+    return wrapText(text, size, f.W - 2 * pad, !!s.bold);
   };
 
   switch (m.type) {
@@ -283,7 +283,7 @@ export function shapes(m, env = {}) {
       const box = P.rect(m.rect);
       out.push({ k: 'path', d: box, stroke: null, fill: s.fill || 'paper', w: 0, alpha: 1, falpha: s.fill ? (s.fillOpacity ?? 1) * (s.opacity ?? 1) : 0.9, cap: 'butt', join: 'miter', blend: null });
       if (s.width > 0) out.push(stroke(box, s, { join: 'miter' }));
-      out.push(textItem(m.rect, wrapIn(m.rect, m.text, s.fontSize, 4), s.fontSize));
+      out.push(textItem(m.rect, wrapIn(m.rect, m.text, s.fontSize, 4), s.fontSize, { color: s.textColor || s.color, bold: !!s.bold }));
       break;
     }
     case 'text': {
@@ -291,7 +291,8 @@ export function shapes(m, env = {}) {
       const d = P.rect(m.rect);
       const f = fillItem(d); if (f) out.push(f);
       if (s.width > 0) out.push(stroke(d, s, { join: 'miter' }));
-      out.push(textItem(m.rect, wrapIn(m.rect, m.text, s.fontSize, 3), s.fontSize, { pad: 3 }));
+      // textColor/bold: a text box from another program keeps its own text colour and weight (0.7.1 71.4)
+      out.push(textItem(m.rect, wrapIn(m.rect, m.text, s.fontSize, 3), s.fontSize, { pad: 3, color: s.textColor || s.color, bold: !!s.bold }));
       break;
     }
     case 'note': {

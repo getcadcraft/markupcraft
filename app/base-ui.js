@@ -9,12 +9,16 @@
  * Save writes markups into that copy (`bytesFor`). Encrypted and signed files refuse with a plain message.
  *
  * createBaseUi(ctx) — ctx: { view, store, t, el, status, curSheet(), pdfLib(), libs(), closePdf(doc), dropTakenAnnots,
- *   reshow(f), settings, saveSettings(), touch(), listOf(markup) (display list), fid(), mix }
+ *   reshow(f), settings, saveSettings(), touch(), listOf(markup) (display list), fid(), mix, tab, act(name), toStamp(clip) }
+ *
+ * Copy and paste (0.7.1 71.6): `copy()` makes a content clip of the selection (content-clip.js; markupcraft.js keeps it
+ * as the clipboard), `paste(clip, how, at)` draws one into this page as one piece; cut = copy + take out.
  */
 
 import { readPage, editBlocker, objectEdits, translate, scaleAbout, apply } from './base-content.js';
 import { emptyBase, isEmptyBase, cleanBase, withMove, withPatch, withDelete, withAdded, withNodes, withPicture, buildWorking, shown,
   hitTest, inRect, boxOf, outline, nodesOf, moveNode, contentFromList, objectGeom } from './base-edit.js';
+import { copyContent, pasteContent } from './content-clip.js';
 
 const KINDS = ['shape', 'picture', 'text'];
 const GRIPS = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
@@ -93,7 +97,7 @@ export function createBaseUi(ctx) {
     store.change(label, (tx) => tx.setBase(c.s.page.key, next));
     return true;
   }
-  const refusal = (why) => (['clip', 'across-streams', 'text', 'flat', 'font', 'gone', 'shading', 'picture', 'metrics'].includes(why) ? t('base.refused.' + why) : t('base.refused.other', { why }));
+  const refusal = (why) => (['clip', 'across-streams', 'text', 'flat', 'font', 'gone', 'shading', 'picture', 'metrics', 'paste'].includes(why) ? t('base.refused.' + why) : t('base.refused.other', { why }));
 
   // ---- the working copy ----
   const jobs = new WeakMap();            // f → { running: Promise, again: bool }
@@ -290,6 +294,11 @@ export function createBaseUi(ctx) {
     if (!c?.list) return false;
     const mod = e.ctrlKey || e.metaKey;
     if (mod && k.toLowerCase() === 'a') { e.preventDefault(); selKeys = new Set(c.list.map((x) => x.key)); ctx.status(t('base.selected', { n: selKeys.size })); ctx.refresh(); return true; }
+    if (mod && !e.shiftKey && !e.altKey && (k.toLowerCase() === 'c' || k.toLowerCase() === 'x' || k.toLowerCase() === 'd') && selKeys.size) {
+      e.preventDefault();
+      ctx.act({ c: 'copy', x: 'cut', d: 'duplicate' }[k.toLowerCase()]);
+      return true;
+    }
     if (mod) return false;
     if ((k === 'Delete' || k === 'Backspace') && selKeys.size) { e.preventDefault(); del(c); return true; }
     if (k === 'Enter' && selKeys.size === 1) { const it = selected(c)[0]; if (it) { e.preventDefault(); startPoints(c, it); return true; } }
@@ -386,7 +395,7 @@ export function createBaseUi(ctx) {
     const sel = selected(c);
     if (sel.length) {
       const by = (k) => sel.filter((x) => x.kind === k).length;
-      const parts = KINDS.filter((k) => by(k)).map((k) => t('base.sel.' + k, { n: by(k) }));
+      const parts = [...KINDS, 'pasted'].filter((k) => by(k)).map((k) => t('base.sel.' + k, { n: by(k) }));
       box.append(el('p', { className: 'mc-note', dataset: { baseSel: String(sel.length) } }, t('base.sel', { list: parts.join(', ') })));
       const shapes = sel.filter((x) => x.kind === 'shape' && !(x.obj && x.obj.inText));
       if (shapes.length) {
@@ -423,6 +432,8 @@ export function createBaseUi(ctx) {
         store.change(t('base.undo.reset'), (tx) => tx.setBase(c.s.page.key, next));
       } }, t('base.reset')));
       acts.append(el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { baseDelete: '' }, onclick: () => del(c) }, t('base.delete')));
+      acts.append(el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('base.copy.title'), dataset: { baseCopy: '' }, onclick: () => ctx.act('copy') }, t('base.copy')),
+        el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('base.stamp.title'), dataset: { baseStamp: '' }, onclick: async () => { const clip = await copy(); if (clip) ctx.toStamp(clip); } }, t('base.stamp')));
       box.append(acts);
     } else box.append(el('p', { className: 'mc-note' }, c.list.length ? t('base.hint') : scanNote(c)));
     const n = Object.keys(c.st.o || {}).length + (c.st.add || []).length;
@@ -490,6 +501,46 @@ export function createBaseUi(ctx) {
     return true;
   }
 
+  // ---- copy and paste (0.7.1 71.6) ----
+  /** The selection as a content clip, or null (said why). */
+  async function copy() {
+    const c = current();
+    if (!c?.list) { if (c?.blocker) blockedSay(c); return null; }
+    const items = selected(c);
+    if (!items.length) { ctx.status(t('base.copy.need')); return null; }
+    const fi = await fileInfo(c.s.file);
+    const clip = await copyContent(fi.lib, c.s.file.bytes, c.s.page.index, c.pc, c.st, items, { source: ctx.tab, sheet: c.s.page.key, rotate: c.s.page.rotate });
+    if (clip.refused) { ctx.status(clip.refused === 'big' ? t('base.copy.big') : clip.refused === 'empty' ? t('base.copy.need') : t('base.blocked.' + clip.refused)); return null; }
+    return clip;
+  }
+  /** Take the selection out (after a copy: cut). */
+  function remove() { const c = current(); if (c?.list && selKeys.size) del(c); }
+  /**
+   * Draw a content clip into this page, as one undo step; the paste is selected. how: 'place' (where it was copied),
+   * 'pointer' (centred at `at`, page space), 'offset' (a step down and right of where it was, a step more each time on the
+   * page it came from; at `at` when that is out of view).
+   */
+  function paste(clip, how = 'offset', { at = null, step = [0, 0], inView = () => true } = {}) {
+    const c = current();
+    if (!c) { ctx.status(t('need.pdf')); return false; }
+    if (c.loading) { ctx.status(t('base.loading')); return false; }
+    if (c.blocker) { blockedSay(c); return false; }
+    let opts;
+    if (how === 'place') opts = { delta: [0, 0] };
+    else if (how === 'pointer' && at) opts = { center: at };
+    else {
+      opts = { delta: step };
+      const b = clip.box;
+      if (!inView([(b[0] + b[2]) / 2 + step[0], (b[1] + b[3]) / 2 + step[1]]) && at) opts = { center: at };
+    }
+    const item = pasteContent(clip, { rotate: c.s.page.rotate, ...opts }, 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+    store.change(t('base.undo.paste', { n: clip.n }), (tx) => tx.setBase(c.s.page.key, withAdded(c.st, [item])));
+    selKeys = new Set(['a:' + item.id]);
+    nodeEdit = null;
+    ctx.refresh();
+    return true;
+  }
+
   function enter() {
     const c = current();
     nodeEdit = null;
@@ -500,10 +551,12 @@ export function createBaseUi(ctx) {
   function cancel() { if (drag) { drag = null; view.invalidate(); } }
 
   return {
-    enter, leave, cancel, down, move, up, dblclick, hover, key, paintOver, props, bytesFor, fileState, restore, forget, intoPage, putIntoPage,
+    enter, leave, cancel, down, move, up, dblclick, hover, key, paintOver, props, bytesFor, fileState, restore, forget, intoPage, putIntoPage, copy, remove, paste,
     get busy() { return !!drag; },
     get selection() { return [...selKeys]; },
     select(keys) { selKeys = new Set(keys); ctx.refresh(); },
+    /** A right click: what is under p becomes the selection unless it is already in it. */
+    pickAt(p) { const c = current(); if (!c?.list) return; const hit = hitTest(c.list, p, tol()); if (hit && !selKeys.has(hit.key)) { selKeys = new Set([hit.key]); nodeEdit = null; ctx.refresh(); } },
     objects() { const c = current(); return c?.list ? c.list.map((x) => ({ key: x.key, kind: x.kind, box: x.box.slice() })) : null; },
     ready: async () => { const s = sheet(); if (s) await fileInfo(s.file); current(); },
     settled: async (f) => { const j = f ? jobs.get(f) : null; if (j?.running) await j.running; },

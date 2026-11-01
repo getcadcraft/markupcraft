@@ -8,7 +8,9 @@
  * applied to the file as it was opened, so they never drift however many there are. `T` is a page-space matrix
  * (move, scale), `nodes` the path's moved points and handles ({op index: numbers}, user space), `stroke`/`fill`
  * '#rrggbb', `lw` page units, `del` true, `text` the run's new words. `add` = paths drawn into the page (page
- * space M/L/C/Z, like shapes.js display lists).
+ * space M/L/C/Z, like shapes.js display lists), and pasted page content (0.7.1 71.6, content-clip.js):
+ * {id, kind: 'pdf', pdf (base64 of a one-page PDF holding only what was copied), box (the copied part, in that page's
+ * space), T (that page's space → this page)}, written as a form XObject (`q T cm /McPasteN Do Q`).
  *
  * `cleanBase(raw)` checks one from a file or autosave (untrusted). `withMove / withPatch / withDelete` make the
  * next state. `buildWorking(lib, bytes, states)` → the PDF with every sheet's edits written in (the copy the
@@ -21,7 +23,7 @@ import { readPage, objectEdits, applyEdits, appendContent, editBlocker, mul, inv
 import { num, ascii } from './base-lex.js';
 import { cleanImage, imageInfo } from './imagestamp.js';
 
-export const LIMITS = { objects: 20000, added: 2000, commands: 20000, text: 2000 };
+export const LIMITS = { objects: 20000, added: 2000, commands: 20000, text: 2000, pasted: 200, pdfChars: 8e6 };
 const HEX = /^#[0-9a-f]{6}$/;
 const KEY = /^\d{1,7}(\/\d{1,7}){0,12}$/;
 
@@ -55,9 +57,11 @@ export function cleanBase(raw) {
     if (typeof v.img === 'string' && cleanImage(v.img)) e.img = v.img;   // a replacement picture: PNG or JPEG, checked like file data
     if (Object.keys(e).length) out.o[k] = e;
   }
-  let cmds = 0;
+  let cmds = 0, pasted = 0;
   for (const a of Array.isArray(raw.add) ? raw.add : []) {
-    if (out.add.length >= LIMITS.added || !a || typeof a !== 'object' || !Array.isArray(a.d)) continue;
+    if (out.add.length >= LIMITS.added || !a || typeof a !== 'object') continue;
+    if (a.kind === 'pdf') { const p = ++pasted <= LIMITS.pasted ? cleanPasted(a, out.add.length) : null; if (p) out.add.push(p); continue; }
+    if (!Array.isArray(a.d)) continue;
     const d = [];
     let ok = true;
     for (const c of a.d) {
@@ -82,6 +86,21 @@ export function cleanBase(raw) {
   return out;
 }
 
+/** Pasted page content (untrusted): a one-page PDF as base64 ("%PDF-" first), a finite box, a matrix that keeps its area. */
+const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+export function cleanPasted(a, n = 0) {
+  if (!a || a.kind !== 'pdf' || typeof a.pdf !== 'string' || a.pdf.length > LIMITS.pdfChars || !a.pdf.startsWith('JVBERi0') || !B64.test(a.pdf)) return null;
+  const T = matrix(a.T);
+  if (!T || Math.abs(T[0] * T[3] - T[1] * T[2]) < 1e-6) return null;
+  if (!Array.isArray(a.box) || a.box.length !== 4 || !a.box.every(finite) || a.box[2] <= a.box[0] || a.box[3] <= a.box[1]) return null;
+  return { id: typeof a.id === 'string' && /^[a-z0-9-]{1,40}$/i.test(a.id) ? a.id : 'p' + n, kind: 'pdf', pdf: a.pdf, box: a.box.slice(), T };
+}
+/** A pasted item's outline on its page (the copied box carried by T). */
+export function pastedD(a) {
+  const [x0, y0, x1, y1] = a.box;
+  return [['M', ...apply(a.T, x0, y0)], ['L', ...apply(a.T, x1, y0)], ['L', ...apply(a.T, x1, y1)], ['L', ...apply(a.T, x0, y1)], ['Z']];
+}
+
 // ---- the next state (every function returns a new object; the Store keeps before/after) -------------
 const isAdded = (key) => typeof key === 'string' && key.startsWith('a:');
 const addedId = (key) => key.slice(2);
@@ -92,7 +111,8 @@ export function withMove(st, keys, T) {
   for (const k of keys) {
     if (isAdded(k)) {
       const a = next.add.find((x) => x.id === addedId(k));
-      if (a) a.d = a.d.map((c) => mapCmd(c, T));
+      if (a?.kind === 'pdf') a.T = mul(a.T, T);
+      else if (a) a.d = a.d.map((c) => mapCmd(c, T));
       continue;
     }
     const e = next.o[k] || (next.o[k] = {});
@@ -143,6 +163,19 @@ export function withNodes(st, key, nodes) {
   return next;
 }
 
+/** base64 → bytes (browser or Node). */
+export function fromB64(b64) {
+  if (typeof atob === 'function') { const s = atob(b64); const out = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i); return out; }
+  return new Uint8Array(Buffer.from(b64, 'base64'));
+}
+/** bytes → base64. */
+export function toB64(bytes) {
+  if (typeof btoa !== 'function') return Buffer.from(bytes).toString('base64');
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
 const mapCmd = (c, T) => {
   if (c[0] === 'Z') return c.slice();
   const out = [c[0]];
@@ -151,11 +184,13 @@ const mapCmd = (c, T) => {
 };
 
 // ---- writing ---------------------------------------------------------------------------------------
-/** Paths drawn into the page → content stream bytes (each in its own q … Q, page space). */
-export function addedBytes(list) {
+/** Paths drawn into the page → content stream bytes (each in its own q … Q, page space). Pasted content draws its form
+ *  XObject by the name in `names` (id → name; one without a name is left out). */
+export function addedBytes(list, names = new Map()) {
   const parts = [];
   const rgb = (hex) => { const v = parseInt(hex.slice(1), 16); return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255].map(num).join(' '); };
   for (const a of list) {
+    if (a.kind === 'pdf') { if (names.has(a.id)) parts.push('q ' + a.T.map(num).join(' ') + ' cm /' + names.get(a.id) + ' Do Q'); continue; }
     const p = ['q'];
     if (a.stroke) p.push(rgb(a.stroke) + ' RG');
     if (a.fill) p.push(rgb(a.fill) + ' rg');
@@ -199,6 +234,7 @@ export async function buildWorking(lib, bytes, states, { save = (doc) => doc.sav
   const why = editBlocker(lib, doc);
   if (why) { const err = new Error(why); err.code = why; throw err; }
   const refused = [], missing = [];
+  const pastedRefs = new Map();
   let pages = 0;
   let helv = null;
   for (const [index, st0] of states) {
@@ -244,7 +280,24 @@ export async function buildWorking(lib, bytes, states, { save = (doc) => doc.sav
       const res = applyEdits(lib, doc, pc, r.edits);
       if (res.refused) refused.push({ page: index, key: '*', why: res.refused });
     }
-    if (st.add?.length) appendContent(lib, doc, index, addedBytes(st.add));
+    if (st.add?.length) {
+      // pasted content: each copied page embedded once per file (the same paste twice shares it), named on this page
+      const names = new Map();
+      for (const a of st.add) {
+        if (a.kind !== 'pdf') continue;
+        try {
+          let ref = pastedRefs.get(a.pdf + '|' + a.box.join());
+          if (!ref) {
+            const src = await lib.PDFDocument.load(fromB64(a.pdf), { updateMetadata: false });
+            const [x0, y0, x1, y1] = a.box;
+            ref = (await doc.embedPage(src.getPage(0), { left: x0, bottom: y0, right: x1, top: y1 }, [1, 0, 0, 1, 0, 0])).ref;
+            pastedRefs.set(a.pdf + '|' + a.box.join(), ref);
+          }
+          names.set(a.id, doc.getPage(index).node.newXObject('McPaste', ref).decodeText());
+        } catch { refused.push({ page: index, key: 'a:' + a.id, why: 'paste' }); }
+      }
+      appendContent(lib, doc, index, addedBytes(st.add, names));
+    }
   }
   return { bytes: await save(doc), refused, missing, pages, doc };
 }
@@ -339,7 +392,10 @@ export function shown(pc, st, kinds = ['shape', 'picture', 'text']) {
     if (box[0] > box[2] || box[1] > box[3]) continue;   // clipped away entirely: nothing shows, nothing to pick
     out.push({ key: o.key, kind, obj: o, e, d, box, clip, lw: (e.lw ?? o.lw ?? 1), fills: o.kind !== 'path' || !!o.fillRgb || /^[fFBb]/.test(o.paint) });
   }
-  if (want.has('shape')) for (const a of st?.add || []) out.push({ key: 'a:' + a.id, kind: 'shape', added: a, e: {}, d: a.d, box: boxOfD(a.d), lw: a.lw ?? 1, fills: !!a.fill, evenOdd: !!a.evenOdd });
+  for (const a of st?.add || []) {
+    if (a.kind === 'pdf') { const d = pastedD(a); out.push({ key: 'a:' + a.id, kind: 'pasted', added: a, e: {}, d, box: boxOfD(d), lw: 0, fills: true }); }   // always pickable: what was pasted, as one piece
+    else if (want.has('shape')) out.push({ key: 'a:' + a.id, kind: 'shape', added: a, e: {}, d: a.d, box: boxOfD(a.d), lw: a.lw ?? 1, fills: !!a.fill, evenOdd: !!a.evenOdd });
+  }
   return out;
 }
 /** An object inside a deleted form is gone too. */
