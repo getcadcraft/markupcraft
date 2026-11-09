@@ -1,43 +1,60 @@
 ---
-title: Újdonságok a 0.7-ben
-summary: RFI-k, beadványok és építési naplók az új Terepi lapon, határidőkkel, pirossal jelölt lejárttal, CSV-vel és BCF-fel, offline munkával és egyesítéssel; asszisztensek, amelyek állapotot állítanak, válaszolnak és exportálják a listát; a Beállításokat követő mértékegységlisták; eltűnő panelek és mozgatható párbeszédpanelek.
-keywords: újdonságok, kiadási megjegyzések, változásnapló, változások, 0.7, verzió, új funkciók, terepi, terepi bejegyzések, rfi, információkérés, beadvány, építési napló, lejárt, határidő, nekem kiosztva, kitűző, egyesítés, offline, táblagép, bcf, csv, asszisztens, mcp, jelölés állapota, válasz, exportálás, mértékegységek, mértékegységlisták, csillag, kalibrálás, kompakt, panelek, párbeszédpanelek, portugál
-from: 142e1a1e
+title: Újdonságok a 0.8 és a 0.8.1 verzióban
+summary: Jelölésekből lesznek feladatok, amelyek maguktól lezárulnak; egyszerű lista a revíziók közötti változásokról, hangjegyzetek és döntések a terven, piros javítási fájlok a rajzolónak, valamint a közös 0.8-as változások: beviteli eszközök, eszköztársorok, Problémák, több nyelv.
+keywords: újdonságok, kiadási jegyzetek, változásnapló, változások, 0.8, 0.8.1, verzió, új funkciók, feladat, feladatok, felelős, határnap, lejárt, ellenőrzés most, mi változott, revíziók, összehasonlítás, hangjegyzet, döntés, piros javítás, válaszfájl, rajzoló, asszisztens, mcp, problémák, nyelvek, beviteli eszközök, érintőpad, eszköztársorok, tulajdonságrács, frissítés
+from: 40368796
 ---
 
-Ez változott a MarkupCraft 0.7-ben a 0.6-hoz képest. A nagy újdonság a terepi bejegyzések: az RFI-k, beadványok és építési naplók a PDF-ben, a jelölései mellett maradnak.
+Ez a változás a MarkupCraft 0.8 és 0.8.1 verziójában, a 0.7-hez képest. A nagy újdonság, hogy egy jelölés lehet olyan feladat, amelyet valaki vagy a saját asszisztense elvégez, és amely magától lezárul, amikor a rajz ténylegesen megváltozik.
 
-## Új
+## Újdonságok
 
-### RFI-k, beadványok és építési naplók
+### Működő jelölések
 
-- **A Terepi lap.** Nyissa meg a {{ui:Terepi}} lapot, és válassza az {{ui:RFI}}, a {{ui:Beadvány}} vagy az {{ui:Építési napló}} lehetőséget. Koppintson vagy kattintson arra a rajzlapra, ahová az RFI vagy a beadvány tartozik, és egy kitűző jelöli a helyet; az építési napló kitűző nélkül a megnyitott rajzlapra kerül (a {{ui:Kitűző elhelyezése}} később hozzáad egyet, a {{ui:Kitűző mozgatása}} bármelyiket áthelyezi). Minden bejegyzésnek saját száma (RFI-0001, SUB-0001, LOG-0001), címe, szövege, állapota, felelőse, határideje, válaszszála és mellékletneveinek listája van. Lásd [RFI-k, beadványok és építési naplók követése](topic:field-records).
-- **Lássa, mi késik.** Szűrje a listát típus, állapot, határidő (lejárt, 7 napon belül esedékes, van vagy nincs határideje), ez a rajzlap vagy minden rajzlap, szöveges keresés szerint, vagy a {{ui:Nekem kiosztva}} szűrővel. Az a bejegyzés, amelynek elmúlt a határideje, és még vár, **Lejárt** jelölést kap, pirossal, a listán és a kitűzőjén. Lásd [Találja meg, ami számít](topic:field-records#find-what-matters).
-- **CSV és BCF.** A {{ui:CSV}} a listázott bejegyzéseket táblázatként írja ki; a {{ui:BCF}} BCF-témákként, mindegyikhez a rajzlapon elfoglalt helyének pillanatképével. Mindkettő követi a szűrőket. Lásd [Exportálás](topic:field-records#export).
-- **Offline, és két másolat eggyé téve.** A bejegyzések a PDF-ben mentődnek, és nem kell hozzájuk hálózat, így egy építkezési táblagép hozzáadhat, megválaszolhat és menthet. Az irodában az {{ui:Egyesítés}} ugyanannak a PDF-nek egy másik másolatából egyesíti a bejegyzéseket az azonosítójuk alapján, egyetlen visszavonási lépésként. Lásd [Mentés, offline munka és másolatok egyesítése](topic:field-records#save-offline-and-merging-copies).
+- **Jelölés feladattá alakítása.** Jelöljön ki egy vagy több jelölést, nyissa meg a {{ui:Feladatok}} lapot, és válassza a {{ui:A kijelölt feladattá tétele}} lehetőséget. A feladatnak van címe, személy vagy a csatlakoztatott asszisztense végzi, lehet határnapja és állapota, és megtartja helyét a lapon és a szálát. Lásd: [Jelölés feladattá alakítása](topic:markups-that-act).
+- **Feladatok, amelyek maguktól lezárulnak.** A feladat figyelheti a rajzot a jelölésén belül. Nyissa meg a lap egy újabb revízióját, és válassza az {{ui:Ellenőrzés most}} lehetőséget: ha a vonalak abban a területben egy hajszálnál nagyobb mértékben változtak, a feladat Kész állapotba kerül, a jelölés Befejezett lesz, a szálban pedig megjegyzés írja le, mi változott. Egy új dátumbélyegző, illetve az 1,5 pontnál kevesebbet elmozdult vonalak nem számítanak. A feladat ehelyett egy modellelemet is figyelhet: az asszisztens a `tasks_check` paranccsal jelenti az elemet, és egy későbbi, eltérő jelentés vagy egy törölt elem lezárja a feladatot. Egy visszavonási lépés újra megnyitja.
+- **A munka megtalálása.** Szűrje a {{ui:Feladatok}} listát állapot szerint és aszerint, kinek szól, beleértve a {{ui:Lejárt}} feladatokat is. Válassza a {{ui:Felelős}} lehetőséget, majd az {{ui:Asszisztens}} lehetőséget, hogy lássa, mi vár az asszisztensére. A határnapot túllépett feladat figyelmeztetésként jelenik meg a Problémák panelen. A {{ui:CSV}} exportálja a listát. A PDF-be a jelöléssel együtt mentődnek a feladatok, és a Live-on keresztül úgy utaznak, mint a többi jelölési tulajdonság.
 
-### AI-asszisztensek
+### Változások egyszerű listája
 
-- **Többet tud az asszisztens.** A saját asszisztense, a CadCraft Studión keresztül kapcsolva, mostantól beállíthatja egy jelölés állapotát (`markup_status`, naplózva a szálában), válaszolhat egy szálban (`markup_reply`), és exportálhatja a {{ui:Jelölések}} listát CSV-ként vagy BCF-ként (`markups_export`, azt, amit a lista a szűrőivel mutat). Minden módosítás egyetlen visszavonási lépés, az asszisztens nevével aláírva. Lásd [Mit kérhet egy asszisztens](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **A változások listázása.** Nyissa meg az {{ui:Összehasonlítás}} lapot, majd a {{ui:Teljes készlet összehasonlítása}} lehetőséget, válassza ki a korábbi és a későbbi fájlt, és válassza a {{ui:A változások listázása}} lehetőséget. A lista egy darabszámmal kezdődik, majd minden változott lapot bemutat, a legnagyobb változással kezdve: hol van a lapon, mekkora (valódi mértékegységben, kalibrált lapon pedig papírbeli hüvelykben (in) is), történt-e vonalhozzáadás vagy -törlés, hány jelölés van ott, és mely szavak jelentek meg vagy tűntek el. A {{ui:A lista másolása}} a vágólapra teszi, a {{ui:CSV}} pedig minden változáshoz egy sort ír. Lásd: [Revíziók közötti változások listázása](topic:what-changed-in-words).
+
+### Hangjegyzetek és döntések
+
+- **Hangjegyzetek.** A {{ui:Jegyzetek}} lapon válassza a {{ui:Hangjegyzet felvétele}} lehetőséget, majd a {{ui:Felvétel leállítása}} lehetőséget; a felvétel két perc után magától leáll. A jegyzet a lap közepére kerül. Húzza a helyére, a feliratot pedig a {{ui:Tulajdonságok}} részben írja be, a listában lévő {{ui:Lejátszás}} gombbal pedig lejátszhatja. A felvétel a PDF-be kerül mentésre.
+- **Döntések.** A {{ui:Döntés kitűzése}} egy-két mondatot ír a lapra. Ha egy korábbi döntést vált fel, válassza ki azt az {{ui:Ezt váltja fel}} mezőben: a régi megmarad, Felváltva jelölést kap, és az újra mutat. Egy visszavonási lépés visszaveszi. Lásd: [Hangjegyzetek és döntések kitűzése a lapra](topic:voice-notes-and-decisions).
+
+### Piros javítás a revízióhoz
+
+- **Küldés és válasz.** A {{ui:Feladatok}} lapon nyissa meg a {{ui:Piros javítás a revízióhoz}} lehetőséget, írja be azt a revíziót, amelyhez a jelölések tartoznak, majd válassza a {{ui:Piros javítási fájl exportálása}} lehetőséget. Kap egy `.redline.json` fájlt, amely nyitott jelölésenként egy elemet tartalmaz: lapot, pozíciót (a lap törtrészeiben, így más méretben újranyomtatva is egyezik), szavakat, szerzőt, szálat és a hozzá tartozó feladatot. Aki a változtatásokat rajzolja, a `.redline-answers.json` fájlban válaszol: Elfogadva, Elutasítva vagy Kész. A {{ui:Válaszfájl betöltése…}} minden jelöléshez beállítja ezt az állapotot és a rajzoló megjegyzését, egy visszavonási lépésként. Lásd: [Jelölések küldése a rajzolónak piros javításként](topic:redline-to-revision).
+
+### AI asszisztensek
+
+- **További eszközök.** A CadCraft Studio-n keresztül csatlakoztatott asszisztens listázhatja a feladatokat (`tasks_list`), létrehozhat vagy módosíthat egyet (`task_set`), levehet róla feladatot (`task_clear`), ellenőrizhet egyet egy újabb revízióval vagy elemmel szemben (`tasks_check`), és olvashatja két megnyitott rajzlapkészlet közötti változások egyszerű listáját (`revisions_changes`). Csak azokat az eszközöket kapja meg, amelyeket az Asszisztensek kapcsoló alatt bejelölt, és minden változás egy visszavonási lépés. Lásd: [MarkupCraft használata AI-asszisztenssel](topic:use-with-ai-assistants).
 
 ## Minden alkalmazásban
 
-- **Mértékegységek.** A {{ui:Beállítások}} › {{ui:Általános}} › {{ui:Mértékegységek}} részben a hosszhoz, területhez, térfogathoz, szöghöz és lejtéshez egy-egy lista tartozik, a mértékegységek definíciói szerinti pontos méretekkel (az amerikai felmérési láb külön mértékegység). Kapcsolja ki azokat, amelyeket sosem használ, és kikerülnek a mértékegységlistákból; jelöljön meg egyet csillaggal, és az új munka abban indul. A fájl mindig megtartja a saját mértékegységét. A MarkupCraftban a {{ui:Beállítások}} › {{ui:MarkupCraft}} részben a mérési és pozíció-mértékegységek, valamint a kalibrálás párbeszédpanel mértékegysége követik a kapcsolókat, a csillag addig a mérési mértékegységet állítja, amíg el nem menti a MarkupCraft saját beállításait, és a kalibráláskor beírt valós távolság bármelyik mértékegység jelét viselheti, például `3 yd` vagy `1.5 km`. Lásd [Mértékegységek, beírt értékek és a mértékegységlisták](common:unit-lists).
-- **Sűrűbb elrendezés és eltűnő panelek.** A {{ui:Beállítások}} › {{ui:Általános}} › {{ui:Elrendezés sűrűsége}} › {{ui:Kompakt}} több mindent elhelyez a képernyőn (az érintőképernyők és a telefonok megtartják a nagy gombjaikat). Minden oldalpanelnek van egy keskeny címsora: húzza el, hogy rögzítse vagy lebegtesse a panelt, ejtse egy másik panel sávjára, hogy egy keretben osztozzanak lapokként, tűzze ki, hogy a szélre csússzon, vagy rejtse el, és hozza vissza a szélről. Lásd [A panelek elrendezése](common:arrange-panels#make-the-layout-denser).
-- **A párbeszédpanelek mozognak.** Húzza el a párbeszédpanelt a címsoránál fogva a rajz útjából; ott tér vissza, ahol hagyta. Kattintson duplán a címsorra, hogy újra középre kerüljön. Lásd [Párbeszédpanel mozgatása](common:arrange-panels#move-a-dialog).
-- **Receptek AI-asszisztensekhez.** Tíz kidolgozott kérés a saját asszisztensének (rajz rendbetétele, készlet plottolása, rajzok ellenőrzése, kérdések egy modellről, mennyiségkimutatás összesítése, alkatrészváltozat kipróbálása…), mindegyikhez a hívott eszközökkel és a szükséges jogosultságokkal, és mindegyiket lejátszják a tesztjeink. Az alkalmazások nem tartalmaznak AI-t. Lásd [Receptek AI-asszisztensekhez](common:assistants-recipes).
-- **Nyelvek.** A **Português (Portugal)** új a {{ui:Beállítások}} › {{ui:Általános}} › {{ui:Nyelv}} részben. Ez, a **Português (Brasil)**, az **Español (México)** és a **Bahasa Indonesia** most már az alkalmazások minden szavával rendelkezik, olyan piszkozatként, amelyet még nem nézett át anyanyelvi beszélő. A súgótémakörök angolul vannak.
-- A **CadCraft Studio** megmondja, miért hiúsult meg egy frissítésellenőrzés (még nincs fájl az Ön rendszeréhez, nincs hálózat, hibás aláírás), ahelyett, hogy csak annyit írna: „Kész”, és nem hozza vissza az Újdonságok kártyát, amelyet bezárt, amíg nincs újabb kiadás.
+- **Nyelvek.** A CadCraft Studio mostantól 54 nyelvet tartalmaz. Tíz új: litván, lett, bosnyák, maráthi, telugu, albán, afrikaans, filippínó, szuahéli és üzbég. Az összes nem angol nyelv gépi piszkozat, amíg egy anyanyelvi beszélő el nem olvassa.
+- **Beviteli eszközök.** A {{ui:Beállítások}} › {{ui:Globális}} › {{ui:Beviteli eszközök}} alatt megadható, mit tesz az érintőpad, az egér oldalsó gombjai, a toll, az ujjal koppintás, a 3D-egér, a játékvezérlő vagy a MIDI-vezérlő, minden alkalmazásban vagy csak ebben az egyben. Amíg nem változtat semmin, minden eszköz a korábban megszokott módon működik. Lásd: [Érintőpad, 3D-egér vagy vezérlő használata](common:input-devices).
+- **Eszköztársorok.** A {{ui:Beállítások}} › {{ui:Általános}} › {{ui:Eszköztársorok}} alatt a {{ui:Tördelés}} (az alapérték), a {{ui:2 sor}} és az {{ui:1 sor}} közül lehet választani, így a rajz több helyet kap. Lásd: [Panelek elrendezése](common:arrange-panels).
+- **Tulajdonságrács.** A jelölés stílusmezői a közös rácsot használják, összecsukható kategóriákkal, címke- és értékoszlopokkal.
+- **Problémák panel.** Az alkalmazás figyelmeztetései, például egy lejárt feladat, a Problémák panelen gyűlnek össze.
+- **Élő munka és bővítmények.** Az élő munkamenetekről a [Közös munka élőben](common:work-together-live) oldalon olvashat; a fiókjához tartozó bővítménylista a [Bővítmények és a fiók listája](common:addons-basics) oldalon található.
+- **AI csatlakoztatása.** A CadCraft Studio a saját asszisztense központja (hub): egyszer csatlakoztassa mind a nyolc alkalmazáshoz. Az alkalmazások nem tartalmaznak saját AI-t.
+
+## A 0.8.1 verzióban javítva
+
+- **A Studio futás közben is tud nyelvet váltani.** Korábban az asztali alkalmazás és a csomagolt kiadások angolul maradtak. Ez még nincs minden platformon tesztelve: jelezze, ha a nyelv nem változik.
+- A 0.8-as Studio-telepítések a {{ui:Beállítások}} › {{ui:Frissítések}} menüpontban kapják meg a 0.8.1-et.
 
 ## Ebben a verzióban még nincs
 
-- **A 0.7 nincs kódaláírással ellátva.** Az aláírás és a Microsoft Store csomag a 0.8-ba került, mert a tanúsítvány érvényesítése még nem jött meg. Ellenőrizze az SHA-256 értéket minden fájl mellett a getcadcraft.com/download oldalon. Windowson, ha a SmartScreen megállítja a telepítőt, válassza a {{ui:További információ}}, majd a {{ui:Futtatás mindenképpen}} lehetőséget. Macen az első alkalommal kattintson jobb gombbal a CadCraft Studióra, és válassza a {{ui:Megnyitás}} lehetőséget. A CadCraft Studio még nincs alkalmazásáruházban, és még nincs iPad- vagy iPhone-kiadás.
-- A {{ui:Mértékegységek}} szög- és lejtéslistái mentődnek, de még nincs mező, amely olvasná őket.
-- A terepi bejegyzések nincsenek megosztva a CadCraft Live TeamWork-munkamenetében (a Live-munkamenetek csak jelöléseket visznek); hozza össze a másolatokat az {{ui:Egyesítés}} paranccsal.
-- Az egyesítés egy bejegyzést egészében az utoljára módosított másolatból vesz át: ha ketten egy bejegyzés különböző mezőit módosították, a későbbi másolat mezői érvényesülnek. A szálak és a mellékletnevek egyesülnek.
-- A mellékletek csak nevek; a fájlok ott maradnak, ahol vannak. A bejegyzésekhez nincsenek csapatok, értesítések vagy felhőprojektek, és az asszisztenseknek még nincsenek eszközeik a bejegyzésekhez.
-- A terepi bejegyzéseket böngészőben, telefon- és táblagépméreten, megszakított hálózattal teszteltük, de még nem kézzel, valódi táblagépen.
-- A 0.6-ból még hiányzik: az oldalobjektumok tetszőleges szögben forgatása, új alakzatok közvetlen rajzolása az oldalra, a vonalak betűtípusának vagy méretének módosítása, és a több soron átfutó szöveg. Az oldalszerkesztéseket tartalmazó mentett másolatot még nem nyitottuk meg Acrobatban.
-- A 0.5-ből még hiányzik: egy oldalmódosítás visszavonása (például egy üres oldal hozzáadásáé), a szöveg olvasása beolvasott rajzlapokról, és a Live-munkamenetek a saját hálózatán túl.
+- **Nincs kódaláírás.** A Windows-telepítőkön és a macOS .dmg fájlon még nincs aláírás. Windows alatt, ha a SmartScreen leállítja a telepítőt, válassza a {{ui:További információ}}, majd a {{ui:Mégis futtatás}} lehetőséget. Mac gépen kattintson jobb gombbal a CadCraft Studio-ra, és válassza az {{ui:Megnyitás}} lehetőséget. Az áruházi kiadások szüneteltetve vannak.
+- **Az AI csatlakoztatása több helyen is befejezetlen.** A CadCraft Studio-n belüli egykattintásos csatlakoztatás, a böngészős asszisztensekhez szánt üzemeltetett csatlakozó és a Studio-n belüli saját API-kulcs ebben a kiadásban nincs ígérve. A feladatciklust teszteltük, de még nem valódi asszisztenssel.
+- **A feladatellenőrzéshez azonos lapméret kell.** Más méretre újranyomtatott lap nem illeszkedik, ezért a feladatai nem záródnak le. A lapokat lapszám alapján párosítjuk, különben az oldal helye alapján.
+- **A hangjegyzetek csak felvételek.** Nincs átirat, és az asszisztens a jegyzet hosszát, szerzőjét és feliratát látja, a hangot nem. A felvételt egy fiktív mikrofonnal, egy fejnélküli böngészőben próbáltuk ki; valódi mikrofonnal telefonon, táblagépen vagy laptopon még ellenőrizni kell.
+- **A PDF-ben lévő számítólapok és indoklások** a fájl egy privát bejegyzésében maradnak meg. A régebbi MarkupCraft figyelmen kívül hagyja ezt a bejegyzést, és a következő mentéskor eldobja, ezért az ilyen fájlt 0.8-as vagy újabb verzióval nyissa meg és mentse.
+- **A rajzoló oldala a piros javításoknak.** A CadCraft még nem tudja beolvasni és megválaszolni a piros javítási fájlt.
+- **Más nyelvek.** A tamil alkalmazássáv 528 px-rel túllóg.
 
-Minden más a [Ami még nincs elkészítve](topic:not-built-yet) témakörben van.
+Minden más a [Ami még nincs elkészítve](topic:not-built-yet) oldalon található. Az ezt megelőző kiadásról lásd: [Újdonságok a 0.7 verzióban](topic:whats-new-0-7).

@@ -1,43 +1,60 @@
 ---
-title: Novinky vo verzii 0.7
-summary: RFI, predkladané podklady a denníky v novej karte Terén, s termínmi, červeným označením po termíne, CSV a BCF, prácou offline a zlúčením; asistenti, ktorí nastavujú stavy, odpovedajú a exportujú zoznam; zoznamy jednotiek podľa Nastavení; panely, ktoré sa skladajú, a presúvateľné dialógové okná.
-keywords: novinky, čo je nové, poznámky k vydaniu, zoznam zmien, zmeny, 0.7, verzia, nové funkcie, terén, záznamy z terénu, rfi, žiadosť o informácie, predkladaný podklad, denník, stavebný denník, po termíne, termín, pridelené mne, ihla, zlúčiť, offline, tablet, bcf, csv, asistent, mcp, stav poznámky, odpoveď, export, jednotky, zoznamy jednotiek, hviezdička, kalibrovať, kompaktná, panely, dialógové okná, portugalčina
-from: 142e1a1e
+title: Novinky vo verziách 0.8 a 0.8.1
+summary: Poznámky, ktoré sa menia na úlohy a uzatvárajú sa samy, jednoduchý zoznam zmien medzi revíziami, hlasové poznámky a rozhodnutia na liste, súbory červených opráv pre tvorcu výkresov a spoločné zmeny 0.8: vstupné zariadenia, riadky panela nástrojov, panel Problémy, viac jazykov.
+keywords: novinky, čo je nové, poznámky k vydaniu, zoznam zmien, zmeny, 0.8, 0.8.1, verzia, nové funkcie, úloha, úlohy, pridelené, dátum termínu, po termíne, skontrolovať teraz, čo sa zmenilo, revízie, porovnať, hlasová poznámka, rozhodnutie, červené opravy, súbor odpovedí, tvorca výkresov, asistent, mcp, problémy, jazyky, vstupné zariadenia, touchpad, riadky panela nástrojov, mriežka vlastností, aktualizácia
+from: 40368796
 ---
 
-Toto sa zmenilo v MarkupCraft 0.7 oproti 0.6. Hlavnou novinkou sú záznamy z terénu: RFI, predkladané podklady a denníky uložené v PDF vedľa Vašich poznámok.
+Toto sa zmenilo v MarkupCraft 0.8 a 0.8.1 v porovnaní s verziou 0.7. Najväčšou novinkou je, že poznámka môže byť úloha, ktorú vykoná niekto alebo váš vlastný asistent, a táto úloha sa uzavrie sama, keď sa výkres skutočne zmení.
 
-## Nové
+## Novinky
 
-### RFI, predkladané podklady a denníky
+### Poznámky, ktoré konajú
 
-- **Karta Terén.** Otvorte kartu {{ui:Terén}} a vyberte {{ui:RFI}}, {{ui:Predkladaný podklad}} alebo {{ui:Denník}}. Ťuknite alebo kliknite na list, kam RFI alebo predkladaný podklad patrí, a ihla označí miesto; denník sa vloží na otvorený list bez ihly ({{ui:Umiestniť ihlu}} ju pridá neskôr, {{ui:Presunúť ihlu}} presunie ľubovoľnú ihlu). Každý záznam má vlastné číslo (RFI-0001, SUB-0001, LOG-0001), názov, text, stav, zodpovednú osobu, termín, vlákno odpovedí a zoznam názvov príloh. Pozrite [Sledovanie RFI, predkladaných podkladov a denníkov](topic:field-records).
-- **Vidieť, čo mešká.** Zoznam filtrujte podľa typu, stavu, termínu (po termíne, termín do 7 dní, má alebo nemá termín), tohto listu alebo všetkých listov, textového vyhľadávania alebo {{ui:Pridelené mne}}. Záznam po termíne, ktorý stále čaká, je označený **Po termíne**, červenou, v zozname aj na svojej ihle. Pozrite [Nájdenie dôležitého](topic:field-records#find-what-matters).
-- **CSV a BCF.** {{ui:CSV}} zapíše uvedené záznamy ako tabuľku; {{ui:BCF}} ich zapíše ako témy BCF, každú s náhľadom svojho miesta na liste. Oba sa riadia filtrami. Pozrite [Export](topic:field-records#export).
-- **Offline a dve kópie splynú do jednej.** Záznamy sa ukladajú do PDF a nepotrebujú sieť, takže tablet na stavbe ich môže pridávať, zodpovedať a ukladať. Po návrate do kancelárie {{ui:Zlúčiť}} pripojí záznamy z inej kópie toho istého PDF podľa ich identifikátorov, ako jeden krok späť. Pozrite [Uloženie, offline a zlúčenie kópií](topic:field-records#save-offline-and-merging-copies).
+- **Premena poznámky na úlohu.** Vyberte jednu alebo viac poznámok, otvorte kartu {{ui:Úlohy}} a zvoľte {{ui:Urobiť z vybraného úlohu}}. Úloha má názov, osobu alebo vášho pripojeného asistenta, ktorý ju vykoná, voliteľný termín a stav, a zachováva si svoje miesto na liste aj svoje vlákno. Pozri [Premena poznámky na úlohu](topic:markups-that-act).
+- **Úlohy, ktoré sa uzavrú samy.** Úloha môže sledovať výkres v rámci svojej poznámky. Otvorte novšiu revíziu listu a zvoľte {{ui:Skontrolovať teraz}}: ak sa čiary v tejto oblasti zmenili o viac než vlások, úloha sa označí ako Dokončená, jej poznámka sa stane Dokončenou a poznámka vo vlákne opíše, čo sa zmenilo. Nový dátum alebo čiary, ktoré sa posunuli menej než o 1,5 bodu, sa nepočítajú. Úloha môže namiesto toho sledovať prvok modelu: váš asistent nahlási prvok pomocou `tasks_check` a neskoršie hlásenie, ktoré sa líši, alebo odstránený prvok úlohu uzavrie. Jeden krok späť ju znova otvorí.
+- **Nájdenie práce.** Filtrujte zoznam {{ui:Úlohy}} podľa stavu a podľa osoby, pre ktorú je určená, vrátane {{ui:Po termíne}}; zvoľte {{ui:Pridelené}}, potom {{ui:Asistent}}, aby ste videli, čo čaká na vášho asistenta. Úloha, ktorá je po termíne, sa zobrazí ako upozornenie v paneli Problémy. {{ui:CSV}} exportuje zoznam. Úlohy sa uložia do súboru PDF spolu s poznámkou a cez Naživo sa prenášajú ako ostatné vlastnosti poznámok.
 
-### Asistenti s umelou inteligenciou
+### Čo sa zmenilo, ako jednoduchý zoznam
 
-- **Viac, čo asistent zvládne.** Váš vlastný asistent, pripojený cez CadCraft Studio, teraz môže nastaviť stav poznámky (`markup_status`, zapíše sa do jej vlákna), odpovedať vo vlákne (`markup_reply`) a exportovať zoznam {{ui:Poznámky}} ako CSV alebo BCF (`markups_export`, to, čo zoznam ukazuje s jeho filtrami). Každá zmena je jeden krok späť, podpísaný menom asistenta. Pozrite [O čo môže asistent požiadať](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Zobraziť zoznam zmien.** Otvorte kartu {{ui:Porovnať}}, potom {{ui:Porovnať celý súbor listov}}, vyberte skorší a neskorší súbor a zvoľte {{ui:Zobraziť zoznam zmien}}. Zoznam začína počtom, potom pokrýva každý zmenený list, od najväčšej zmeny: kde na liste, aká veľká (v reálnych jednotkách aj v palcoch papiera na kalibrovanom liste), či čiary pribudli alebo zmizli, koľko poznámok tam je a ktoré slová sa objavili alebo zmizli. {{ui:Kopírovať zoznam}} ho uloží do schránky a {{ui:CSV}} zapíše jeden riadok na každú zmenu. Pozri [Zoznam toho, čo sa zmenilo medzi revíziami](topic:what-changed-in-words).
 
-## V každej aplikácii
+### Hlasové poznámky a rozhodnutia
 
-- **Jednotky.** {{ui:Nastavenia}} › {{ui:Všeobecné}} › {{ui:Jednotky}} má po jednom zozname pre dĺžku, plochu, objem, uhol a sklon, s presnými veľkosťami podľa definícií jednotiek (americká geodetská stopa je samostatná jednotka). Vypnite jednotky, ktoré nikdy nepoužívate, a zmiznú zo zoznamov jednotiek; označte jednu hviezdičkou a nová práca sa začne v nej. Súbor si vždy ponechá vlastnú jednotku. V MarkupCraft sa jednotky merania a polohy v {{ui:Nastavenia}} › {{ui:MarkupCraft}} a jednotka v dialógovom okne kalibrácie riadia týmito prepínačmi, hviezdička určuje jednotku merania, kým neuložíte vlastné nastavenia MarkupCraft, a skutočná vzdialenosť, ktorú pri kalibrácii napíšete, môže mať značku ľubovoľnej jednotky, napríklad `3 yd` alebo `1.5 km`. Pozrite [Jednotky, zadávané hodnoty a zoznamy jednotiek](common:unit-lists).
-- **Hustejšie rozloženie a panely, ktoré sa skladajú.** {{ui:Nastavenia}} › {{ui:Všeobecné}} › {{ui:Hustota rozloženia}} › {{ui:Kompaktná}} sa zmestí viac na obrazovku (dotykové obrazovky a telefóny si ponechávajú veľké tlačidlá). Každý bočný panel má úzky záhlavný pruh: potiahnutím ho ukotvíte alebo uvoľníte, pustením na pruh iného panela ho zdieľate v jednom ráme ako karty, pripnutím ho necháte vsunúť sa k okraju alebo ho skryjete a vrátite z okraja. Pozrite [Usporiadanie panelov](common:arrange-panels#make-the-layout-denser).
-- **Dialógové okná sa presúvajú.** Dialógové okno potiahnite za záhlavie mimo výkresu; vráti sa tam, kde ste ho nechali. Dvojitým kliknutím na záhlavie ho znova vycentrujete. Pozrite [Presunutie dialógového okna](common:arrange-panels#move-a-dialog).
-- **Recepty pre asistentov s umelou inteligenciou.** Desať prepracovaných požiadaviek pre Vášho vlastného asistenta (upratať výkres, vykresliť sadu, skontrolovať výkresy, klásť modelu otázky, spočítať výkaz výmer, vyskúšať variant súčiastky …), každá s nástrojmi, ktoré volá, a oprávneniami, ktoré potrebuje, a každá prehraná našimi testami. Aplikácie neobsahujú žiadnu umelú inteligenciu. Pozrite [Recepty pre asistentov s umelou inteligenciou](common:assistants-recipes).
-- **Jazyky.** **Português (Portugal)** je nový v {{ui:Nastavenia}} › {{ui:Všeobecné}} › {{ui:Jazyk}}. Tento jazyk, **Português (Brasil)**, **Español (México)** a **Bahasa Indonesia** majú teraz každé slovo aplikácií, ako koncepty, ktoré ešte neskontroloval rodený hovorca. Témy pomocníka sú v angličtine.
-- **CadCraft Studio** hovorí, prečo kontrola aktualizácií zlyhala (zatiaľ žiadny súbor pre Váš systém, žiadna sieť, neplatný podpis) namiesto samotného „Hotovo“, a prestane vracať kartu Novinky, ktorú ste zavreli, kým nie je novšie vydanie.
+- **Hlasové poznámky.** Na karte {{ui:Poznámky}} zvoľte {{ui:Nahrať hlasovú poznámku}} a potom {{ui:Zastaviť nahrávanie}}; nahrávky sa samé zastavia po dvoch minútach. Poznámka je pripnutá v strede listu; presuniete ju tam, kam patrí, a popis zadáte v {{ui:Vlastnosti}}. Tlačidlo {{ui:Prehrať}} v zozname ju prehrá. Nahrávka sa uloží do súboru PDF.
+- **Rozhodnutia.** {{ui:Pripnúť rozhodnutie}} zapíše na list jednu alebo dve vety. Ak nahrádza skoršie rozhodnutie, vyberte ho v {{ui:Nahrádza}}: staré rozhodnutie zostane, označí sa ako Nahradené a odkazuje na nové. Jeden krok späť ho vráti. Pozri [Pripnutie hlasových poznámok a rozhodnutí na list](topic:voice-notes-and-decisions).
 
-## Zatiaľ nie je vo verzii
+### Červené opravy do revízie
 
-- **0.7 nie je podpísaná kódom.** Podpisovanie a balík pre Microsoft Store sa presunuli do 0.8, pretože overenie certifikátu zatiaľ neprebehlo. Skontrolujte SHA-256 vedľa každého súboru na getcadcraft.com/download. Ak inštalátor vo Windows zastaví SmartScreen, vyberte {{ui:Ďalšie informácie}} a potom {{ui:Spustiť aj tak}}. Na Macu pri prvom spustení kliknite pravým tlačidlom na CadCraft Studio a vyberte {{ui:Otvoriť}}. CadCraft Studio zatiaľ nie je v žiadnom obchode s aplikáciami a zatiaľ neexistuje verzia pre iPad ani iPhone.
-- Zoznamy uhlov a sklonov v {{ui:Jednotky}} sa ukladajú, ale zatiaľ ich nečíta žiadne pole.
-- Záznamy z terénu sa nezdieľajú v živej relácii CadCraft Studio (živé relácie prenášajú len poznámky); kópie spojte pomocou {{ui:Zlúčiť}}.
-- Zlúčenie preberie záznam ako celok z kópie zmenenej naposledy: ak dvaja ľudia zmenili rôzne polia jedného záznamu, vyhrajú polia neskoršej kópie. Vlákna a názvy príloh sa spoja.
-- Prílohy sú len názvy; súbory zostávajú tam, kde sú. Pre záznamy neexistujú tímy, upozornenia ani cloudové projekty a asistenti zatiaľ nemajú nástroje pre záznamy.
-- Záznamy z terénu boli testované v prehliadači vo veľkosti telefónu a tabletu s odpojenou sieťou, ale zatiaľ nie ručne na skutočnom tablete.
-- Stále z 0.6: otáčanie objektov strany do ľubovoľného uhla, kreslenie nových tvarov priamo do strany, zmena písma alebo veľkosti riadku a text, ktorý sa zalamuje na viac riadkov. Uložená kópia so zmenami strán sa zatiaľ neotvorila v Acrobate.
-- Stále z 0.5: vrátenie zmeny strany (napríklad pridania prázdnej strany), čítanie textu zo skenovaných listov a živé relácie mimo Vašej vlastnej siete.
+- **Odoslanie a odpoveď.** Na karte {{ui:Úlohy}} otvorte {{ui:Červené opravy do revízie}}, zadajte revíziu, voči ktorej sú poznámky, a zvoľte {{ui:Exportovať súbor červených opráv}}. Dostanete súbor `.redline.json` s jednou položkou pre každú otvorenú poznámku: list, polohu (ako zlomky listu, takže nové vykreslenie v inom formáte stále sedí), texty, autora, vlákno a jeho úlohu. Kto zmeny kreslí, odpovedá stavom Prijaté, Zamietnuté alebo Dokončené v súbore `.redline-answers.json`; {{ui:Načítať súbor odpovedí…}} priradí každej poznámke tento stav a poznámku tvorcu výkresov ako jeden krok späť. Pozri [Odoslanie poznámok tvorcovi výkresov ako červených opráv](topic:redline-to-revision).
 
-Všetko ostatné je v [Čo ešte nie je hotové](topic:not-built-yet).
+### Asistenti AI
+
+- **Ďalšie nástroje.** Asistent, ktorého ste pripojili cez CadCraft Studio, môže vypísať úlohy (`tasks_list`), vytvoriť alebo zmeniť jednu (`task_set`), úlohu zrušiť (`task_clear`), skontrolovať ju voči novšej revízii alebo prvku (`tasks_check`) a prečítať jednoduchý zoznam zmien medzi dvoma otvorenými súbormi výkresov (`revisions_changes`). Dostane len tie nástroje, ktoré ste označili pod prepínačom Asistenti, a každá zmena je jeden krok späť. Pozri [Používanie MarkupCraft s asistentom AI](topic:use-with-ai-assistants).
+
+## Vo všetkých aplikáciách
+
+- **Jazyky.** CadCraft Studio má teraz 54 jazykov. Desať je nových: litovčina, lotyština, bosniančina, maráthčina, telugčina, albánčina, afrikánčina, filipínčina, svahilčina a uzbečtina. Všetky jazyky okrem angličtiny sú zatiaľ strojové koncepty, kým ich neprečíta rodený hovorca.
+- **Vstupné zariadenia.** {{ui:Nastavenia}} › {{ui:Globálne}} › {{ui:Vstupné zariadenia}} určuje, čo robí touchpad, bočné tlačidlá myši, pero, klepnutie prstom, 3D myš, herný ovládač alebo MIDI ovládač, a to pre každú aplikáciu alebo len pre túto. Kým niečo nezmeníte, každé zariadenie funguje ako predtým. Pozri [Používanie touchpadu, 3D myši alebo ovládača](common:input-devices).
+- **Riadky panela nástrojov.** {{ui:Nastavenia}} › {{ui:Všeobecné}} › {{ui:Riadky panela nástrojov}} ponúka {{ui:Zalomiť}} (predvolené), {{ui:2 riadky}} a {{ui:1 riadok}}, aby výkres mal viac miesta. Pozri [Usporiadanie panelov](common:arrange-panels).
+- **Mriežka vlastností.** Polia štýlu poznámky používajú spoločnú mriežku so zbaľovacími kategóriami a stĺpcami názvu a hodnoty.
+- **Panel Problémy.** Upozornenia z aplikácie, napríklad úloha po termíne, sa zhromažďujú v jednom paneli Problémy.
+- **Naživo a doplnky.** Relácie naživo sú opísané v [Spolupráca naživo](common:work-together-live); zoznam doplnkov, ktorý nasleduje váš účet, je v [Doplnky a zoznam vášho účtu](common:addons-basics).
+- **Pripojenie AI.** CadCraft Studio je centrum pre vášho vlastného asistenta: pripojte ho raz pre všetkých osem aplikácií. Aplikácie samy žiadnu AI neobsahujú.
+
+## Opravené vo verzii 0.8.1
+
+- **Studio dokáže prepnúť jazyk za behu.** Predtým desktopová aplikácia a zabalené vydania zostali v angličtine. Ešte to nie je otestované na každej platforme: dajte nám vedieť, ak sa jazyk nezmení.
+- Inštaláciám Studio 0.8 sa ponúka 0.8.1 cez {{ui:Nastavenia}} › {{ui:Aktualizácie}}.
+
+## Ešte nie je v tejto verzii
+
+- **Bez podpisu kódu.** Inštalátory pre Windows a súbor .dmg pre macOS zatiaľ nemajú podpis. Na Windows, ak SmartScreen zastaví inštalátor, zvoľte {{ui:Ďalšie informácie}}, potom {{ui:Spustiť aj tak}}. Na Macu kliknite pravým tlačidlom na CadCraft Studio a zvoľte {{ui:Otvoriť}}. Verzie pre obchody sú pozastavené.
+- **Pripojenie AI je miestami nedokončené.** Pripojenie jedným kliknutím v Studiu, hostiteľský konektor pre asistentov v prehliadači a váš vlastný kľúč API v Studiu nie sú v tomto vydaní sľúbené. Slučka úloh bola otestovaná, ale zatiaľ nie so skutočným asistentom.
+- **Kontroly úloh vyžadujú rovnaký formát strany.** List znova vykreslený v inom formáte sa nezhoduje, takže jeho úlohy sa neuzavrú. Listy sa párujú podľa čísla listu, inak podľa pozície strany.
+- **Hlasové poznámky sú len nahrávky.** Neexistuje prepis a asistent vidí dĺžku, autora a popis poznámky, nie zvuk. Nahrávanie sa vyskúšalo s falošným mikrofónom v bezhlavom prehliadači; skutočný mikrofón na telefóne, tablete alebo notebooku ešte treba overiť.
+- **Výpočtové listy a dôvody v PDF** sa uchovávajú v súkromnom zázname súboru. Staršia verzia MarkupCraft tento záznam ignoruje a pri ďalšom uložení súboru ho zahodí, preto takýto súbor otvárajte a ukladajte vo verzii 0.8 alebo novšej.
+- **Strana tvorcu výkresov pri červených opravách.** Čítanie súboru červených opráv v CadCraft a odpovedanie na neho ešte nie je hotové.
+- **Ďalšie jazyky.** Panel aplikácie pre tamilčinu presahuje o 528 px.
+
+Všetko ostatné je v [Čo ešte nie je hotové](topic:not-built-yet). Pre predchádzajúce vydanie pozri [Novinky vo verzii 0.7](topic:whats-new-0-7).

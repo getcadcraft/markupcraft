@@ -34,7 +34,7 @@ $__tabs = ['props', 'list', 'punch', 'tasks', 'notes', 'field', 'chest', 'compar
 $__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['insert-picture', ''], ['duplicate', 'Ctrl+D'],
            ['delete', 'Delete'], ['clean-pen', ''], null, ['save-stamp', ''], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc'], null, ['seltext', ''], ['copy-area', ''], ['line-up', '']];   // i18n-ignore (key names; 0.7.1 71.7 insert-picture, 71.9 save-stamp, 71.10 seltext; 0.8 D8.15 copy-area, line-up)
 /* File › Pages (0.4 K1): on the PDF the open sheet belongs to. */
-$__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['slip-sheet', 'layers'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],
+$__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['save-clean', 'file-earmark-check'], ['slip-sheet', 'layers'], ['batch-links', 'link-45deg'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],
                 ['page-move-up', 'arrow-up'], ['page-move-down', 'arrow-down'], null, ['page-insert-pdf', 'file-earmark-plus'],
                 ['page-insert-blank', 'file-earmark'], ['page-delete', 'trash'], null, ['page-extract', 'box-arrow-up-right'], null, ['ocr', 'text-paragraph']];   // i18n-ignore (keys)
 /* "Open in TakeoffCraft" on the sheet bar (0.4 item 1.5): only when TakeoffCraft is open in this area and the build it runs
@@ -153,7 +153,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
         <div class="mc-actions"><button type="button" class="btn-line btn-sm-cc" data-act="layer-new"><i class="bi bi-plus-lg" aria-hidden="true"></i> <?= Lang::e('layer.new') ?></button></div>
       </details>
     </section>
-    <section class="mc-sec mc-sheets-sec">
+    <section class="mc-sec mc-sheets-sec" data-af-open>
       <div class="mc-sec-head">
         <h2 class="mc-h"><?= Lang::e('sheets.h') ?></h2>
         <span class="mc-muted mc-count" data-sheet-count></span>
@@ -205,6 +205,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <button type="button" class="mc-navbtn" data-act="zoom-in" title="<?= Lang::e('nav.zoom_in.title') ?>"><i class="bi bi-zoom-in" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.zoom_in') ?></span></button>
       <button type="button" class="mc-navbtn mc-navtext" data-act="fit-page" title="<?= Lang::e('nav.fit_page.title') ?>"><?= Lang::e('nav.fit_page') ?></button>
       <button type="button" class="mc-navbtn mc-navtext" data-act="fit-width" title="<?= Lang::e('nav.fit_width.title') ?>"><?= Lang::e('nav.fit_width') ?></button>
+      <button type="button" class="mc-navbtn mc-navtext" data-act="notes-toggle" aria-pressed="true" title="<?= Lang::e('nav.notes') ?>"><i class="bi bi-eye" aria-hidden="true"></i> <?= Lang::e('nav.notes') ?></button>
       <button type="button" class="mc-navbtn mc-navtext" data-act="page-mode" aria-pressed="false" title="<?= Lang::e('nav.page_mode.tabs.title') ?>"><i class="bi bi-view-stacked" aria-hidden="true"></i> <?= Lang::e('nav.page_mode') ?></button>
       <button type="button" class="mc-navbtn" data-act="view-ccw" title="<?= Lang::e('nav.view_ccw.title') ?>"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.view_ccw') ?></span></button>
       <button type="button" class="mc-navbtn" data-act="view-cw" title="<?= Lang::e('nav.view_cw.title') ?>"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span class="visually-hidden"><?= Lang::e('nav.view_cw') ?></span></button>
@@ -340,6 +341,8 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
 
     <section class="mc-pane" role="tabpanel" id="mc-pane-notes" aria-labelledby="mc-tab-notes" data-pane="notes" hidden>
       <h2 class="mc-h"><?= Lang::e('tab.notes') ?></h2>
+      <div class="mc-pnotes" data-pnotes></div>
+      <h3 class="mc-h"><?= Lang::e('pnotes.pins.h') ?></h3>
       <p class="mc-note"><?= Lang::e('notes.note') ?></p>
       <div class="mc-actions">
         <button type="button" class="btn-plot btn-sm-cc" data-act="voice-record" aria-pressed="false"><i class="bi bi-mic" aria-hidden="true"></i> <span data-voice-label><?= Lang::e('notes.record') ?></span></button>

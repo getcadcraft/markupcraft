@@ -1,44 +1,61 @@
 ---
-title: What's new in 0.7
-summary: RFIs, submittals and daily logs in a new Field tab, with due dates, overdue in red, CSV and BCF, offline work and Merge; assistants that set statuses, reply and export the list; unit lists that follow Settings; panels that tidy away and dialogs that move.
+title: What's new in 0.8 and 0.8.1
+summary: Markups that become tasks and close themselves, a plain list of what changed between revisions, voice notes and decisions on the plan, redline files for the drafter, and the shared 0.8 changes: input devices, toolbar rows, Problems, more languages.
 section: start
 order: 5
-keywords: whats new, what's new, release notes, changelog, changes, 0.7, version, new features, field, field records, rfi, request for information, submittal, daily log, site diary, overdue, due date, assigned to me, pin, merge, offline, tablet, bcf, csv, assistant, mcp, markup status, reply, export, units, unit lists, star, calibrate, compact, panels, dialogs, portuguese
+keywords: whats new, what's new, release notes, changelog, changes, 0.8, 0.8.1, version, new features, task, tasks, assignee, due day, overdue, check now, what changed, revisions, compare, voice note, decision, redline, answers file, drafter, assistant, mcp, problems, languages, input devices, trackpad, toolbar rows, property grid, update
 ---
 
-This is what changed in MarkupCraft 0.7, compared with 0.6. The big new thing is field records: RFIs, submittals and daily logs kept inside the PDF beside your markups.
+This is what changed in MarkupCraft 0.8 and 0.8.1, compared with 0.7. The big new thing is that a markup can be a task that someone, or your own assistant, does, and that closes itself when the drawing really changes.
 
 ## New
 
-### RFIs, submittals and daily logs
+### Markups that act
 
-- **The Field tab.** Open the {{ui:Field}} tab and choose {{ui:RFI}}, {{ui:Submittal}} or {{ui:Daily log}}. Tap or click the sheet where an RFI or a submittal belongs and a pin marks the place; a daily log goes on the open sheet without a pin ({{ui:Place pin}} adds one later, {{ui:Move pin}} moves any pin). Each record has its own number (RFI-0001, SUB-0001, LOG-0001), a title, text, a status, an assignee, a due date, a thread of replies and a list of attachment names. See [Track RFIs, submittals and daily logs](topic:field-records).
-- **See what is late.** Filter the list by type, status, due date (overdue, due in 7 days, has or has no due date), this sheet or all sheets, a text search, or {{ui:Assigned to me}}. A record past its due date that is still waiting is marked **Overdue**, in red, on the list and on its pin. See [Find what matters](topic:field-records#find-what-matters).
-- **CSV and BCF.** {{ui:CSV}} writes the listed records as a spreadsheet; {{ui:BCF}} writes them as BCF topics, each with a snapshot of its place on the sheet. Both follow the filters. See [Export](topic:field-records#export).
-- **Offline, and two copies made one.** Records are saved inside the PDF and need no network, so a tablet on site can add, answer and save them. Back at the office, {{ui:Merge}} joins the records of another copy of the same PDF by their ids, as one undo step. See [Save, offline and merging copies](topic:field-records#save-offline-and-merging-copies).
+- **Make a markup a task.** Select one or more markups, open the {{ui:Tasks}} tab and choose {{ui:Make selected a task}}. A task has a title, a person or your connected assistant to do it, an optional due day and a state, and it keeps its place on the sheet and its thread. See [Make a markup a task](topic:markups-that-act).
+- **Tasks that close themselves.** A task can watch the drawing inside its markup. Open a newer revision of the sheet and choose {{ui:Check now}}: if the lines in that area changed by more than a hair, the task is marked Done, its markup becomes Completed and a note in the thread says what changed. A new date stamp, or lines that moved less than 1.5 points, do not count. A task can instead watch a model element: your assistant reports the element with `tasks_check`, and a later report that differs, or a deleted element, closes the task. One undo step reopens it.
+- **Find the work.** Filter the {{ui:Tasks}} list by state and by who it is for, including {{ui:Overdue}}; choose {{ui:Assigned to}}, then {{ui:Assistant}} to see what waits for your assistant. A task past its due day shows as a warning in the Problems panel. {{ui:CSV}} exports the list. Tasks are saved in the PDF with the markup and travel through Live like other markup properties.
+
+### What changed, as a plain list
+
+- **List the changes.** Open the {{ui:Compare}} tab, then {{ui:Compare a whole set}}, pick the earlier and the later file and choose {{ui:List the changes}}. The list starts with a count, then covers each changed sheet, biggest change first: where on the sheet, how big (in real units as well as paper inches on a calibrated sheet), whether lines were added or removed, how many markups sit there, and which words appeared or disappeared. {{ui:Copy the list}} puts it on the clipboard and {{ui:CSV}} writes one row per change. See [List what changed between revisions](topic:what-changed-in-words).
+
+### Voice notes and decisions
+
+- **Voice notes.** In the {{ui:Notes}} tab choose {{ui:Record a voice note}}, then {{ui:Stop recording}}; recordings stop by themselves at two minutes. The note is pinned at the center of the sheet, you drag it where it belongs and type a caption in {{ui:Properties}}, and {{ui:Play}} in the list plays it. The recording is saved inside the PDF.
+- **Decisions.** {{ui:Pin a decision}} writes a sentence or two on the sheet. If it replaces an earlier decision, pick that one in {{ui:It replaces}}: the old one stays, marked Replaced, and points to the new one. One undo step takes it back. See [Pin voice notes and decisions on a sheet](topic:voice-notes-and-decisions).
+
+### Redline to revision
+
+- **Send and answer.** In the {{ui:Tasks}} tab open {{ui:Redline to revision}}, type the revision the markups are against and choose {{ui:Export redline file}}. You get a `.redline.json` file with one item per open markup: sheet, position (as fractions of the sheet, so a re-plot at another size still lines up), words, author, thread and its task. Whoever draws the changes answers Accepted, Rejected or Done in a `.redline-answers.json` file; {{ui:Load answers file…}} gives each markup that status and the drafter's note, as one undo step. See [Send markups to the drafter as a redline](topic:redline-to-revision).
 
 ### AI assistants
 
-- **More an assistant can do.** Your own assistant, connected through CadCraft Studio, can now set a markup's status (`markup_status`, logged in its thread), reply in a thread (`markup_reply`) and export the {{ui:Markups}} list as CSV or BCF (`markups_export`, what the list shows with its filters). Each change is one undo step, signed with the assistant's name. See [What an assistant can ask for](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **More tools.** An assistant you connected through CadCraft Studio can list tasks (`tasks_list`), make or change one (`task_set`), take the task off (`task_clear`), check one against a newer revision or an element (`tasks_check`) and read the plain list of changes between two open plan sets (`revisions_changes`). It only gets the tools you ticked under the Assistants switch, and each change is one undo step. See [Use MarkupCraft with an AI assistant](topic:use-with-ai-assistants).
 
 ## In every app
 
-- **Units.** {{ui:Settings}} › {{ui:General}} › {{ui:Units}} has one list each for length, area, volume, angle and slope, with the exact sizes the units' definitions give (the US survey foot is its own unit). Switch off the units you never use and they leave the unit lists; star one and new work starts in it. A file always keeps its own unit. In MarkupCraft, the measuring and position units in {{ui:Settings}} › {{ui:MarkupCraft}} and the unit in the calibrate dialog follow the switches, the star sets the measuring unit until you save MarkupCraft's own settings, and the real distance you type when you calibrate can carry any unit's mark, such as `3 yd` or `1.5 km`. See [Units, typed values and the unit lists](common:unit-lists).
-- **A denser layout and panels that tidy away.** {{ui:Settings}} › {{ui:General}} › {{ui:Layout density}} › {{ui:Compact}} fits more on the screen (touch screens and phones keep their large buttons). Each side panel has a slim title bar: drag it to dock or float the panel, drop it on another panel's bar to share one frame as tabs, pin it to slide away to the edge, or hide it and bring it back from the edge. See [Arrange the panels](common:arrange-panels#make-the-layout-denser).
-- **Dialogs move.** Drag a dialog by its title bar out of the way of the drawing; it comes back where you left it. Double-click the title bar to centre it again. See [Move a dialog](common:arrange-panels#move-a-dialog).
-- **Recipes for AI assistants.** Ten worked requests for your own assistant (tidy a drawing, plot a set, check drawings, ask a model questions, total a takeoff, try a part variant…), each with the tools it calls and the permissions it needs, and each replayed by our tests. The apps contain no AI. See [Recipes for AI assistants](common:assistants-recipes).
-- **Languages.** **Português (Portugal)** is new in {{ui:Settings}} › {{ui:General}} › {{ui:Language}}. It, **Português (Brasil)**, **Español (México)** and **Bahasa Indonesia** now have every word of the apps, as drafts not yet reviewed by a native speaker. Help topics are in English.
-- **CadCraft Studio** says why an update check failed (no file for your system yet, no network, a bad signature) instead of just "Done", and stops bringing back a What's new card you closed until there is a newer release.
+- **Languages.** CadCraft Studio now has 54 languages. Ten are new: Lithuanian, Latvian, Bosnian, Marathi, Telugu, Albanian, Afrikaans, Filipino, Swahili and Uzbek. All of the non-English ones are machine drafts until a native speaker reads them.
+- **Input devices.** {{ui:Settings}} › {{ui:Global}} › {{ui:Input devices}} sets what a trackpad, your mouse's side buttons, a pen, finger taps, a 3D mouse, a game controller or a MIDI controller does, for every app or only for this one. Until you change something, every device works as before. See [Use a trackpad, 3D mouse or controller](common:input-devices).
+- **Toolbar rows.** {{ui:Settings}} › {{ui:General}} › {{ui:Toolbar rows}} has {{ui:Wrap}} (the default), {{ui:2 rows}} and {{ui:1 row}}, so the drawing gets more room. See [Arrange the panels](common:arrange-panels).
+- **Property grid.** The Style fields of a markup use the shared grid, with collapsible categories and label and value columns.
+- **Problems panel.** Warnings from the app, such as an overdue task, collect in one Problems panel.
+- **Live and add-ons.** Live sessions are described in [Work together live](common:work-together-live); the add-on list that follows your account is in [Add-ons and your account list](common:addons-basics).
+- **Connect your AI.** CadCraft Studio is the hub for your own assistant: connect once for all eight apps. The apps contain no AI of their own.
+
+## Fixed in 0.8.1
+
+- **Studio can switch language while it runs.** Before, the desktop app and the packed editions stayed in English. This is not yet tested on every platform: tell us if the language does not change.
+- Studio 0.8 installs are offered 0.8.1 through {{ui:Settings}} › {{ui:Updates}}.
 
 ## Not in this version yet
 
-- **0.7 is not code-signed.** Signing, and the Microsoft Store package, moved to 0.8 because the certificate validation has not come through yet. Check the SHA-256 beside each file on getcadcraft.com/download. On Windows, if SmartScreen stops the installer, choose {{ui:More info}}, then {{ui:Run anyway}}. On a Mac, the first time, right-click CadCraft Studio and choose {{ui:Open}}. CadCraft Studio is not in an app store yet, and there is no iPad or iPhone build yet.
-- The angle and slope lists in {{ui:Units}} are saved, but no box reads them yet.
-- Field records are not shared in a CadCraft Studio live session (live sessions carry markups only); bring copies together with {{ui:Merge}}.
-- Merge takes a record as a whole from the copy changed last: if two people changed different fields of one record, the later copy's fields win. Threads and attachment names are joined.
-- Attachments are names only; the files stay where they are. There are no teams, notifications or cloud projects for records, and assistants have no tools for records yet.
-- Field records were tested in a browser at phone and tablet sizes with the network cut, but not yet by hand on a real tablet.
-- Still from 0.6: turning page objects to any angle, drawing new shapes straight into the page, changing a line's font or size, and text that flows over several lines. A saved copy with page edits has not been opened in Acrobat yet.
-- Still from 0.5: undoing a page change (such as adding a blank page), reading text from scanned sheets, and live sessions beyond your own network.
+- **Not code-signed.** The Windows installers and the macOS .dmg carry no signature yet. On Windows, if SmartScreen stops the installer, choose {{ui:More info}}, then {{ui:Run anyway}}. On a Mac, right-click CadCraft Studio and choose {{ui:Open}}. Store builds are on hold.
+- **Connect your AI is unfinished in places.** One-click connecting inside Studio, the hosted connector for browser assistants and your own API key inside Studio are not promised for this release. The task loop has been tested, but not yet with a real assistant.
+- **Task checks need the same page size.** A sheet re-plotted at another size will not match, so its tasks do not close. Sheets are paired by sheet number, else by page position.
+- **Voice notes are recordings only.** There is no transcript, and an assistant sees a note's length, author and caption, not the sound. Recording was tried with a fake microphone in a headless browser; a real microphone on a phone, tablet or laptop is still to be checked.
+- **Calc sheets and reasons in a PDF** are kept in a private entry of the file. An older MarkupCraft ignores that entry and drops it the next time it saves the file, so open and save such a file with 0.8 or later.
+- **The drafter's side of redlines.** CadCraft reading the redline file and answering it is not built yet.
+- **Other languages.** Tamil's app bar overflows by 528 px.
 
-Everything else is in [What is not built yet](topic:not-built-yet).
+Everything else is in [What is not built yet](topic:not-built-yet). For the release before this one, see [What's new in 0.7](topic:whats-new-0-7).

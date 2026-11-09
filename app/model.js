@@ -91,6 +91,31 @@ export const nowIso = () => new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 /** Add-on data on a markup (0.5 AO.6; docs/ADDONS-SPEC.md §5.5): the shared loader's rule (addons.js cleanAddonData). */
 export const cleanXd = cleanAddonData;
 
+/**
+ * A sheet link's view (0.9 SU.1085 batch links): { id (detail number, ≤ 8), box ([x0,y0,x1,y1] in the target sheet's PDF user
+ * space, or null = the whole sheet), ref (the callout text it was made from; set only by batch links, ≤ 40) } or undefined.
+ * Untrusted (files, Live, the clipboard).
+ */
+export function cleanLinkView(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+  const id = String(v.id ?? '').toUpperCase().replace(/[^A-Z0-9.-]/g, '').slice(0, 8);
+  const box = Array.isArray(v.box) && v.box.length === 4 && v.box.every((n) => Number.isFinite(+n) && Math.abs(+n) < 1e6) ? v.box.map((n) => Math.round(+n * 100) / 100) : null;
+  const ref = String(v.ref ?? '').replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  if (box && (box[2] <= box[0] || box[3] <= box[1])) return id || ref ? { id, box: null, ref } : undefined;
+  return id || box || ref ? { id, box, ref } : undefined;
+}
+
+/** What a markup is: 'note', 'private', or undefined for a regular markup (0.9 NOTES.1). Untrusted. */
+export const cleanScope = (s) => (s === 'note' || s === 'private' ? s : undefined);
+/** A markup's box from its own geometry, without drawing it: [x0, y0, x1, y1] or null. */
+export function roughBox(m) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const add = (x, y) => { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; };
+  if (m.rect) { add(m.rect[0], m.rect[1]); add(m.rect[2], m.rect[3]); }
+  for (const p of m.pts || []) add(p[0], p[1]);
+  return Number.isFinite(x0) ? [x0, y0, x1, y1] : null;
+}
+
 /** A new markup with every field present. */
 export function makeMarkup(fields) {
   const t = fields.type;
@@ -112,6 +137,8 @@ export function makeMarkup(fields) {
     fields: cleanFields(fields.fields),   // custom column values (0.4 K19)
     xd: cleanXd(fields.xd),               // add-ons' own data, by add-on id (0.5 AO.6); kept untouched without the add-on
     link: String(fields.link ?? '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60),   // the sheet it jumps to (0.4 K9)
+    linkView: fields.link ? cleanLinkView(fields.linkView) : undefined,   // the view on that sheet + the callout it was made from (0.9 SU.1085)
+    scope: cleanScope(fields.scope),   // 0.9 NOTES.1: 'note' (shows and hides, never prints) | 'private' (sealed, its writer only) | undefined (a regular markup)
     flat: fields.flat === true ? true : undefined,   // flattened into the page when saved; a markup until then (0.7.1 71.7)
     subject: fields.subject ?? (TYPES[t]?.subject || ''),
     comment: fields.comment ?? '',
@@ -190,6 +217,9 @@ export class Store {
     this.columns = [];                // custom columns (0.4 K19): [{ key, name, type, choices }] — the set's, not undoable
     this.base = new Map();            // sheet key → edits to the page's own content (0.6 DF.14, base-edit.js), undoable
     this.records = new Map();         // id → field record (0.7 LC.7, records.js): RFIs, submittals, daily logs; removed ones stay as marks
+    this.notesShown = true;           // 0.9 NOTES.1: the Show notes switch (a view state, not undoable)
+    this.defaultScope = undefined;    // what new markups are: undefined | 'note' | 'private'
+    this.offPage = null;              // (markup) → wholly on the pasteboard? Set by the app, which knows the pages; such a markup counts as a note
   }
 
   // ---- layers (0.4 K3) ----
@@ -212,15 +242,21 @@ export class Store {
   dropLayer(name) { if (this.layers.delete(name)) this.emit('layers', { name }); }
   /** Replace the set's custom columns (values on markups whose column goes are kept, unseen, until saved). */
   setColumns(cols) { this.columns = cleanColumns(cols); this.emit('columns'); }
-  shown(m) { return !m.layer || !this.layerState(m.layer).hidden; }
+  /** A regular markup, the only kind that may leave the app (0.9 NOTES.1): not a note, not private, not on the pasteboard. */
+  isShared(m) { return !m.scope && !this.offPage?.(m); }
+  shown(m) { return (this.notesShown || this.isShared(m)) && (!m.layer || !this.layerState(m.layer).hidden); }
   open(m) { return this.shown(m) && (!m.layer || !this.layerState(m.layer).locked); }
 
   on(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
   emit(kind, info) { this.version++; for (const fn of this.listeners) fn(kind, info); }
 
   get(id) { return this.markups.get(id) || null; }
-  onSheet(sheet) { const out = []; for (const m of this.markups.values()) if (m.sheet === sheet) out.push(m); return out; }
-  all() { return [...this.markups.values()]; }
+  // all() and onSheet() are regular markups only, so that every export, list, summary, print, assistant and copy leaves notes
+  // and private notes out without having to remember to. Only what draws and edits them on this screen uses everything() / everyOn().
+  onSheet(sheet) { const out = []; for (const m of this.markups.values()) if (m.sheet === sheet && this.isShared(m)) out.push(m); return out; }
+  all() { return [...this.markups.values()].filter((m) => this.isShared(m)); }
+  everyOn(sheet) { const out = []; for (const m of this.markups.values()) if (m.sheet === sheet) out.push(m); return out; }
+  everything() { return [...this.markups.values()]; }
 
   /** Run one edit. `fn(tx)` calls tx.add/update/remove/setCalibration/setPunchNext/setSheetName/setBase. */
   change(label, fn) {
@@ -228,6 +264,7 @@ export class Store {
     const tx = {
       add: (m) => {
         const mk = m.id && m.type && m.style ? clone(m) : makeMarkup(m);
+        if (this.defaultScope && !mk.scope && mk.type !== 'foreign') mk.scope = this.defaultScope;
         if (this.markups.has(mk.id)) throw new Error('duplicate markup id');   // i18n-ignore (programming error)
         this.markups.set(mk.id, mk);
         ops.push({ op: 'add', id: mk.id, after: clone(mk), sheet: mk.sheet });

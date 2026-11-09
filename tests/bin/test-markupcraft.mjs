@@ -57,6 +57,7 @@ const pagesM = await imp('pages.js');
 const slipM = await imp('slip.js');
 const findM = await imp('textsearch.js');
 const arcsM = await imp('arcs.js');
+const arcToolM = await imp('arc-tool.js');
 const picM = await imp('imagestamp.js');
 const sumM = await imp('summary.js');
 const xlsxM = await imp('xlsx.js');
@@ -1173,6 +1174,66 @@ section('Arcs and angle measure (0.4 K4)');
   await reader.closePdf(doc);
 }
 
+section('Arc tool: the ten methods (0.9 FX.137)');
+{
+  const T = arcToolM, D = Math.PI / 180, h = Math.SQRT1_2 * 100;
+  const P = (x, y) => [x, y];
+  // run a method: points as [x,y], numbers as raw values (radians / user units) in the order of its roles
+  const run = (id, ins) => { const a = T.arcSession(id); for (const i of ins) { if (Array.isArray(i)) a.point(i); else a.value(i); } return a.finish(); };
+  // what the stored pts mean once MarkupCraft reads them back: centre, radius, signed sweep (degrees), and where the middle sits
+  const read = (r) => { const q = r.pts && arcsM.arcThrough(...r.pts); return q && { c: q.c, r: q.r, sw: q.sweep / D, mid: r.pts[1], a: r.pts[0], b: r.pts[2] }; };
+  const is = (r, c, rad, sw, mid, label) => { const q = read(r); ok(!!q && nearArr(q.c, c, 1e-3) && near(q.r, rad, 1e-3) && near(Math.abs(q.sw), sw, 1e-3) && (!mid || nearArr(q.mid, mid, 1e-3)), label, q && JSON.stringify({ c: q.c, r: q.r, sw: q.sw, mid: q.mid, err: r.error })); return q; };
+  const S = P(100, 0), C0 = P(0, 0), E = P(0, 100);
+  ok(T.ARC_METHODS.length === 10 && T.ARC_METHODS.every((m) => T.METHODS[m]) && T.ARC_METHODS.every((m) => T.ROLES[m].length === 3), 'ten methods, each three inputs, all in the shared geometry');
+  const q3 = is(run('3P', [S, P(h, h), E]), C0, 100, 90, P(h, h), '3-Point: the clicked points are the arc');
+  ok(JSON.stringify(run('3P', [S, P(h, h), E]).pts) === JSON.stringify([S, P(h, h), E]), '3-Point stores exactly what was clicked (files unchanged)');
+  ok(q3.sw > 0, '3-Point counterclockwise reads back counterclockwise');
+  is(run('SCE', [S, C0, E]), C0, 100, 90, P(h, h), 'Start, Center, End');
+  is(run('CSE', [C0, S, E]), C0, 100, 90, P(h, h), 'Center, Start, End');
+  is(run('SCA', [S, C0, 90 * D]), C0, 100, 90, P(h, h), 'Start, Center, Angle +90 (counterclockwise)');
+  is(run('CSA', [C0, S, 90 * D]), C0, 100, 90, P(h, h), 'Center, Start, Angle +90');
+  const cwA = is(run('SCA', [S, C0, -90 * D]), C0, 100, 90, P(h, -h), 'Start, Center, Angle -90 stays on the clockwise side (middle below)');
+  ok(nearArr(cwA.b, [100, 0], 1e-6) && nearArr(cwA.a, [0, -100], 1e-6), 'a clockwise arc is stored from its counterclockwise start: (0,-100) to (100,0)');
+  is(run('CSA', [C0, S, -90 * D]), C0, 100, 90, P(h, -h), 'Center, Start, Angle -90 (clockwise)');
+  const chord = 100 * Math.SQRT2;
+  is(run('SCL', [S, C0, chord]), C0, 100, 90, P(h, h), 'Start, Center, Length (chord): the short way, counterclockwise');
+  is(run('CSL', [C0, S, chord]), C0, 100, 90, P(h, h), 'Center, Start, Length');
+  is(run('SCL', [S, C0, -chord]), C0, 100, 90, P(h, -h), 'Start, Center, Length, negative: clockwise');
+  is(run('SEA', [S, E, 90 * D]), C0, 100, 90, P(h, h), 'Start, End, Angle +90');
+  is(run('SEA', [S, E, -90 * D]), P(100, 100), 100, 90, P(100 - h, 100 - h), 'Start, End, Angle -90 bulges the other way (center (100,100))');
+  is(run('SEA', [S, E, 270 * D]), P(100, 100), 100, 270, null, 'Start, End, Angle 270 is the major arc');
+  is(run('SED', [C0, P(100, 100), 0]), P(0, 100), 100, 90, P(h, 100 - h), 'Start, End, Direction: leaves (0,0) heading east, curls up to (100,100)');
+  is(run('SED', [C0, P(100, -100), 0]), P(0, -100), 100, 90, P(h, -100 + h), 'Start, End, Direction, a clockwise curl on the other side');
+  is(run('SER', [S, E, 100]), C0, 100, 90, P(h, h), 'Start, End, Radius +100: the minor arc');
+  is(run('SER', [S, E, -100]), P(100, 100), 100, 270, null, 'Start, End, Radius -100: the long way round');
+  ok(run('3P', [P(0, 0), P(5, 5), P(10, 10)]).error === 'line' && run('SEA', [S, S, 1]).error === 'same' && run('SER', [S, E, 10]).error === 'radius'
+    && run('SCL', [S, C0, 500]).error === 'chord' && run('SEA', [S, E, 0]).error === 'angle' && run('SED', [C0, P(100, 0), 0]).error === 'direction' && run('CSE', [C0, S, P(200, 0)]).error === 'full',
+  'degenerate inputs give an error name (line, same, radius, chord, angle, direction, full)');
+  ok(run('SCA', [S, C0]).error === 'incomplete', 'unfinished input is not an arc');
+  const mk = model.makeMarkup({ sheet: 'A:0', type: 'arc', pts: run('SCA', [S, C0, -90 * D]).pts, author });
+  const dl = shapesM.shapes(mk, {});
+  const cpts = dl[0].d.filter((c) => c[0] === 'C').flatMap((c) => [[c[1], c[2]], [c[3], c[4]], [c[5], c[6]]]);
+  ok(dl.length === 1 && cpts.length && cpts.every(([x, y]) => y <= 1e-6), 'the clockwise quarter is drawn below the axis (the side asked for)');
+  const a = T.arcSession('SCA');
+  ok(a.role === 'start' && !a.numeric && a.point(S) && a.role === 'center' && a.point(C0) && a.role === 'angle' && a.numeric && !a.point(E), 'steps follow the roles; a point is refused where a number is due');
+  const pv = a.preview(P(0, 100));
+  ok(!!pv.pts && !!is({ pts: pv.pts }, C0, 100, 90, P(h, h), 'preview with the pointer a quarter turn round: the quarter arc'), 'the preview is the arc the click would make');
+  const pw = a.preview(P(-100, 0));
+  ok(pw.pts && near(Math.abs(read({ pts: pw.pts }).sw), 180), 'moving on to 180 degrees widens the preview');
+  const g = T.arcSession('SCE'); g.point(S);
+  ok(g.preview(P(10, 10)).guide?.length === 2 && !g.preview(P(10, 10)).pts, 'before the last input the preview is a guide line');
+  ok(a.back() && a.role === 'center' && a.v.length === 1, 'Backspace takes back one input');
+  const tv = T.typedValue;
+  ok(near(tv('angle', '90').value, Math.PI / 2) && near(tv('angle', '-45°').value, -Math.PI / 4) && tv('angle', 'abc').error === 'arc.err.degrees', 'a typed angle is degrees, minus is clockwise');
+  ok(near(tv('direction', '90', null, 0).value, Math.PI / 2) && near(tv('direction', '0', null, 90).value, Math.PI / 2), 'a typed direction is as seen: the page turn is added');
+  const cal = { mmPerPt: 1, unit: 'mm' };
+  ok(near(tv('length', '150', cal).value, 150) && near(tv('radius', '-150', cal).value, -150) && tv('length', '12', null).error === 'sketch.err.scale' && tv('length', 'x', cal).error === 'sketch.err.length', 'a typed length or radius uses the sheet scale; minus is kept');
+  const EN2 = JSON.parse(fs.readFileSync(path.join(APP, 'lang/en.json'), 'utf8'));
+  const words = [...T.ARC_METHODS.map((m) => 'arc.method.' + m), ...new Set(T.ARC_METHODS.flatMap((m) => T.ROLES[m].map((r) => 'arc.role.' + r))),
+    ...['angle', 'length', 'direction', 'radius'].map((r) => 'arc.type.' + r), ...['degrees', 'line', 'same', 'chord', 'angle', 'direction', 'radius', 'full', 'incomplete', 'method'].map((e) => 'arc.err.' + e), 'arc.method', 'arc.esc'];
+  ok(words.every((k) => typeof EN2[k] === 'string'), 'every method, step, prompt and error has its words in lang/en.json', words.filter((k) => !EN2[k]));
+}
+
 section('Pictures and signatures (0.4 K5)');
 {
   const cv = createCanvas(120, 60);
@@ -1945,6 +2006,14 @@ section('0.7.1: copy and paste page content (71.6), pictures from files (71.7), 
   ok(round.tools.length === 2 && round.tools[0].items.length === 2 && round.tools[1].content.n === 40, 'both survive the chest file (export → import)');
   const tampered = chestM.parseChest(JSON.stringify({ format: chestM.CHEST_FORMAT, version: 1, tools: [{ ...tool, items: [{ type: 'rect', rect: ['x'] }] }, { ...ctool, content: { ...ctool.content, pdf: 'PHN2Zz4=' } }, { ...tool, items: [...tool.items, { type: 'foreign' }] }] }));
   ok(tampered.tools.length === 1 && tampered.tools[0].items.length === 2 && tampered.skipped === 2, 'tampered stamps are dropped (bad markups, content that is not a PDF); bad items inside a good one are left out', tampered);
+  // FX.38/FX.39 (0.9): a picture or signature markup, flattened or not, kept as a stamp in the chest and placed again
+  const pic = model.makeMarkup({ sheet: 'f1:0', type: 'image', rect: [50, 50, 194, 100], img: fm.img, label: 'Signature', author });
+  pic.flat = true;
+  const ptool = chestM.stampTool('My signature', { items: clipM.makeClip([pic, g1]).items });
+  const pround = chestM.parseChest(chestM.exportChest([ptool])).tools[0];
+  const pplaced = clipM.placeClip({ items: pround.items }, { sheet: 'f2:3', author: 'Ann', center: [300, 300] });
+  const pimg = pplaced.find((m) => m.type === 'image');
+  ok(pround.items.length === 2 && pimg && pimg.img === fm.img && pimg.flat === true && pimg.sheet === 'f2:3', 'a picture markup saved as a stamp survives the chest file and places on another file with its flatten setting');
 }
 
 section('Copy area: a picture that knows its size, overlays, line up (0.8 D8.15)');

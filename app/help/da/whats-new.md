@@ -1,43 +1,60 @@
 ---
-title: Nyheder i 0.7
-summary: RFI'er, indsendelser og dagbøger i en ny fane Felt, med frister, forfaldne i rødt, CSV og BCF, offlinearbejde og Sammenflet; assistenter, der sætter statusser, svarer og eksporterer listen; enhedslister, der følger Indstillinger; paneler, der rydder af vejen, og dialogbokse, der kan flyttes.
-keywords: nyheder, udgivelsesnoter, ændringslog, ændringer, 0.7, version, nye funktioner, felt, feltoptegnelser, rfi, request for information, indsendelse, dagbog, byggepladsdagbog, forfalden, frist, tildelt mig, nål, sammenflet, offline, tablet, bcf, csv, assistent, mcp, markeringsstatus, svar, eksport, enheder, enhedslister, stjerne, kalibrér, kompakt, paneler, dialogbokse, portugisisk
-from: 142e1a1e
+title: Nyt i 0.8 og 0.8.1
+summary: Markeringer, der bliver til opgaver og lukker sig selv, en almindelig liste over ændringer mellem revisioner, talebeskeder og beslutninger på planen, rettelsesfiler til tegneren samt de fælles ændringer i 0.8: inputenheder, værktøjslinjens rækker, Problemer og flere sprog.
+keywords: nyt, hvad er nyt, udgivelsesnoter, ændringshistorik, ændringer, 0.8, 0.8.1, version, nye funktioner, opgave, opgaver, tildelt, forfaldsdag, overskredet, kontrollér nu, hvad ændrede sig, revisioner, sammenlign, talebesked, beslutning, rettelse, svarfil, tegner, assistent, mcp, problemer, sprog, inputenheder, trackpad, værktøjslinjens rækker, egenskabsgitter, opdatering
+from: 40368796
 ---
 
-Her er, hvad der er ændret i MarkupCraft 0.7 i forhold til 0.6. Det store nye er feltoptegnelser: RFI'er, indsendelser og dagbøger, der opbevares i PDF'en ved siden af dine markeringer.
+Dette er ændringerne i MarkupCraft 0.8 og 0.8.1 sammenlignet med 0.7. Det store nye er, at en markering kan være en opgave, som en person eller din egen assistent udfører, og som lukker sig selv, når tegningen virkelig ændrer sig.
 
 ## Nyt
 
-### RFI'er, indsendelser og dagbøger
+### Markeringer, der handler
 
-- **Fanen Felt.** Åbn fanen {{ui:Felt}} og vælg {{ui:RFI}}, {{ui:Indsendelse}} eller {{ui:Dagbog}}. Tryk eller klik på det ark, hvor en RFI eller en indsendelse hører hjemme, og en nål markerer stedet; en dagbog placeres på det åbne ark uden nål ({{ui:Placér nål}} tilføjer en senere, {{ui:Flyt nål}} flytter en vilkårlig nål). Hver optegnelse har sit eget nummer (RFI-0001, SUB-0001, LOG-0001), en titel, tekst, en status, en ansvarlig, en frist, en tråd af svar og en liste over bilagsnavne. Se [Følg RFI'er, indsendelser og dagbøger](topic:field-records).
-- **Se, hvad der er forsinket.** Filtrér listen efter type, status, frist (forfalden, forfalder inden for 7 dage, har eller har ingen frist), dette ark eller alle ark, en tekstsøgning eller {{ui:Tildelt mig}}. En optegnelse, der har overskredet sin frist og stadig venter, er markeret **Forfalden**, i rødt, på listen og på sin nål. Se [Find det, der betyder noget](topic:field-records#find-what-matters).
-- **CSV og BCF.** {{ui:CSV}} skriver de listede optegnelser som et regneark; {{ui:BCF}} skriver dem som BCF-emner, hver med et snapshot af sit sted på arket. Begge følger filtrene. Se [Eksport](topic:field-records#export).
-- **Offline, og to kopier gjort til én.** Optegnelser gemmes i PDF'en og kræver intet netværk, så en tablet på pladsen kan tilføje, besvare og gemme dem. Tilbage på kontoret samler {{ui:Sammenflet}} en anden kopi af den samme PDF's optegnelser via deres id'er, som ét fortryd-trin. Se [Gem, offline og sammenfletning af kopier](topic:field-records#save-offline-and-merging-copies).
+- **Gør en markering til en opgave.** Vælg en eller flere markeringer, åbn fanen {{ui:Opgaver}} og vælg {{ui:Gør det valgte til en opgave}}. En opgave har en titel, en person eller din tilsluttede assistent til at udføre den, en valgfri forfaldsdag og en status, og den beholder sin plads på arket og sin tråd. Se [Gør en markering til en opgave](topic:markups-that-act).
+- **Opgaver, der lukker sig selv.** En opgave kan holde øje med tegningen inden for sin markering. Åbn en nyere revision af arket og vælg {{ui:Kontrollér nu}}: Hvis linjerne i området er ændret mere end en hårsbredde, markeres opgaven som Færdig, markeringen bliver Afsluttet, og en note i tråden siger, hvad der ændrede sig. En ny datostempel eller linjer, der er flyttet mindre end 1.5 point, tæller ikke. En opgave kan i stedet holde øje med et modelelement: din assistent melder elementet med `tasks_check`, og en senere melding, der er forskellig, eller et slettet element, lukker opgaven. Ét trin i fortryd åbner den igen.
+- **Find arbejdet.** Filtrér listen over {{ui:Opgaver}} efter status og efter hvem opgaven er til, herunder {{ui:Overskredet}}; vælg {{ui:Tildelt}} og derefter {{ui:Assistent}} for at se, hvad der venter på din assistent. En opgave, der har passeret sin forfaldsdag, vises som en advarsel i panelet Problemer. {{ui:CSV}} eksporterer listen. Opgaver gemmes i PDF-filen sammen med markeringen og følger med gennem Live som andre markeringsegenskaber.
+
+### Hvad der ændrede sig, som en almindelig liste
+
+- **List ændringerne.** Åbn fanen {{ui:Compare}}, vælg derefter {{ui:Sammenlign et helt sæt}}, vælg den tidligere og den senere fil, og vælg {{ui:List ændringerne}}. Listen starter med et antal og dækker derefter hvert ændret ark, med den største ændring først: hvor på arket, hvor stor (i reelle enheder samt i papirtommer på et kalibreret ark), om linjer er tilføjet eller fjernet, hvor mange markeringer der ligger der, og hvilke ord der er dukket op eller forsvundet. {{ui:Kopiér listen}} lægger den på udklipsholderen, og {{ui:CSV}} skriver én række pr. ændring. Se [List ændringer mellem revisioner](topic:what-changed-in-words).
+
+### Talebeskeder og beslutninger
+
+- **Talebeskeder.** På fanen {{ui:Notater}} vælg {{ui:Optag en talebesked}}, og vælg derefter {{ui:Stop optagelsen}}; optagelser stopper af sig selv efter to minutter. Noten fastgøres i midten af arket, du trækker den hen, hvor den skal være, og skriver en billedtekst i {{ui:Egenskaber}}, og {{ui:Afspil}} i listen afspiller den. Optagelsen gemmes i PDF-filen.
+- **Beslutninger.** {{ui:Fastgør en beslutning}} skriver en eller to sætninger på arket. Hvis den erstatter en tidligere beslutning, vælges den i {{ui:Den erstatter}}: den gamle bliver stående, markeret Erstattet, og peger på den nye. Ét trin i fortryd fjerner den igen. Se [Fastgør talebeskeder og beslutninger på et ark](topic:voice-notes-and-decisions).
+
+### Rettelser til revision
+
+- **Send og svar.** På fanen {{ui:Opgaver}} åbnes {{ui:Rettelser til revision}}, skriv den revision markeringerne er i forhold til, og vælg {{ui:Eksportér rettelsesfil}}. Du får en `.redline.json`-fil med ét punkt pr. åben markering: ark, position (som brøkdele af arket, så en ny plot i en anden størrelse stadig passer), ord, forfatter, tråd og dens opgave. Den, der tegner ændringerne, svarer Accepteret, Afvist eller Færdig i en `.redline-answers.json`-fil; {{ui:Indlæs svarfil…}} giver hver markering den status og tegnerens note som ét trin i fortryd. Se [Send markeringer til tegneren som en rettelse](topic:redline-to-revision).
 
 ### AI-assistenter
 
-- **Mere en assistent kan gøre.** Din egen assistent, tilsluttet via CadCraft Studio, kan nu sætte en markerings status (`markup_status`, logget i dens tråd), svare i en tråd (`markup_reply`) og eksportere listen {{ui:Markeringer}} som CSV eller BCF (`markups_export`, det listen viser med sine filtre). Hver ændring er ét fortryd-trin, signeret med assistentens navn. Se [Hvad en assistent kan bede om](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Flere værktøjer.** En assistent, du har forbundet via CadCraft Studio, kan liste opgaver (`tasks_list`), oprette eller ændre en (`task_set`), fjerne opgaven (`task_clear`), kontrollere en mod en nyere revision eller et element (`tasks_check`) og læse den almindelige liste over ændringer mellem to åbne plansæt (`revisions_changes`). Den får kun de værktøjer, du har markeret under kontakten {{ui:Assistenter}}, og hver ændring er ét trin i fortryd. Se [Brug MarkupCraft med en AI-assistent](topic:use-with-ai-assistants).
 
 ## I alle apps
 
-- **Enheder.** {{ui:Indstillinger}} › {{ui:Generelt}} › {{ui:Enheder}} har en liste hver til længde, areal, volumen, vinkel og hældning med de præcise størrelser, enhedernes definitioner giver (den amerikanske opmålingsfod er sin egen enhed). Slå de enheder fra, du aldrig bruger, og de forsvinder fra enhedslisterne; sæt en stjerne ved én, og nyt arbejde starter i den. En fil beholder altid sin egen enhed. I MarkupCraft følger mål- og positionsenhederne i {{ui:Indstillinger}} › {{ui:MarkupCraft}} og enheden i kalibreringsdialogen til/fra-valgene, stjernen angiver måleenheden, indtil du gemmer MarkupCrafts egne indstillinger, og den rigtige afstand, du skriver, når du kalibrerer, kan have en vilkårlig enheds mærke, som `3 yd` eller `1.5 km`. Se [Enheder, indtastede værdier og enhedslisterne](common:unit-lists).
-- **Et tættere layout og paneler, der rydder af vejen.** {{ui:Indstillinger}} › {{ui:Generelt}} › {{ui:Layouttæthed}} › {{ui:Kompakt}} får mere plads på skærmen (touchskærme og telefoner beholder deres store knapper). Hvert sidepanel har en smal titellinje: træk i den for at fastgøre eller frigøre panelet, slip den på et andet panels linje for at dele én ramme som faner, fastgør det, så det glider ud til kanten, eller skjul det og hent det tilbage fra kanten. Se [Ordn panelerne](common:arrange-panels#make-the-layout-denser).
-- **Dialogbokse kan flyttes.** Træk en dialogboks i dens titellinje væk fra tegningen; den kommer tilbage, hvor du lod den. Dobbeltklik på titellinjen for at centrere den igen. Se [Flyt en dialogboks](common:arrange-panels#move-a-dialog).
-- **Opskrifter til AI-assistenter.** Ti gennemarbejdede forespørgsler til din egen assistent (ryd op i en tegning, plot et sæt, kontrollér tegninger, stil en model spørgsmål, summér et mængdeudtræk, prøv en variant af en del…), hver med de værktøjer, den kalder, og de tilladelser, den kræver, og hver afspillet igen af vores tests. Apperne indeholder ingen AI. Se [Opskrifter til AI-assistenter](common:assistants-recipes).
-- **Sprog.** **Português (Portugal)** er nyt i {{ui:Indstillinger}} › {{ui:Generelt}} › {{ui:Sprog}}. Det, **Português (Brasil)**, **Español (México)** og **Bahasa Indonesia** har nu hvert ord i apperne, som kladder, der endnu ikke er gennemgået af en modersmålstaler. Hjælpeemnerne er på engelsk.
-- **CadCraft Studio** siger, hvorfor en opdateringskontrol mislykkedes (ingen fil til dit system endnu, intet netværk, en ugyldig signatur) i stedet for blot »Færdig«, og holder op med at bringe et Nyheder-kort tilbage, som du har lukket, indtil der er en nyere udgivelse.
+- **Sprog.** CadCraft Studio har nu 54 sprog. Ti er nye: litauisk, lettisk, bosnisk, marathi, telugu, albansk, afrikaans, filippinsk, swahili og usbekisk. Alle de ikke-engelske er maskinelle kladder, indtil en indfødt taler har læst dem.
+- **Inputenheder.** {{ui:Indstillinger}} › {{ui:Globalt}} › {{ui:Inputenheder}} angiver, hvad et trackpad, musens sideknapper, en pen, fingertryk, en 3D-mus, en spilcontroller eller en MIDI-controller gør, for alle apps eller kun for denne. Indtil du ændrer noget, virker alle enheder som før. Se [Brug et trackpad, 3D-mus eller controller](common:input-devices).
+- **Værktøjslinjens rækker.** {{ui:Indstillinger}} › {{ui:Generelt}} › {{ui:Værktøjslinjens rækker}} har {{ui:Ombryd}} (standard), {{ui:2 rækker}} og {{ui:1 række}}, så tegningen får mere plads. Se [Arrangér panelerne](common:arrange-panels).
+- **Egenskabsgitter.** Felterne for Stil på en markering bruger det fælles gitter med sammenklappelige kategorier og kolonner for etiket og værdi.
+- **Panelet Problemer.** Advarsler fra appen, for eksempel en overskredet opgave, samles i ét panel for problemer.
+- **Live og add-ons.** Live-sessioner beskrives i [Arbejd sammen live](common:work-together-live); listen over add-ons, der følger din konto, står i [Add-ons og din kontoliste](common:addons-basics).
+- **Forbind din AI.** CadCraft Studio er samlingspunktet for din egen assistent: forbind én gang for alle otte apps. Appene indeholder ingen AI af egen.
+
+## Rettet i 0.8.1
+
+- **Studio kan skifte sprog, mens det kører.** Før blev desktopappen og de pakkede udgaver på engelsk. Det er endnu ikke testet på alle platforme: giv os besked, hvis sproget ikke skifter.
+- Installationer af Studio 0.8 får tilbudt 0.8.1 via {{ui:Indstillinger}} › {{ui:Opdateringer}}.
 
 ## Ikke i denne version endnu
 
-- **0.7 er ikke kodesigneret.** Signering og Microsoft Store-pakken er flyttet til 0.8, fordi certifikatvalideringen ikke er kommet igennem endnu. Kontrollér SHA-256 ved siden af hver fil på getcadcraft.com/download. Hvis SmartScreen på Windows stopper installationsprogrammet, vælger du {{ui:Flere oplysninger}} og derefter {{ui:Kør alligevel}}. På en Mac højreklikker du første gang på CadCraft Studio og vælger {{ui:Åbn}}. CadCraft Studio er ikke i en appbutik endnu, og der er ingen version til iPad eller iPhone endnu.
-- Vinkel- og hældningslisterne i {{ui:Enheder}} gemmes, men ingen boks læser dem endnu.
-- Feltoptegnelser deles ikke i en CadCraft Studio-livesession (livesessioner bærer kun markeringer); saml kopier med {{ui:Sammenflet}}.
-- Sammenflet tager en optegnelse som helhed fra den kopi, der blev ændret sidst: hvis to personer har ændret forskellige felter i den samme optegnelse, vinder den senere kopis felter. Tråde og bilagsnavne samles.
-- Bilag er kun navne; filerne bliver, hvor de er. Der er ingen teams, notifikationer eller skyprojekter til optegnelser, og assistenter har endnu ingen værktøjer til optegnelser.
-- Feltoptegnelser blev testet i en browser i telefon- og tabletstørrelser med netværket afbrudt, men endnu ikke i hånden på en rigtig tablet.
-- Stadig fra 0.6: at dreje sideobjekter til en vilkårlig vinkel, at tegne nye figurer direkte ind i siden, at ændre en linjes skrifttype eller størrelse og tekst, der løber over flere linjer. En gemt kopi med sideændringer er endnu ikke åbnet i Acrobat.
-- Stadig fra 0.5: at fortryde en sideændring (som at tilføje en tom side), at læse tekst fra scannede ark og livesessioner ud over dit eget netværk.
+- **Ikke kodesigneret.** Windows-installationsprogrammerne og .dmg-filen til macOS har endnu ingen signatur. På Windows, hvis SmartScreen stopper installationsprogrammet, vælg {{ui:Flere oplysninger}}, og derefter {{ui:Kør alligevel}}. På en Mac: højreklik på CadCraft Studio og vælg {{ui:Åbn}}. Butiksudgivelser er sat på pause.
+- **Forbindelse til din AI er ufærdig flere steder.** Forbindelse med ét klik i Studio, den hostede connector til browserassistenter og din egen API-nøgle i Studio er ikke lovet i denne udgivelse. Opgaveløkken er testet, men endnu ikke med en rigtig assistent.
+- **Opgavekontrol kræver samme sidestørrelse.** Et ark, der er plottet igen i en anden størrelse, matcher ikke, så dets opgaver lukkes ikke. Ark parres efter arknummer, ellers efter sideposition.
+- **Talebeskeder er kun optagelser.** Der findes ingen transskription, og en assistent ser en notes længde, forfatter og billedtekst, ikke lyden. Optagelse er testet med en falsk mikrofon i en browser uden grafisk brugerflade; en rigtig mikrofon på telefon, tablet eller bærbar er endnu ikke testet.
+- **Beregningsark og begrundelser i en PDF** gemmes i en privat post i filen. En ældre MarkupCraft ignorerer posten og fjerner den, næste gang den gemmer filen, så åbn og gem sådan en fil med 0.8 eller nyere.
+- **Tegnerens side af rettelser.** At CadCraft læser rettelsesfilen og svarer på den, er ikke lavet endnu.
+- **Andre sprog.** Tamils appbjælke løber over med 528 px.
 
-Alt andet står i [Hvad der ikke er lavet endnu](topic:not-built-yet).
+Alt andet står i [Hvad er ikke lavet endnu](topic:not-built-yet). For udgivelsen før denne, se [Nyt i 0.7](topic:whats-new-0-7).

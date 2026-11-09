@@ -39,7 +39,7 @@ The host's copy checks every change. One that can't go in is taken back on your 
 
 ## Join from a browser
 
-A teammate without Studio can scan the picture under the host's code with a phone, tablet or computer on the same network. MarkupCraft opens in the browser and fills with the host's plan set once the host lets you in. Invite links, for joining from another network, are not open yet.
+A teammate without Studio can scan the picture under the host's code with a phone, tablet or computer on the same network. MarkupCraft opens in the browser and fills with the host's plan set once the host lets you in. An invite link lets someone join from another network: the host needs a Team Cloud Plan seat for the app, everyone else joins free, and the link works only while the host's session is open.
 
 ## When the session ends
 

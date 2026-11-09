@@ -35,17 +35,18 @@ const clampN = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) ? Mat
 function itemOf(m) {
   return {
     type: m.type,
+    scope: m.scope === 'note' ? 'note' : undefined,   // 0.9 NOTES.1: a pasted note stays a note; private notes never get here (makeClip)
     pts: m.pts ? m.pts.map((p) => [p[0], p[1]]) : null,
     rect: m.rect ? m.rect.slice() : null,
     rot: m.rot || 0,
     style: { ...(m.style || {}) },
-    text: m.text || '', label: m.label || '', subject: m.subject || '', comment: m.comment || '', layer: m.layer || '', link: m.link || '', legend: m.legend, fields: { ...(m.fields || {}) }, img: m.type === 'image' ? m.img : '', holes: m.holes?.length ? m.holes.map((h) => h.map((p) => [p[0], p[1]])) : undefined, xd: m.xd ? JSON.parse(JSON.stringify(m.xd)) : undefined, flat: m.flat === true ? true : undefined,
+    text: m.text || '', label: m.label || '', subject: m.subject || '', comment: m.comment || '', layer: m.layer || '', link: m.link || '', linkView: m.linkView ? JSON.parse(JSON.stringify(m.linkView)) : undefined, legend: m.legend, fields: { ...(m.fields || {}) }, img: m.type === 'image' ? m.img : '', holes: m.holes?.length ? m.holes.map((h) => h.map((p) => [p[0], p[1]])) : undefined, xd: m.xd ? JSON.parse(JSON.stringify(m.xd)) : undefined, flat: m.flat === true ? true : undefined,
   };
 }
 
 /** A clip of these markups. Read-only (locked) and foreign markups are kept as they are in their file, so never copied. */
 export function makeClip(markups, { source = '', sheet = '' } = {}) {
-  const items = (markups || []).filter((m) => m && !m.locked && m.type !== 'foreign' && TYPES[m.type]).slice(0, CLIP_MAX).map(itemOf);
+  const items = (markups || []).filter((m) => m && m.scope !== 'private' && !m.locked && m.type !== 'foreign' && TYPES[m.type]).slice(0, CLIP_MAX).map(itemOf);
   if (!items.length) return null;
   return { format: CLIP_FORMAT, v: 1, source: str(source, 80), sheet: str(sheet, 80), at: new Date().toISOString(), items };
 }
@@ -68,9 +69,9 @@ export function cleanItem(d) {
   };
   for (const k of Object.keys(style)) if (style[k] === undefined) delete style[k];
   const m = makeMarkup({
-    sheet: '', type: d.type, pts: d.pts || null, rect: d.rect || null,
+    sheet: '', type: d.type, scope: d.scope === 'note' ? 'note' : undefined, pts: d.pts || null, rect: d.rect || null,
     rot: [0, 90, 180, 270].includes(d.rot) ? d.rot : 0, style,
-    text: str(d.text, 20000), label: str(d.label, 200), subject: str(d.subject, 200), comment: str(d.comment, 20000), layer: str(d.layer, 60), link: str(d.link, 60), legend: d.legend, fields: d.fields, img: d.type === 'image' ? cleanImage(d.img) : '', holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, flat: d.flat === true,
+    text: str(d.text, 20000), label: str(d.label, 200), subject: str(d.subject, 200), comment: str(d.comment, 20000), layer: str(d.layer, 60), link: str(d.link, 60), linkView: d.linkView, legend: d.legend, fields: d.fields, img: d.type === 'image' ? cleanImage(d.img) : '', holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, flat: d.flat === true,
   });
   return geometryOk(m) ? itemOf(m) : null;
 }

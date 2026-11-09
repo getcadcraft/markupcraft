@@ -26,7 +26,7 @@ const DEFAULTS = { shape: 'rect', markups: true, dpi: 150, tint: '#d0312d', opac
 const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
 const ap = (m, [x, y]) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 
-export function installAreaCopy({ root, view, curSheet, markupLists, calibration, status, t, tab = '', onCopied = null }) {
+export function installAreaCopy({ root, view, curSheet, markupLists, calibration, status, t, tab = '', onCopied = null, onToBoard = null }) {
   let opts = { ...DEFAULTS };
   try { opts = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(LS) || '{}') }; } catch { /* defaults */ }
   if (!['rect', 'ellipse', 'free'].includes(opts.shape)) opts.shape = 'rect';
@@ -51,12 +51,13 @@ export function installAreaCopy({ root, view, curSheet, markupLists, calibration
   const copyBtn = el('button', { type: 'button', className: 'btn-plot btn-sm-cc', dataset: { areaAct: 'copy' }, disabled: true, onclick: () => copy(false) }, el('i', { className: 'bi bi-copy', 'aria-hidden': 'true' }), ' ', t('area.copy'));
   const overBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'overlay' }, disabled: true, onclick: () => copy(true) }, el('i', { className: 'bi bi-layers', 'aria-hidden': 'true' }), ' ', t('area.overlay'));
   const pngBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'png' }, disabled: true, onclick: () => savePng() }, el('i', { className: 'bi bi-download', 'aria-hidden': 'true' }), ' ', t('area.png'));
+  const boardBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'board' }, disabled: true, onclick: () => toBoard() }, el('i', { className: 'bi bi-camera', 'aria-hidden': 'true' }), ' ', t('pnotes.snapshot.bar'));
   const bar = el('div', { className: 'mc-areabar', role: 'toolbar', 'aria-label': t('area.bar'), hidden: true },
     el('div', { className: 'mc-areabar-row', role: 'group', 'aria-label': t('area.shape') }, shapeBtn('rect', 'square'), shapeBtn('ellipse', 'circle'), shapeBtn('free', 'bezier')),
     el('div', { className: 'mc-areabar-row' },
       el('label', { className: 'mc-radio', for: 'mc-area-markups' }, markupsBox, ' ', t('area.markups')),
       el('label', { className: 'mc-k', for: 'mc-area-dpi' }, t('area.dpi')), dpiSel),
-    el('div', { className: 'mc-areabar-row' }, copyBtn, pngBtn),
+    el('div', { className: 'mc-areabar-row' }, copyBtn, pngBtn, ...(onToBoard ? [boardBtn] : [])),
     el('div', { className: 'mc-areabar-row', role: 'group', 'aria-label': t('area.overlay.group') },
       overBtn, el('label', { className: 'mc-k', for: 'mc-area-tint' }, t('area.tint')), tintSel,
       el('label', { className: 'mc-k', for: 'mc-area-opacity' }, t('area.opacity')), opRange, opOut));
@@ -67,7 +68,7 @@ export function installAreaCopy({ root, view, curSheet, markupLists, calibration
     for (const b of bar.querySelectorAll('[data-area-shape]')) b.setAttribute('aria-pressed', String(b.dataset.areaShape === s));
     status(t('area.hint.' + s));
   }
-  function sync() { for (const b of [copyBtn, overBtn, pngBtn]) b.disabled = !area || busy; }
+  function sync() { for (const b of [copyBtn, overBtn, pngBtn, boardBtn]) b.disabled = !area || busy; }
 
   function enter() { bar.hidden = false; sync(); status(t('area.hint.' + opts.shape)); view.invalidate(); }
   function leave() { bar.hidden = true; drag = null; area = null; view.invalidate(); }
@@ -212,6 +213,24 @@ export function installAreaCopy({ root, view, curSheet, markupLists, calibration
         + (cal ? '' : ' ' + t('area.no_scale')));
       if (window.markupcraft) window.markupcraft.lastAreaClip = clip;   // tests
       return clip;
+    } catch (e) {
+      console.warn(e);
+      status(t('area.failed'));
+      return null;
+    } finally { busy = false; sync(); }
+  }
+
+  /** The area as a picture beside the sheet (0.9 NOTES.1), without touching the clipboard. */
+  async function toBoard() {
+    if (!area || busy) { if (!area) status(t('area.need')); return null; }
+    if (area.key !== curSheet()?.page.key) { area = null; sync(); status(t('area.need')); return null; }
+    busy = true; sync();
+    status(t('area.making'));
+    try {
+      const pic = await picture(false);
+      const clip = pic && makeAreaClip({ app: 'markupcraft', source: tab, sheet: curSheet().page.key, label: t('area.label'), src: pic.src, ptPerPx: pic.ptPerPx, real: null, overlay: null, shape: area.shape });
+      if (!clip) { status(t('area.failed')); return null; }
+      return onToBoard?.(clip) || null;
     } catch (e) {
       console.warn(e);
       status(t('area.failed'));

@@ -619,6 +619,7 @@ export class View {
         b.beginPath(); b.rect(this.ox, this.oy, pw, ph); b.clip();
         this.onBase?.(b, this);
         b.restore();
+        this.onBoard?.(b, this);   // 0.9 NOTES.1: notes and the pasteboard, not clipped to the sheet
       }
     }
     if (this.dirtyOver) {

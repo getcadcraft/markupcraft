@@ -1,43 +1,60 @@
 ---
-title: Co nowego w 0.7
-summary: Zapytania RFI, zgłoszenia do akceptacji i dzienniki dzienne w nowej karcie Teren, z terminami, przeterminowanymi na czerwono, CSV i BCF, pracą offline i Scalaniem; asystenci, którzy ustawiają statusy, odpowiadają i eksportują listę; listy jednostek podążające za Ustawieniami; panele, które się chowają, i okna dialogowe, które się przesuwają.
-keywords: co nowego, nowości, informacje o wydaniu, lista zmian, zmiany, 0.7, wersja, nowe funkcje, teren, zapisy terenowe, rfi, zapytanie o informację, zgłoszenie do akceptacji, dziennik dzienny, dziennik budowy, przeterminowane, termin, przypisane do mnie, pinezka, scalanie, offline, tablet, bcf, csv, asystent, mcp, status adnotacji, odpowiedź, eksport, jednostki, listy jednostek, gwiazdka, kalibracja, zwarta, panele, okna dialogowe, portugalski
-from: 142e1a1e
+title: Co nowego w 0.8 i 0.8.1
+summary: Adnotacje, które stają się zadaniami i same się zamykają, zwykła lista zmian między rewizjami, notatki głosowe i decyzje na planie, pliki redline dla rysownika oraz wspólne zmiany w 0.8: urządzenia wejściowe, wiersze paska narzędzi, Problemy, więcej języków.
+keywords: co nowego, informacje o wydaniu, dziennik zmian, zmiany, 0.8, 0.8.1, wersja, nowe funkcje, zadanie, zadania, przypisane do, dzień terminu, po terminie, sprawdź teraz, co się zmieniło, rewizje, porównaj, notatka głosowa, decyzja, redline, plik odpowiedzi, rysownik, asystent, mcp, problemy, języki, urządzenia wejściowe, gładzik, wiersze paska narzędzi, siatka właściwości, aktualizacja
+from: 40368796
 ---
 
-To jest to, co zmieniło się w MarkupCraft 0.7 w porównaniu z 0.6. Największa nowość to zapisy terenowe: RFI, zgłoszenia do akceptacji i dzienniki dzienne trzymane w PDF obok Twoich adnotacji.
+To jest opis zmian w MarkupCraft 0.8 i 0.8.1 w porównaniu z 0.7. Największa nowość to to, że adnotacja może być zadaniem, które wykonuje ktoś albo Twój asystent, i które zamyka się samo, gdy rysunek naprawdę się zmieni.
 
-## Nowości
+## Nowe
 
-### RFI, zgłoszenia do akceptacji i dzienniki dzienne
+### Adnotacje, które działają
 
-- **Karta Teren.** Otwórz kartę {{ui:Teren}} i wybierz {{ui:RFI}}, {{ui:Zgłoszenie do akceptacji}} lub {{ui:Dziennik dzienny}}. Dotknij lub kliknij arkusz tam, gdzie należy RFI lub zgłoszenie, a pinezka oznaczy miejsce; dziennik dzienny trafia na otwarty arkusz bez pinezki ({{ui:Umieść pinezkę}} dodaje ją później, {{ui:Przesuń pinezkę}} przesuwa każdą pinezkę). Każdy zapis ma własny numer (RFI-0001, SUB-0001, LOG-0001), tytuł, tekst, status, osobę przypisaną, termin, wątek odpowiedzi i listę nazw załączników. Zobacz [Śledź RFI, zgłoszenia do akceptacji i dzienniki dzienne](topic:field-records).
-- **Zobacz, co się spóźnia.** Filtruj listę według rodzaju, statusu, terminu (przeterminowane, termin w ciągu 7 dni, z terminem lub bez), tego arkusza lub wszystkich arkuszy, wyszukiwania tekstu albo {{ui:Przypisane do mnie}}. Zapis po terminie, który nadal czeka, jest oznaczony **Przeterminowane**, na czerwono, na liście i na swojej pinezce. Zobacz [Znajdź to, co ważne](topic:field-records#find-what-matters).
-- **CSV i BCF.** {{ui:CSV}} zapisuje wymienione zapisy jako arkusz kalkulacyjny; {{ui:BCF}} zapisuje je jako tematy BCF, każdy z migawką jego miejsca na arkuszu. Oba podążają za filtrami. Zobacz [Eksport](topic:field-records#export).
-- **Offline i dwie kopie scalone w jedną.** Zapisy są zapisywane wewnątrz PDF i nie potrzebują sieci, więc tablet na budowie może je dodawać, odpowiadać na nie i zapisywać. Po powrocie do biura {{ui:Scal}} łączy zapisy innej kopii tego samego PDF według ich identyfikatorów, jako jeden krok cofania. Zobacz [Zapis, praca offline i scalanie kopii](topic:field-records#save-offline-and-merging-copies).
+- **Zamień adnotację w zadanie.** Zaznacz jedną lub więcej adnotacji, otwórz kartę {{ui:Zadania}} i wybierz {{ui:Zrób z zaznaczonych zadanie}}. Zadanie ma tytuł, osobę albo podłączonego asystenta do wykonania, opcjonalny dzień terminu i stan, a także zachowuje swoje miejsce na arkuszu i swój wątek. Zobacz [Zamień adnotację w zadanie](topic:markups-that-act).
+- **Zadania, które same się zamykają.** Zadanie może obserwować rysunek wewnątrz swojej adnotacji. Otwórz nowszą rewizję arkusza i wybierz {{ui:Sprawdź teraz}}: jeśli linie w tym obszarze zmieniły się o więcej niż włos, zadanie zostaje oznaczone jako Gotowe, adnotacja staje się Ukończona, a notatka w wątku opisuje, co się zmieniło. Nowa pieczątka daty ani linie przesunięte o mniej niż 1,5 punktu nie są brane pod uwagę. Zadanie może zamiast tego obserwować element modelu: asystent zgłasza element poleceniem `tasks_check`, a późniejsze zgłoszenie, które się różni, lub usunięty element zamyka zadanie. Jeden krok cofnięcia otwiera je ponownie.
+- **Znajdź pracę.** Filtruj listę {{ui:Zadania}} według stanu i osoby, dla której zadanie jest, w tym {{ui:Po terminie}}. Wybierz {{ui:Przypisane do}}, a potem {{ui:Asystent}}, aby zobaczyć, co czeka na Twojego asystenta. Zadanie po terminie pojawia się jako ostrzeżenie w panelu Problemy. {{ui:CSV}} eksportuje listę. Zadania są zapisywane w PDF razem z adnotacją i przenoszą się przez Live jak inne właściwości adnotacji.
+
+### Co się zmieniło, jako zwykła lista
+
+- **Wypisz zmiany.** Otwórz kartę {{ui:Porównaj}}, potem {{ui:Porównaj cały zestaw}}, wybierz wcześniejszy i późniejszy plik i wybierz {{ui:Wypisz zmiany}}. Lista zaczyna się od liczby, a potem obejmuje każdy zmieniony arkusz, począwszy od największej zmiany: gdzie na arkuszu, jak duża (w jednostkach rzeczywistych, a także w calach papierowych na skalibrowanym arkuszu), czy linie zostały dodane lub usunięte, ile adnotacji się tam znajduje i które słowa się pojawiły lub zniknęły. {{ui:Kopiuj listę}} umieszcza ją w schowku, a {{ui:CSV}} zapisuje jeden wiersz na każdą zmianę. Zobacz [Wypisz, co się zmieniło między rewizjami](topic:what-changed-in-words).
+
+### Notatki głosowe i decyzje
+
+- **Notatki głosowe.** Na karcie {{ui:Notatki}} wybierz {{ui:Nagraj notatkę głosową}}, a potem {{ui:Zatrzymaj nagrywanie}}. Nagrania zatrzymują się same po dwóch minutach. Notatka jest przypięta do środka arkusza. Przeciągnij ją tam, gdzie ma być, i wpisz podpis w {{ui:Właściwości}}; {{ui:Odtwórz}} na liście odtwarza notatkę. Nagranie jest zapisane wewnątrz pliku PDF.
+- **Decyzje.** {{ui:Przypnij decyzję}} zapisuje na arkuszu jedno lub dwa zdania. Jeśli zastępuje wcześniejszą decyzję, wybierz ją w {{ui:Zastępuje}}: stara decyzja zostaje, oznaczona jako Zastąpiona, i wskazuje na nową. Jeden krok cofnięcia ją cofa. Zobacz [Przypinanie notatek głosowych i decyzji na arkuszu](topic:voice-notes-and-decisions).
+
+### Redline do rewizji
+
+- **Wyślij i odpowiedz.** Na karcie {{ui:Zadania}} otwórz {{ui:Redline do rewizji}}, wpisz rewizję, do której odnoszą się adnotacje, i wybierz {{ui:Eksportuj plik redline}}. Dostaniesz plik `.redline.json` z jedną pozycją na każdą otwartą adnotację: arkusz, położenie (jako ułamki arkusza, więc ponowny wydruk w innym rozmiarze nadal się zgadza), słowa, autora, wątek i jego zadanie. Osoba rysująca zmiany odpowiada w pliku `.redline-answers.json` statusem Zaakceptowano, Odrzucono albo Gotowe. {{ui:Wczytaj plik z odpowiedziami…}} nadaje każdej adnotacji ten status i uwagę rysownika jako jeden krok cofnięcia. Zobacz [Wyślij adnotacje do rysownika jako redline](topic:redline-to-revision).
 
 ### Asystenci AI
 
-- **Więcej, co może zrobić asystent.** Twój własny asystent, połączony przez CadCraft Studio, może teraz ustawić status adnotacji (`markup_status`, zapisany w jej wątku), odpowiedzieć w wątku (`markup_reply`) i wyeksportować listę {{ui:Adnotacje}} jako CSV lub BCF (`markups_export`, to, co pokazuje lista z jej filtrami). Każda zmiana to jeden krok cofania, podpisany nazwą asystenta. Zobacz [O co może poprosić asystent](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Więcej narzędzi.** Asystent podłączony przez CadCraft Studio może wypisać zadania (`tasks_list`), utworzyć lub zmienić zadanie (`task_set`), zdjąć zadanie (`task_clear`), sprawdzić zadanie względem nowszej rewizji lub elementu (`tasks_check`) oraz odczytać zwykłą listę zmian między dwoma otwartymi zestawami planów (`revisions_changes`). Dostaje tylko te narzędzia, które zaznaczysz w przełączniku Asystenci, a każda zmiana to jeden krok cofnięcia. Zobacz [Korzystanie z MarkupCraft z asystentem AI](topic:use-with-ai-assistants).
 
 ## We wszystkich aplikacjach
 
-- **Jednostki.** {{ui:Ustawienia}} › {{ui:Ogólne}} › {{ui:Jednostki}} ma po jednej liście dla długości, pola, objętości, kąta i spadku, z dokładnymi rozmiarami wynikającymi z definicji jednostek (stopa pomiarowa USA to osobna jednostka). Wyłącz jednostki, których nigdy nie używasz, a znikną z list jednostek; oznacz jedną gwiazdką, a nowa praca zacznie się w niej. Plik zawsze zachowuje własną jednostkę. W MarkupCraft jednostki pomiaru i położenia w {{ui:Ustawienia}} › {{ui:MarkupCraft}} oraz jednostka w oknie kalibracji podążają za przełącznikami, gwiazdka ustawia jednostkę pomiaru, dopóki nie zapiszesz własnych ustawień MarkupCraft, a rzeczywista odległość wpisywana przy kalibracji może nosić oznaczenie dowolnej jednostki, na przykład `3 yd` lub `1.5 km`. Zobacz [Jednostki, wpisywane wartości i listy jednostek](common:unit-lists).
-- **Gęstszy układ i panele, które się chowają.** {{ui:Ustawienia}} › {{ui:Ogólne}} › {{ui:Gęstość układu}} › {{ui:Zwarta}} mieści więcej na ekranie (ekrany dotykowe i telefony zachowują duże przyciski). Każdy panel boczny ma wąski pasek tytułu: przeciągnij go, aby zadokować lub oderwać panel, upuść na pasku innego panelu, aby dzielić jedną ramkę jako karty, przypnij, aby chował się przy krawędzi, albo ukryj go i przywołaj z krawędzi. Zobacz [Rozmieść panele](common:arrange-panels#make-the-layout-denser).
-- **Okna dialogowe się przesuwają.** Przeciągnij okno dialogowe za pasek tytułu z drogi rysunku; wraca tam, gdzie je zostawiłeś(-aś). Kliknij dwukrotnie pasek tytułu, aby wyśrodkować je ponownie. Zobacz [Przesuń okno dialogowe](common:arrange-panels#move-a-dialog).
-- **Przepisy dla asystentów AI.** Dziesięć opisanych próśb do Twojego własnego asystenta (uporządkuj rysunek, wydrukuj zestaw, sprawdź rysunki, zadaj modelowi pytania, zsumuj przedmiar, wypróbuj wariant części…), każda z narzędziami, które wywołuje, i uprawnieniami, których potrzebuje, i każda odtwarzana przez nasze testy. Aplikacje nie zawierają AI. Zobacz [Przepisy dla asystentów AI](common:assistants-recipes).
-- **Języki.** **Português (Portugal)** jest nowy w {{ui:Ustawienia}} › {{ui:Ogólne}} › {{ui:Język}}. On, **Português (Brasil)**, **Español (México)** i **Bahasa Indonesia** mają teraz każde słowo aplikacji, jako wersje robocze jeszcze niesprawdzone przez rodzimego użytkownika języka. Tematy startowe pomocy są dostępne po polsku; pozostałe tematy pomocy są po angielsku.
-- **CadCraft Studio** mówi, dlaczego sprawdzenie aktualizacji się nie powiodło (brak pliku dla Twojego systemu, brak sieci, zły podpis) zamiast samego „Gotowe” i przestaje przywracać zamkniętą kartę Co nowego, dopóki nie ma nowszego wydania.
+- **Języki.** CadCraft Studio ma teraz 54 języki. Dziesięć z nich jest nowych: litewski, łotewski, bośniacki, marathi, telugu, albański, afrikaans, filipiński, suahili i uzbecki. Wszystkie języki inne niż angielski są wersjami roboczymi maszynowymi, dopóki nie przeczyta ich rodzima osoba mówiąca.
+- **Urządzenia wejściowe.** {{ui:Ustawienia}} › {{ui:Globalne}} › {{ui:Urządzenia wejściowe}} określa, co robią gładzik, boczne przyciski myszy, rysik, dotknięcia palcem, mysz 3D, kontroler do gier lub kontroler MIDI, dla każdej aplikacji albo tylko dla tej jednej. Dopóki nic nie zmienisz, każde urządzenie działa jak wcześniej. Zobacz [Korzystanie z gładzika, myszy 3D lub kontrolera](common:input-devices).
+- **Wiersze paska narzędzi.** {{ui:Ustawienia}} › {{ui:Ogólne}} › {{ui:Wiersze paska narzędzi}} ma opcje {{ui:Zawijaj}} (domyślna), {{ui:2 wiersze}} i {{ui:1 wiersz}}, dzięki czemu rysunek ma więcej miejsca. Zobacz [Ustawianie paneli](common:arrange-panels).
+- **Siatka właściwości.** Pola stylu adnotacji korzystają ze wspólnej siatki, ze zwijanymi kategoriami oraz kolumnami etykiet i wartości.
+- **Panel Problemy.** Ostrzeżenia z aplikacji, na przykład zadanie po terminie, zbierają się w jednym panelu Problemy.
+- **Live i dodatki.** Sesje Live są opisane w [Współpraca na żywo](common:work-together-live). Lista dodatków powiązana z Twoim kontem znajduje się w [Dodatki i lista dodatków konta](common:addons-basics).
+- **Podłącz swojego asystenta AI.** CadCraft Studio jest centrum dla Twojego własnego asystenta: połącz raz dla wszystkich ośmiu aplikacji. Same aplikacje nie zawierają własnej AI.
+
+## Naprawione w 0.8.1
+
+- **Studio może zmienić język w trakcie pracy.** Wcześniej aplikacja desktopowa i wersje pakowane pozostawały po angielsku. Nie jest to jeszcze sprawdzone na każdej platformie: daj znać, jeśli język się nie zmienia.
+- Instalacje Studio 0.8 otrzymują ofertę aktualizacji do 0.8.1 w {{ui:Ustawienia}} › {{ui:Aktualizacje}}.
 
 ## Jeszcze nie w tej wersji
 
-- **0.7 nie jest podpisane cyfrowo.** Podpisywanie i pakiet Microsoft Store przeniesiono do 0.8, bo walidacja certyfikatu jeszcze nie nadeszła. Sprawdź SHA-256 obok każdego pliku na getcadcraft.com/download. W Windows, jeśli SmartScreen zatrzyma instalator, wybierz {{ui:Więcej informacji}}, potem {{ui:Uruchom mimo to}}. Na Macu za pierwszym razem kliknij CadCraft Studio prawym przyciskiem i wybierz {{ui:Otwórz}}. CadCraft Studio nie jest jeszcze w żadnym sklepie z aplikacjami i nie ma jeszcze wersji na iPada ani iPhone'a.
-- Listy kątów i spadków w {{ui:Jednostki}} są zapisywane, ale żadne pole ich jeszcze nie odczytuje.
-- Zapisy terenowe nie są współdzielone w sesji Live CadCraft Studio (sesje Live niosą tylko adnotacje); łącz kopie za pomocą {{ui:Scal}}.
-- Scalanie bierze zapis w całości z kopii zmienionej ostatnio: jeśli dwie osoby zmieniły różne pola jednego zapisu, wygrywają pola późniejszej kopii. Wątki i nazwy załączników są łączone.
-- Załączniki to tylko nazwy; pliki zostają tam, gdzie są. Nie ma zespołów, powiadomień ani projektów w chmurze dla zapisów, a asystenci nie mają jeszcze narzędzi do zapisów.
-- Zapisy terenowe przetestowano w przeglądarce w rozmiarach telefonu i tabletu z odciętą siecią, ale jeszcze nie ręcznie na prawdziwym tablecie.
-- Nadal z 0.6: obracanie obiektów strony pod dowolnym kątem, rysowanie nowych kształtów bezpośrednio na stronie, zmiana czcionki lub rozmiaru linii oraz tekst zawijany na kilka wierszy. Zapisana kopia ze zmianami strony nie została jeszcze otwarta w Acrobacie.
-- Nadal z 0.5: cofanie zmiany strony (na przykład dodania pustej strony), odczyt tekstu z zeskanowanych arkuszy oraz sesje Live poza Twoją własną siecią.
+- **Brak podpisu kodu.** Instalatory dla Windows i pliki .dmg dla macOS nie mają jeszcze podpisu. W Windows, jeśli SmartScreen zatrzyma instalator, wybierz {{ui:Więcej informacji}}, a potem {{ui:Uruchom mimo to}}. Na Macu kliknij prawym przyciskiem CadCraft Studio i wybierz {{ui:Otwórz}}. Wersje sklepowe są wstrzymane.
+- **Podłączanie AI jest w niektórych miejscach niedokończone.** Łączenie jednym kliknięciem wewnątrz Studio, hostowany łącznik dla asystentów w przeglądarce i własny klucz API w Studio nie są obiecane w tym wydaniu. Pętla zadań została sprawdzona, ale jeszcze nie z prawdziwym asystentem.
+- **Sprawdzanie zadań wymaga tego samego rozmiaru strony.** Arkusz ponownie wydrukowany w innym rozmiarze nie będzie pasował, więc jego zadania się nie zamkną. Arkusze są łączone po numerze arkusza, a jeśli go brak, po położeniu na stronie.
+- **Notatki głosowe to tylko nagrania.** Nie ma transkrypcji, a asystent widzi długość notatki, autora i podpis, a nie dźwięk. Nagrywanie testowano z fałszywym mikrofonem w przeglądarce bez interfejsu. Prawdziwy mikrofon w telefonie, tablecie lub laptopie nadal wymaga sprawdzenia.
+- **Arkusze obliczeń i uzasadnienia w PDF** są przechowywane w prywatnym wpisie pliku. Starsza wersja MarkupCraft ignoruje ten wpis i usuwa go przy następnym zapisie pliku, więc takie pliki otwieraj i zapisuj w wersji 0.8 lub nowszej.
+- **Strona rysownika w redline.** Odczytywanie przez CadCraft pliku redline i odpowiadanie na niego jeszcze nie zostało zbudowane.
+- **Inne języki.** Pasek aplikacji w języku tamilskim wychodzi poza krawędź o 528 px.
 
-Wszystko inne jest w [Czego jeszcze nie zbudowano](topic:not-built-yet).
+Wszystko inne znajdziesz w [Czego jeszcze nie zbudowano](topic:not-built-yet). Informacje o poprzednim wydaniu są w [Co nowego w 0.7](topic:whats-new-0-7).

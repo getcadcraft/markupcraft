@@ -1,43 +1,60 @@
 ---
-title: Novetats de la versió 0.7
-summary: RFI, aprovacions de materials i diaris d'obra en una nova pestanya Obra, amb dates límit, retards en vermell, CSV i BCF, treball sense connexió i Combina; assistents que defineixen estats, responen i exporten la llista; llistes d'unitats que segueixen la Configuració; panells que es recullen i diàlegs que es mouen.
-keywords: novetats, què hi ha de nou, notes de la versió, registre de canvis, canvis, 0.7, versió, noves funcions, obra, registres d'obra, rfi, sol·licitud d'informació, aprovació de materials, diari d'obra, retard, data límit, assignats a mi, marcador, combina, sense connexió, tauleta, bcf, csv, assistent, mcp, estat de la marca, resposta, exporta, unitats, llistes d'unitats, estrella, calibra, compacta, panells, diàlegs, portuguès
-from: 142e1a1e
+title: Novetats de la 0.8 i la 0.8.1
+summary: Marques que es converteixen en tasques i es tanquen soles, una llista simple dels canvis entre revisions, notes de veu i decisions al plànol, fitxers de marcatge per al delineant, i els canvis compartits de la 0.8: dispositius d'entrada, files de la barra d'eines, Problemes i més idiomes.
+keywords: novetats, què hi ha de nou, notes de la versió, registre de canvis, canvis, 0.8, 0.8.1, versió, noves funcions, tasca, tasques, responsable, dia de venciment, fora de termini, comprova ara, què ha canviat, revisions, compara, nota de veu, decisió, marcatge, fitxer de respostes, delineant, assistent, mcp, problemes, idiomes, dispositius d'entrada, trackpad, files de la barra d'eines, graella de propietats, actualització
+from: 40368796
 ---
 
-Això és el que ha canviat a MarkupCraft 0.7, en comparació amb la 0.6. La gran novetat són els registres d'obra: RFI, aprovacions de materials i diaris d'obra guardats dins el PDF, al costat de les marques.
+Aquests són els canvis de MarkupCraft 0.8 i 0.8.1, comparats amb la 0.7. La gran novetat és que una marca pot ser una tasca que algú, o el vostre propi assistent, fa, i que es tanca sola quan el dibuix canvia de veritat.
 
 ## Novetats
 
-### RFI, aprovacions de materials i diaris d'obra
+### Marques que actuen
 
-- **La pestanya Obra.** Obriu la pestanya {{ui:Obra}} i trieu {{ui:RFI}}, {{ui:Aprovació de materials}} o {{ui:Diari d'obra}}. Toqueu o feu clic a la fulla on pertoca un RFI o una aprovació i un marcador indica el lloc. Un diari d'obra es posa a la fulla oberta sense marcador ({{ui:Col·loca el marcador}} n'hi afegeix un més tard, i {{ui:Mou el marcador}} mou qualsevol marcador). Cada registre té el seu número (RFI-0001, SUB-0001, LOG-0001), un títol, text, un estat, una persona assignada, una data límit, un fil de respostes i una llista de noms d'adjunts. Consulteu [Seguiment de RFI, aprovacions de materials i diaris d'obra](topic:field-records).
-- **Vegeu què va tard.** Filtreu la llista per tipus, estat, data límit (amb retard, ha de vèncer en 7 dies, amb o sense data límit), per aquesta fulla o per totes, per una cerca de text, o per {{ui:Assignats a mi}}. Un registre que ha passat la seva data límit i encara està pendent es marca **Amb retard**, en vermell, a la llista i al seu marcador. Consulteu [Trobar el que importa](topic:field-records#find-what-matters).
-- **CSV i BCF.** {{ui:CSV}} escriu els registres de la llista com a full de càlcul; {{ui:BCF}} els escriu com a temes BCF, cadascun amb una instantània del seu lloc a la fulla. Tots dos segueixen els filtres. Consulteu [Exportació](topic:field-records#export).
-- **Sense connexió, i dues còpies fetes una.** Els registres es desen dins del PDF i no necessiten xarxa, de manera que una tauleta a l'obra pot afegir-los, respondre'ls i desar-los. De tornada a l'oficina, {{ui:Combina}} uneix els registres d'una altra còpia del mateix PDF pels seus identificadors, com un sol pas de desfer. Consulteu [Desar, treballar sense connexió i combinar còpies](topic:field-records#save-offline-and-merging-copies).
+- **Converteix una marca en tasca.** Seleccioneu una o més marques, obriu la pestanya {{ui:Tasques}} i trieu {{ui:Converteix la selecció en tasca}}. Una tasca té un títol, una persona o el vostre assistent connectat que la fa, un dia de venciment opcional i un estat, i conserva el seu lloc al plànol i el seu fil. Vegeu [Converteix una marca en tasca](topic:markups-that-act).
+- **Tasques que es tanquen soles.** Una tasca pot vigilar el dibuix dins de la seva marca. Obriu una revisió més nova del plànol i trieu {{ui:Comprova ara}}: si les línies d'aquella àrea han canviat més que un pèl, la tasca es marca com a Feta, la seva marca passa a Completada i una nota al fil explica què ha canviat. Un segell de data nou, o línies que s'han mogut menys de 1.5 points, no compten. Una tasca també pot vigilar un element del model: el vostre assistent informa de l'element amb `tasks_check`, i un informe posterior que sigui diferent, o un element suprimit, tanca la tasca. Un únic pas de desfer la reobre.
+- **Troba la feina.** Filtreu la llista de {{ui:Tasques}} per estat i per a qui és, incloent-hi {{ui:Fora de termini}}; trieu {{ui:Assignada a}} i després {{ui:Assistent}} per veure què espera el vostre assistent. Una tasca que passa del seu dia de venciment apareix com a avís al tauler de Problemes. {{ui:CSV}} exporta la llista. Les tasques es desen al PDF amb la marca i viatgen per Live com les altres propietats de marca.
+
+### Què ha canviat, en una llista simple
+
+- **Llista els canvis.** Obriu la pestanya {{ui:Compara}}, després Compara un joc complet, trieu el fitxer anterior i el posterior i trieu {{ui:Llista els canvis}}. La llista comença amb un recompte i després cobreix cada plànol canviat, començant pel canvi més gran: on és al plànol, quant de gran és (en unitats reals i també en polzades de paper en un plànol calibrat), si s'han afegit o eliminat línies, quantes marques hi ha i quines paraules han aparegut o desaparegut. {{ui:Copia la llista}} la posa al porta-retalls i {{ui:CSV}} escriu una fila per cada canvi. Vegeu [Llista el que ha canviat entre revisions](topic:what-changed-in-words).
+
+### Notes de veu i decisions
+
+- **Notes de veu.** A la pestanya {{ui:Notes}} trieu {{ui:Grava una nota de veu}}, després {{ui:Atura la gravació}}; les gravacions s'aturen soles als dos minuts. La nota queda fixada al centre del plànol: l'arrossegueu on pertoca i hi escriviu un títol a {{ui:Propietats}}, i {{ui:Reprodueix}} a la llista la reprodueix. La gravació es desa dins del PDF.
+- **Decisions.** {{ui:Fixa una decisió}} escriu una o dues frases al plànol. Si substitueix una decisió anterior, trieu-la al camp {{ui:Substitueix}}: la vella es conserva, marcada com a Substituïda, i apunta a la nova. Un únic pas de desfer la fa tornar enrere. Vegeu [Fixa notes de veu i decisions en un plànol](topic:voice-notes-and-decisions).
+
+### Marcatge de revisió
+
+- **Envia i respon.** A la pestanya {{ui:Tasques}} obriu {{ui:Marcatge de revisió}}, escriviu la revisió a què es refereixen les marques i trieu {{ui:Exporta el fitxer de marcatge}}. Obtindreu un fitxer `.redline.json` amb un element per a cada marca oberta: plànol, posició (com a fraccions del plànol, de manera que un nou traçat a una altra mida encara quadra), paraules, autor, fil i la seva tasca. Qui dibuixa els canvis respon Acceptada, Rebutjada o Feta en un fitxer `.redline-answers.json`; {{ui:Carrega el fitxer de respostes…}} dona a cada marca aquest estat i la nota del delineant, com a un únic pas de desfer. Vegeu [Envia les marques al delineant com a marcatge](topic:redline-to-revision).
 
 ### Assistents d'IA
 
-- **Més coses que pot fer un assistent.** El vostre propi assistent, connectat a través de CadCraft Studio, ara pot definir l'estat d'una marca (`markup_status`, registrat al seu fil), respondre en un fil (`markup_reply`) i exportar la llista {{ui:Marques}} com a CSV o BCF (`markups_export`, el que mostra la llista amb els seus filtres). Cada canvi és un pas de desfer, signat amb el nom de l'assistent. Consulteu [Què pot demanar un assistent](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Més eines.** Un assistent que heu connectat des de CadCraft Studio pot llistar tasques (`tasks_list`), crear-ne o canviar-ne una (`task_set`), treure-li la tasca (`task_clear`), comprovar-ne una contra una revisió més nova o un element (`tasks_check`) i llegir la llista simple dels canvis entre dos conjunts de plànols oberts (`revisions_changes`). Només té les eines que heu marcat sota l'interruptor d'Assistents, i cada canvi és un únic pas de desfer. Vegeu [Utilitza MarkupCraft amb un assistent d'IA](topic:use-with-ai-assistants).
 
-## A totes les aplicacions
+## En totes les apps
 
-- **Unitats.** {{ui:Configuració}} › {{ui:General}} › {{ui:Unitats}} té una llista per a longitud, àrea, volum, angle i pendent, amb les mides exactes que donen les definicions de les unitats (el peu d'agrimensura dels EUA és una unitat pròpia). Desactiveu les unitats que no feu servir i surten de les llistes; marqueu-ne una amb l'estrella i el treball nou comença amb ella. Un fitxer conserva sempre la seva pròpia unitat. A MarkupCraft, les unitats de mesura i de posició de {{ui:Configuració}} › {{ui:MarkupCraft}} i la unitat del diàleg de calibratge segueixen els interruptors; l'estrella fixa la unitat de mesura fins que deseu la configuració pròpia de MarkupCraft; i la distància real que escriviu en calibrar pot portar la marca de qualsevol unitat, com `3 yd` o `1.5 km`. Consulteu [Unitats, valors escrits i les llistes d'unitats](common:unit-lists).
-- **Un disseny més dens i panells que es recullen.** {{ui:Configuració}} › {{ui:General}} › {{ui:Densitat de la disposició}} › {{ui:Compacta}} hi cap més a la pantalla (les pantalles tàctils i els telèfons mantenen els botons grans). Cada panell lateral té una barra de títol prima: arrossegueu-la per acoblar o deixar flotant el panell, deixeu-la sobre la barra d'un altre panell per compartir un marc com a pestanyes, fixeu-la per fer-la lliscar cap a la vora, o amagueu-la i torneu-la a treure de la vora. Consulteu [Organitzar els panells](common:arrange-panels#make-the-layout-denser).
-- **Els diàlegs es mouen.** Arrossegueu un diàleg per la seva barra de títol fora del camí del dibuix; torna al lloc on l'heu deixat. Feu doble clic a la barra de títol per centrar-lo de nou. Consulteu [Moure un diàleg](common:arrange-panels#move-a-dialog).
-- **Receptes per a assistents d'IA.** Deu peticions resoltes per al vostre propi assistent (ordenar un dibuix, traçar un joc, comprovar dibuixos, fer preguntes a un model, totalitzar un amidament, provar una variant de peça…), cadascuna amb les eines que crida i els permisos que necessita, i cadascuna repetida pels nostres tests. Les aplicacions no contenen cap IA. Consulteu [Receptes per a assistents d'IA](common:assistants-recipes).
-- **Idiomes.** **Português (Portugal)** és nou a {{ui:Configuració}} › {{ui:General}} › {{ui:Idioma}}. Aquest, **Português (Brasil)**, **Español (México)** i **Bahasa Indonesia** ara tenen totes les paraules de les aplicacions, com a esborranys que encara no ha revisat un parlant natiu. Els temes d'ajuda són en anglès.
-- **CadCraft Studio** indica per què ha fallat una comprovació d'actualitzacions (no hi ha cap fitxer per al vostre sistema encara, no hi ha xarxa, una signatura incorrecta) en lloc de només "Fet", i deixa de tornar a mostrar una targeta de Novetats que heu tancat fins que hi hagi una versió més nova.
+- **Idiomes.** CadCraft Studio ara té 54 idiomes. Deu són nous: lituà, letó, bosnià, marathi, telugu, albanès, afrikaans, filipí, suahili i uzbek. Tots els idiomes que no són l'anglès són esborranys automàtics fins que un parlant nadiu els llegeixi.
+- **Dispositius d'entrada.** {{ui:Configuració}} › {{ui:Global}} › {{ui:Dispositius d'entrada}} decideix què fan un trackpad, els botons laterals del ratolí, un llapis, els tocs amb el dit, un ratolí 3D, un comandament de joc o un controlador MIDI, per a totes les apps o només per a aquesta. Mentre no canvieu res, cada dispositiu funciona com abans. Vegeu [Utilitza un trackpad, un ratolí 3D o un comandament](common:input-devices).
+- **Files de la barra d'eines.** {{ui:Configuració}} › {{ui:General}} › {{ui:Files de la barra d'eines}} té {{ui:Ajusta}} (per defecte), {{ui:2 files}} i {{ui:1 fila}}, perquè el dibuix tingui més espai. Vegeu [Organitza els taulers](common:arrange-panels).
+- **Graella de propietats.** Els camps d'Estil d'una marca fan servir la graella compartida, amb categories plegables i columnes d'etiqueta i valor.
+- **Tauler de Problemes.** Els avisos de l'app, com una tasca fora de termini, es reuneixen en un únic tauler de Problemes.
+- **Live i complements.** Les sessions Live es descriuen a [Treballa junts en directe](common:work-together-live); la llista de complements que segueix el vostre compte és a [Complements i la llista del vostre compte](common:addons-basics).
+- **Connecteu la vostra IA.** CadCraft Studio és el centre del vostre propi assistent: connecteu-lo una sola vegada per a les vuit apps. Les apps no contenen cap IA pròpia.
 
-## No hi és en aquesta versió encara
+## Corregit a la 0.8.1
 
-- **La 0.7 no està signada amb codi.** La signatura, i el paquet de la Microsoft Store, es van traslladar a la 0.8 perquè la validació del certificat encara no ha arribat. Comproveu el SHA-256 al costat de cada fitxer a getcadcraft.com/download. A Windows, si SmartScreen atura l'instal·lador, trieu {{ui:Més informació}} i després {{ui:Executa igualment}}. En un Mac, la primera vegada, feu clic dret a CadCraft Studio i trieu {{ui:Obre}}. CadCraft Studio encara no és a cap botiga d'aplicacions, i encara no hi ha versió per a iPad ni iPhone.
-- Les llistes d'angle i de pendent de {{ui:Unitats}} es desen, però encara cap quadre no les llegeix.
-- Els registres d'obra no es comparteixen en una sessió en directe de CadCraft Studio (les sessions en directe només porten marques); porteu les còpies juntes amb {{ui:Combina}}.
-- Combina pren un registre sencer de la còpia canviada més recentment: si dues persones han canviat camps diferents d'un mateix registre, guanyen els camps de la còpia més recent. Els fils i els noms d'adjunts s'uneixen.
-- Els adjunts són només noms; els fitxers es queden on són. No hi ha equips, notificacions ni projectes al núvol per als registres, i els assistents encara no tenen eines per als registres.
-- Els registres d'obra s'han provat en un navegador a mides de telèfon i de tauleta amb la xarxa tallada, però encara no a mà en una tauleta real.
-- Encara de la 0.6: girar objectes de la pàgina a qualsevol angle, dibuixar formes noves directament a la pàgina, canviar el tipus o la mida de lletra d'una línia, i text que es distribueix en diverses línies. Una còpia desada amb canvis de pàgina encara no s'ha obert a Acrobat.
-- Encara de la 0.5: desfer un canvi de pàgina (com afegir una pàgina en blanc), llegir text de fulls escanejats, i sessions en directe més enllà de la vostra pròpia xarxa.
+- **Studio pot canviar d'idioma mentre s'executa.** Abans, l'app d'escriptori i les edicions empaquetades es quedaven en anglès. Encara no s'ha provat a totes les plataformes: digueu-nos si l'idioma no canvia.
+- Les instal·lacions de Studio 0.8 reben l'oferta de la 0.8.1 a través de {{ui:Configuració}} › {{ui:Actualitzacions}}.
 
-Tot la resta és a [Què encara no està implementat](topic:not-built-yet).
+## Encara no és a aquesta versió
+
+- **Sense signatura de codi.** Els instal·ladors de Windows i el .dmg de macOS encara no tenen signatura. A Windows, si SmartScreen atura l'instal·lador, trieu {{ui:Més informació}} i després {{ui:Executa igualment}}. En un Mac, feu clic dret a CadCraft Studio i trieu {{ui:Obre}}. Les versions per a botigues estan en espera.
+- **Connectar la IA encara no està acabat en alguns punts.** La connexió amb un clic dins de Studio, el connector allotjat per a assistents de navegador i la vostra clau d'API pròpia dins de Studio no estan garantits en aquesta versió. El bucle de tasques s'ha provat, però encara no amb un assistent real.
+- **Les comprovacions de tasques necessiten la mateixa mida de pàgina.** Un plànol traçat a una altra mida no coincidirà, i per tant les seves tasques no es tancaran. Els plànols s'aparellen pel número de plànol o, si no, per la posició a la pàgina.
+- **Les notes de veu són només gravacions.** No hi ha transcripció, i un assistent veu la durada, l'autor i el títol d'una nota, no el so. La gravació s'ha provat amb un micròfon fals en un navegador sense interfície gràfica; encara falta comprovar un micròfon real en un telèfon, una tauleta o un portàtil.
+- **Els fulls de càlcul i els motius en un PDF** es guarden en una entrada privada del fitxer. Una MarkupCraft més antiga ignora aquesta entrada i l'elimina la propera vegada que desa el fitxer, així que obriu i deseu aquests fitxers amb la 0.8 o posterior.
+- **El costat del delineant de les marques de revisió.** CadCraft que llegeix el fitxer de marcatge i hi respon encara no està implementat.
+- **Altres idiomes.** La barra d'aplicació del tàmil es desborda en 528 px.
+
+Tot el que queda és a [Què encara no està implementat](topic:not-built-yet). Per a la versió anterior, vegeu [Novetats de la 0.7](topic:whats-new-0-7).

@@ -44,12 +44,19 @@ export function createLive(store, opts = {}) {
       switch (r.op) {
         case 'add': case 'remove': {
           const m = r.op === 'add' ? after : before;
+          if ((r.after || r.before)?.scope === 'private') break;   // 0.9 NOTES.1: private notes never go on the wire
           const adding = (r.op === 'add') !== reverse;
           if (adding) out.push({ o: 'add', id: r.id, m: clone(r.op === 'add' ? r.after : r.before), ...(r.op === 'remove' ? { at: r.order } : {}) });
           else out.push({ o: 'del', id: r.id, ly: (m && m.layer) || '', ...(r.op === 'remove' ? { at: r.order } : {}) });
           break;
         }
-        case 'update': out.push(...diff(r.id, before, after)); break;
+        case 'update':
+          // 0.9 NOTES.1: to the others a markup made private is gone, and a private note made regular is new
+          if (before?.scope === 'private' && after?.scope === 'private') break;
+          if (after?.scope === 'private') { out.push({ o: 'del', id: r.id, ly: (before && before.layer) || '' }); break; }
+          if (before?.scope === 'private') { out.push({ o: 'add', id: r.id, m: clone(after) }); break; }
+          out.push(...diff(r.id, before, after));
+          break;
         case 'cal': out.push({ o: 'cal', sheet: r.sheet, v: clone(after) }); break;
         case 'name': out.push({ o: 'name', sheet: r.sheet, v: clone(after) }); break;
         case 'punch': out.push({ o: 'punch', v: after }); break;
@@ -176,13 +183,14 @@ export function createLive(store, opts = {}) {
     return {
       v: SCHEMA,
       files: files().map((f) => ({ id: f.id, name: f.name, bytes: f.bytes })),
-      markups: [...store.markups.values()],
+      markups: [...store.markups.values()].filter((m) => m.scope !== 'private'),   // 0.9 NOTES.1
       calibrations: [...store.calibrations], sheetNames: [...store.sheetNames], punchNext: store.punchNext,
     };
   }
   function loadState(s) {
     if (!s || s.v !== SCHEMA) throw new Error('live snapshot: unknown format');   // i18n-ignore (protocol)
-    store.markups = new Map((s.markups || []).map((m) => [m.id, m]));
+    const mine = [...store.markups.values()].filter((m) => m.scope === 'private');   // 0.9 NOTES.1: this person's own, the session never has them
+    store.markups = new Map([...(s.markups || []), ...mine].map((m) => [m.id, m]));
     store.calibrations = new Map(s.calibrations || []);
     store.sheetNames = new Map(s.sheetNames || []);
     store.punchNext = s.punchNext || 1;

@@ -13,6 +13,7 @@ import { t as tr } from './i18n.js';
 
 /** The doc's block (shell-modules.md § Mounting 2). Kept as the doc has it; browser-mount-kit.mjs compares them. */
 export function mountShellModules(host) {
+  { const f = () => window.ccDocTitleFollow && window.ccDocTitleFollow(host); if (window.ccDocTitleFollow) f(); else window.addEventListener('load', f); }   // 2026-11-09: tab title = document name (one pattern, app-shell.js)
   const when = (api, name, go) => (window[api] ? go() : document.addEventListener('cc-' + name + '-ready', go, { once: true }));
   // EG.18 calc sheets — parameters in, drives out, saved inside the app's own file
   when('ccCalc', 'calc', () => {
@@ -38,6 +39,11 @@ export function mountShellModules(host) {
     for (const [name, fn] of Object.entries(host.probes || {})) ccLessons.probe(name, fn);
     ccLessons.registerTools(host.control);
     host.emit = (event, data) => ccLessons.emit(event, data);           // the app calls host.emit('tool', { name: 'line' }) where it runs a command
+  });
+  // DI.1 drawing details — what the app counts, and where the written details are kept in its file
+  when('ccDocInfo', 'docinfo', () => {
+    ccDocInfo.attach({ read: host.docinfo?.read, persist: (json) => host.file.set('docinfo', json), step: host.step, onChange: host.docinfo?.onChange });   // read() → { units, extents, counts, extra, bytes, path }
+    ccDocInfo.registerTools(host.control);
   });
   // AC.12 Suggest, AC.13 activity log, AC.8 Ask box — they ride on host.control, so the app hands over very little
   when('ccSuggest', 'suggest', () => {
@@ -95,8 +101,16 @@ export function markupHost(mc) {
     onSelection: (fn) => mc.onSelection(fn),
     select: (el) => { if (el && el.id) mc.select(el.id); },
     ...lessonsOf(mc),
+    docinfo: {
+      read: () => {   // only what MarkupCraft can count: markups, sheets (pages), layers
+        const c = mc.counts(), n = mc.store.all().length;
+        return { path: mc.name(), counts: { annotations: n, sheets: c.sheets, layers: c.layers } };
+      },
+      onChange: (fn) => mc.store.on(() => fn()),
+    },
     rev: () => mc.store.undoStack.length,
     document: () => ({ docId: mc.name(), path: '', name: mc.name() }),
+    dirty: () => !!mc.dirty(),   // 2026-11-09: the tab title's unsaved mark (assets/js/app-doc-title.js)
     perms: {
       get: () => ASSIST(),
       set: (rec) => { try { localStorage.setItem(ASSIST_KEY + 'markupcraft', JSON.stringify(rec)); } catch { /* private mode */ } },
@@ -116,16 +130,18 @@ export function mountMarkupShell(mc) {
     const s = mc.shell();
     if (window.ccCalc) ccCalc.load(s.calcs || null);
     if (window.ccReasons) ccReasons.load(s.reasons || null);
+    if (window.ccDocInfo) ccDocInfo.load(s.docinfo || null);
     if (window.ccLessons) ccLessons.emit('model', {});
   };
   mc.store.on((kind) => { if (window.ccLessons) ccLessons.emit('model', {}); if (window.ccTotals && kind !== 'layers') ccTotals.invalidate(); });
   document.addEventListener('cc-calc-ready', reload, { once: true });
   document.addEventListener('cc-reasons-ready', reload, { once: true });
+  document.addEventListener('cc-docinfo-ready', reload, { once: true });
   return {
     host,
     /** The page calls this after files open: the file's calc sheets and reasons are loaded. */
     filesOpened() { reload(); if (host.fileOpened) host.fileOpened(tr('lesson.file.opened')); },
     /** The page calls this before a file is written: the sheets and reasons go into its Info entry. */
-    beforeSave() { for (const [k, api] of [['calcs', window.ccCalc], ['reasons', window.ccReasons]]) { const j = api ? api.save() : null; mc.setShell(k, j, true); } },
+    beforeSave() { for (const [k, api] of [['calcs', window.ccCalc], ['reasons', window.ccReasons], ['docinfo', window.ccDocInfo]]) { const j = api ? api.save() : null; mc.setShell(k, j, true); } },
   };
 }

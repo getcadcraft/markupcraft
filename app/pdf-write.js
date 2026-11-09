@@ -40,6 +40,7 @@ export const PRIVATE_COLUMNS_KEY = 'MarkupCraftColumns';   // Info: the set's cu
 export const PRIVATE_LINK_KEY = 'MarkupCraftLink';     // our Link annotations for sheet links (0.4 K9)
 export const PRIVATE_RECORDS_KEY = 'MarkupCraftRecords';   // Info: the set's field records as JSON (0.7 LC.7, records.js packRecords)
 export const PRIVATE_SHELL_KEY = 'MarkupCraftShell';   // Info: the shell's calc sheets and design reasons as JSON {calcs, reasons} (0.8 round 3, shell-mount.js)
+export const NOTES_KEY = 'MarkupCraftNotes';   // Catalog: a stream of JSON { v, notes, sealed } that no page refers to, so no reader shows or prints it (0.9 NOTES.1)
 export const PRIVATE_LAYERS_KEY = 'MarkupCraftLayers';   // Info: the set's layers [{name, hidden, locked}] (0.4 K3)
 
 const n = (v) => {
@@ -142,7 +143,7 @@ export function privateData(m, rect) {
   return JSON.stringify({
     v: 1, id: m.id, type: m.type, pts: m.pts, rect: m.rect, rot: m.rot, style: m.style, text: m.text, label: m.label,
     subject: m.subject, comment: m.comment, author: m.author, created: m.created, modified: m.modified, status: m.status,
-    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, xd: m.xd || undefined, task: m.task || undefined, voice: m.voice || undefined, decision: m.decision || undefined, flat: m.flat === true ? true : undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
+    punch: m.punch, layer: m.layer || undefined, img: m.type === 'image' ? m.img : undefined, link: m.link || undefined, linkView: m.link && m.linkView ? m.linkView : undefined, legend: m.legend || undefined, fields: Object.keys(m.fields || {}).length ? m.fields : undefined, holes: m.holes?.length ? m.holes : undefined, xd: m.xd || undefined, task: m.task || undefined, voice: m.voice || undefined, decision: m.decision || undefined, flat: m.flat === true ? true : undefined, ar: rect.map((v) => Math.round(v * 1000) / 1000),
   });
 }
 
@@ -153,8 +154,9 @@ export function privateData(m, rect) {
  *   layers: [{ name, hidden, locked }] — markup layers (0.4 K3) become optional content groups (OCGs) that other viewers
  *     list and switch: each annotation names its layer's group (/OC), hidden layers start off; the list is also kept in
  *     Info /MarkupCraftLayers. Groups the drawing has of its own are kept; ours (marked /MarkupCraft true) are replaced.
- *   linkPage: (link) → page index in this file | null — a markup with a sheet link (0.4 K9) also gets a PDF Link annotation
- *     over it that jumps to that page in any viewer (ours, marked /MarkupCraftLink, are replaced on each save)
+ *   linkPage: (link, markup) → page index in this file | { index, box } | null — a markup with a sheet link (0.4 K9) also gets
+ *     a PDF Link annotation over it that jumps to that page in any viewer (ours, marked /MarkupCraftLink, are replaced on each
+ *     save); with `box` (a view on that sheet, 0.9 SU.1085) the jump is /FitR on it
  *   bookmarks: null | [{ title, page, children }] — replace the PDF's outline (0.4 K24); null leaves it as it is
  *   flatten: null | 'all' | Set of markup ids — those are drawn into the page itself (their appearance as a form XObject
  *     painted by the page's content) instead of becoming annotations: no longer editable, no thread, but every viewer and
@@ -163,7 +165,7 @@ export function privateData(m, rect) {
  *     page `index` with `matrix` (an invisible text layer; report.ocr counts the pages)
  * Returns { bytes, report: { written, flattened, missing, pages, replies, ocr } }.
  */
-export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null, records = null, shell = null, ocr = [] } = {}) {
+export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new Set(), labels = null, producerNote = 'MarkupCraft', flatten = null, layers = [], linkPage = null, columns = [], bookmarks = null, records = null, shell = null, ocr = [], notes = null } = {}) {
   const { PDFDocument, PDFName, PDFString, PDFHexString, PDFDict, PDFArray, PDFRef } = lib;
   let doc;
   try {
@@ -185,6 +187,7 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
     A: spec.A.map((f) => ctx.obj({ Type: 'NumberFormat', U: PDFString.of(f.U), C: f.C, D: f.D, F: f.F })),
   });
   const report = { written: 0, flattened: 0, missing: 0, pages: 0, replies: 0, photos: 0 };
+  const dropped = [];   // annotations taken off the pages: their objects must not stay in the file (0.9 NOTES.1)
   const flat = (m) => flatten === 'all' || (flatten instanceof Set && flatten.has(m.id));
   // replies carry an empty appearance, so no viewer paints a note icon for them on the sheet
   const emptyAp = ctx.register(ctx.flateStream('', { Type: 'XObject', Subtype: 'Form', FormType: 1, BBox: [0, 0, 1, 1] }));
@@ -238,15 +241,15 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
       for (let i = 0; i < old.size(); i++) {
         const item = old.get(i);
         const key = item instanceof PDFRef ? refKey(item.objectNumber, item.generationNumber) : null;
-        if (key && removeRefs.has(key)) continue;
+        if (key && removeRefs.has(key)) { dropped.push(item); continue; }
         const dict = item instanceof PDFRef ? ctx.lookupMaybe(item, PDFDict) : item instanceof PDFDict ? item : null;
-        if (dict && (dict.get(N(PRIVATE_LINK_KEY)) !== undefined || (dict.get(N('Subtype')) === N('FileAttachment') && dict.get(N(PRIVATE_PHOTO_KEY)) !== undefined))) continue;   // our sheet links and photo attachments: written again below
+        if (dict && (dict.get(N(PRIVATE_LINK_KEY)) !== undefined || (dict.get(N('Subtype')) === N('FileAttachment') && dict.get(N(PRIVATE_PHOTO_KEY)) !== undefined))) { if (item instanceof PDFRef) dropped.push(item); continue; }   // our sheet links and photo attachments: written again below
         if (dict) {
           const irt = dict.get(N('IRT'));
-          if (irt instanceof PDFRef && removeRefs.has(refKey(irt.objectNumber, irt.generationNumber))) continue;
+          if (irt instanceof PDFRef && removeRefs.has(refKey(irt.objectNumber, irt.generationNumber))) { if (item instanceof PDFRef) dropped.push(item); continue; }
           const parent = dict.get(N('Parent'));
           const sub = dict.get(N('Subtype'));
-          if (sub === N('Popup') && parent instanceof PDFRef && removeRefs.has(refKey(parent.objectNumber, parent.generationNumber))) continue;
+          if (sub === N('Popup') && parent instanceof PDFRef && removeRefs.has(refKey(parent.objectNumber, parent.generationNumber))) { if (item instanceof PDFRef) dropped.push(item); continue; }
         }
         keep.push(item);
       }
@@ -468,10 +471,14 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
       }
       if (m.layer && ocgOf.has(m.layer)) d.OC = ocgOf.get(m.layer);
       const annotRef = ctx.register(ctx.obj(d));
-      const lp = m.link && linkPage ? linkPage(m.link) : null;
-      if (Number.isInteger(lp) && pdfPages[lp]) {
+      const lp = m.link && linkPage ? linkPage(m.link, m) : null;
+      const lpi = lp && typeof lp === 'object' ? lp.index : lp;
+      if (Number.isInteger(lpi) && pdfPages[lpi]) {
+        // a view on that sheet (0.9 SU.1085): /FitR on its box, so any reader opens the detail, not just the sheet
+        const vb = lp && typeof lp === 'object' && Array.isArray(lp.box) && lp.box.length === 4 && lp.box.every(Number.isFinite) ? lp.box : null;
+        const dest = vb ? [pdfPages[lpi].ref, N('FitR'), ...vb] : [pdfPages[lpi].ref, N('Fit')];
         keep.push(ctx.register(ctx.obj({ Type: 'Annot', Subtype: 'Link', Rect: rect, Border: [0, 0, 0], F: 4, P: page.ref,
-          A: { S: 'GoTo', D: [pdfPages[lp].ref, N('Fit')] }, [PRIVATE_LINK_KEY]: true })));
+          A: { S: 'GoTo', D: dest }, [PRIVATE_LINK_KEY]: true })));
       }
       keep.push(annotRef);
       report.written++;
@@ -514,6 +521,28 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
     const nums = [];
     labels.forEach((l, i) => { nums.push(i, ctx.obj({ P: txt(String(l ?? '') || String(i + 1)) })); });
     doc.catalog.set(N('PageLabels'), ctx.obj({ Nums: nums }));
+  }
+
+  // 0.9 NOTES.1: what came off the pages goes from the file too, or a removed or newly private markup could be read out of its bytes
+  const gone = (o) => { if (o instanceof PDFRef) { const d = ctx.lookup(o); ctx.delete(o); return d; } return o; };
+  for (const ref of dropped) {
+    const d = gone(ref);
+    if (!(d instanceof PDFDict)) continue;
+    const ap = ctx.lookupMaybe(d.get(N('AP')), PDFDict);
+    if (ap) gone(ap.get(N('N')));
+    gone(d.get(N('AP')));
+    const fs = ctx.lookupMaybe(d.get(N('FS')), PDFDict);
+    const ef = fs && ctx.lookupMaybe(fs.get(N('EF')), PDFDict);
+    if (ef) gone(ef.get(N('F')));
+    gone(d.get(N('FS')));
+  }
+  // notes and sealed private notes: never kept from the bytes this was made from, so a copy made without them has none
+  const oldNotes = doc.catalog.get(N(NOTES_KEY));
+  if (oldNotes !== undefined) { doc.catalog.delete(N(NOTES_KEY)); gone(oldNotes); }
+  if (notes?.notes?.length || notes?.sealed?.length || notes?.uid) {
+    doc.catalog.set(N(NOTES_KEY), ctx.register(ctx.flateStream(new TextEncoder().encode(JSON.stringify({ v: 1, notes: notes.notes || [], sealed: notes.sealed || [], ...(notes.uid ? { uid: notes.uid } : {}) })))));
+    report.notes = notes.notes?.length || 0;
+    report.sealed = notes.sealed?.length || 0;
   }
 
   // mark the copy so reopening it knows to read the private data

@@ -27,7 +27,7 @@ import { makeMarkup, geometryOk, cleanReply, statusText, STATUSES, TYPES } from 
 import { t } from './i18n.js';
 import { validCalibration } from './units.js';
 import { unpackRecords } from './records.js';
-import { PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_RECORDS_KEY, PRIVATE_SHELL_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
+import { NOTES_KEY, PRIVATE_KEY, PRIVATE_CAL_KEY, PRIVATE_SHEET_KEY, PRIVATE_LAYERS_KEY, PRIVATE_RECORDS_KEY, PRIVATE_SHELL_KEY, PRIVATE_COLUMNS_KEY, PRIVATE_PHOTO_KEY, refKey } from './pdf-write.js';
 import { readTitleBlock } from './titleblock.js';
 import { cleanImage } from './imagestamp.js';
 import { cleanHoles } from './holes.js';
@@ -167,9 +167,28 @@ export function fromPrivate(json, a, sheet) {
     sheet, type: d.type, pts: d.pts || null, rect: d.rect || null, rot: [0, 90, 180, 270].includes(d.rot) ? d.rot : 0,
     style: clean, text: String(d.text ?? ''), label: String(d.label ?? ''), subject: String(d.subject ?? ''), comment: String(d.comment ?? ''),
     author: String(d.author ?? ''), created: String(d.created || ''), modified: String(d.modified || ''),
-    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, task: d.task, voice: d.voice, decision: d.decision, flat: d.flat === true,
+    status: d.status, punch: d.punch && typeof d.punch === 'object' ? d.punch : null, layer: typeof d.layer === 'string' ? d.layer : '', img: d.type === 'image' ? cleanImage(d.img) : '', link: typeof d.link === 'string' ? d.link : '', linkView: d.linkView, legend: d.legend, fields: d.fields, holes: d.type === 'area' ? cleanHoles(d.holes) : undefined, xd: d.xd, task: d.task, voice: d.voice, decision: d.decision, flat: d.flat === true,
   });
   return geometryOk(mk) ? mk : null;
+}
+
+/** One note read from a file or a sealed payload (untrusted) → a markup of that scope, with its thread; null when it is not usable (0.9 NOTES.1). */
+export function noteFromData(d, sheet, scope) {
+  if (!d || typeof d !== 'object') return null;
+  const m = fromPrivate(JSON.stringify({ ...d, v: 1, ar: undefined }), null, sheet);
+  if (!m) return null;
+  m.scope = scope;
+  m.replies = Array.isArray(d.replies) ? d.replies.map(cleanReply).filter(Boolean) : [];
+  return m;
+}
+/** The file's notes stream (pdf-write.js NOTES_KEY) → { notes: [data], sealed: [blob] }. Anything unreadable reads as none. */
+function readNotesStream(lib, ldoc) {
+  try {
+    const st = ldoc.context.lookup(ldoc.catalog.get(lib.PDFName.of(NOTES_KEY)));
+    if (!st || !lib.decodePDFRawStream) return { notes: [], sealed: [], uid: null };
+    const v = JSON.parse(new TextDecoder().decode(lib.decodePDFRawStream(st).decode()));
+    return { notes: Array.isArray(v?.notes) ? v.notes.slice(0, 5000) : [], sealed: Array.isArray(v?.sealed) ? v.sealed.slice(0, 200) : [], uid: /^[0-9a-f]{32}$/.test(v?.uid) ? v.uid : null };
+  } catch { return { notes: [], sealed: [], uid: null }; }
 }
 
 /**
@@ -311,7 +330,7 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_RECORDS_KEY) : custom?.[PRIVATE_RECORDS_KEY]; records = unpackRecords(raw ? String(raw) : '', doc.numPages); } catch { records = []; }
   // the shell's calc sheets and design reasons (0.8 round 3): untrusted JSON, the modules clean it
   let shell = null;
-  try { const raw = custom instanceof Map ? custom.get(PRIVATE_SHELL_KEY) : custom?.[PRIVATE_SHELL_KEY]; const v = raw ? JSON.parse(String(raw)) : null; if (v && typeof v === 'object' && !Array.isArray(v)) shell = { calcs: v.calcs ?? null, reasons: v.reasons ?? null }; } catch { shell = null; }
+  try { const raw = custom instanceof Map ? custom.get(PRIVATE_SHELL_KEY) : custom?.[PRIVATE_SHELL_KEY]; const v = raw ? JSON.parse(String(raw)) : null; if (v && typeof v === 'object' && !Array.isArray(v)) shell = { calcs: v.calcs ?? null, reasons: v.reasons ?? null, docinfo: v.docinfo ?? null }; } catch { shell = null; }
   // File › New (blank.js): the paper and grid of a blank set, so "Add a blank page" matches it
   const blank = blankInfo(custom instanceof Map ? custom.get(BLANK_KEY) : custom?.[BLANK_KEY]);
   const pages = [];
@@ -403,6 +422,18 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     if (r && !m.replies.some((x) => x.id === r.id)) m.replies.push(r);
   }
   for (const m of record.markups) delete m.fromPrivate;
+
+  // 0.9 NOTES.1: notes go in with the markups; sealed private notes wait for their writer (markupcraft notes-ui.js)
+  if (ldoc) {
+    const nb = readNotesStream(lib, ldoc);
+    for (const d of nb.notes) {
+      const key = pages[d?.sheet]?.key;
+      const m = key ? noteFromData(d, key, 'note') : null;
+      if (m && !record.markups.some((x) => x.id === m.id)) record.markups.push(m);
+    }
+    record.sealed = nb.sealed;
+    record.notesUid = nb.uid;   // the host's file of sealed notes for this PDF (notes-ui.js)
+  }
 
   // draw: pages with only editable annotations → annotations off; pages with both → a cleaned copy
   const mixed = pageHasEditable.some((e, i) => e && pageHasForeign[i]);

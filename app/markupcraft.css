@@ -458,6 +458,17 @@ select.mc-ff { padding: 0; }
 /* Slip-sheet dialog (0.4 K13) */
 .mc-slip-list { margin: 0; padding-left: 1.25rem; display: grid; gap: .3rem; max-height: 40vh; overflow: auto; }
 .mc-slip-row label { cursor: pointer; }
+/* Batch links (0.9 SU.1085) */
+.mc-bl-scroll { max-height: 58vh; overflow: auto; }
+.mc-bl-scroll .mc-slip-list { max-height: none; }
+.mc-bl-table { width: 100%; border-collapse: collapse; }
+.mc-bl-table th { text-align: left; font-weight: 600; padding: .25rem .4rem; position: sticky; top: 0; background: var(--mc-panel, Canvas); }
+.mc-bl-table td { padding: .2rem .4rem; vertical-align: middle; }
+.mc-bl-table td .mc-input { width: 100%; }
+.mc-bl-need { color: var(--mc-warn, #b45309); }
+.mc-bl-sec + .mc-bl-sec { margin-top: .75rem; }
+.mc-bl-h { font-size: 1rem; margin: 0 0 .3rem; }
+.mc-bl-row .mc-bl-sel { margin-left: .4rem; max-width: 22rem; }
 /* Find text (0.4 K14) */
 .mc-find-sec { border-bottom: var(--pen-1) solid var(--line); padding-bottom: .5rem; }
 .mc-find-sum { cursor: pointer; font-weight: 600; font-size: .875rem; }
@@ -501,6 +512,8 @@ select.mc-ff { padding: 0; }
 .mc-pic-preview { max-width: 100%; max-height: 6rem; object-fit: contain; background: #fff; border: var(--pen-1) solid var(--line); }
 .mc-sig { width: 100%; max-width: 32.5rem; aspect-ratio: 520 / 180; background: #fff; border: var(--pen-1) solid var(--line); touch-action: none; cursor: crosshair; }
 /* Sketch to scale (0.4 K18): the typed-length box by the pointer */
+.mc-arcbar { position: absolute; left: 0.5rem; top: 0.5rem; z-index: 4; }
+.mc-arcbar .mc-select { width: auto; max-width: 14rem; }
 .mc-sketch { position: absolute; width: 10rem; z-index: 5; box-shadow: none; border: var(--pen-2) solid var(--action); }
 /* Custom columns (0.4 K19) */
 .mc-cols { display: grid; gap: .4rem; }
@@ -608,3 +621,10 @@ select.mc-ff { padding: 0; }
 @media (max-width: 760px) { .mc-areabar span { display: none; } }
 .mc-areabar :is(.btn-line, .btn-plot) { padding: .15rem .55rem; font-size: .8125rem; min-height: 0; line-height: 1.5; }
 .mc-areabar .mc-select { padding-block: .1rem; }
+
+/* 0.9 NOTES.1: notes, the pasteboard, private notes */
+.mc-pnotes { margin-bottom: .75rem; padding-bottom: .5rem; border-bottom: 1px solid var(--line, rgba(127,127,127,.3)); }
+.mc-pnotes label { display: block; }
+.mc-pnotes .mc-radio { display: inline-flex; gap: .35rem; align-items: center; }
+.mc-pnotes .mc-actions { margin: .4rem 0; flex-wrap: wrap; }
+.mc-pnotes .mc-linkbtn { text-align: left; }

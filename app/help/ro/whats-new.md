@@ -1,43 +1,60 @@
 ---
-title: Noutăți în 0.7
-summary: RFI-uri, documente de aprobare și jurnale zilnice într-o filă nouă Teren, cu termene, întârzieri în roșu, CSV și BCF, lucru offline și Îmbinare; asistenți care setează stările, răspund și exportă lista; liste de unități care urmează Setările; panouri care se ascund și casete de dialog care se mută.
-keywords: noutăți, release notes, modificări, jurnal de modificări, 0.7, versiune, funcții noi, teren, înregistrări de teren, rfi, cerere de informații, document de aprobare, jurnal zilnic, jurnal de șantier, termen, întârziat, atribuite mie, pin, îmbinare, offline, tabletă, bcf, csv, asistent, mcp, stare adnotare, răspuns, export, unități, liste de unități, stea, calibrare, compact, panouri, casete de dialog, portugheză
-from: 142e1a1e
+title: Noutăți în 0.8 și 0.8.1
+summary: Adnotări care devin sarcini și se închid singure, o listă simplă a modificărilor dintre revizii, note vocale și decizii pe plan, fișiere cu linii roșii pentru desenator, și modificările comune din 0.8: dispozitive de intrare, rânduri ale barei de instrumente, Probleme, mai multe limbi.
+keywords: noutăți, ce este nou, note de lansare, jurnal de modificări, modificări, 0.8, 0.8.1, versiune, funcții noi, sarcină, sarcini, responsabil, zi scadentă, întârziat, verificare acum, ce s-a schimbat, revizii, comparare, notă vocală, decizie, linii roșii, fișier de răspunsuri, desenator, asistent, mcp, probleme, limbi, dispozitive de intrare, trackpad, rânduri ale barei de instrumente, grilă de proprietăți, actualizare
+from: 40368796
 ---
 
-Aceasta este lista modificărilor din MarkupCraft 0.7, față de 0.6. Noutatea cea mai mare sunt înregistrările de teren: RFI-uri, documente de aprobare și jurnale zilnice păstrate în PDF, lângă adnotări.
+Iată ce s-a schimbat în MarkupCraft 0.8 și 0.8.1, comparativ cu 0.7. Noutatea mare este că o adnotare poate fi o sarcină pe care o face cineva sau asistentul conectat, și care se închide singură atunci când desenul se schimbă cu adevărat.
 
 ## Noutăți
 
-### RFI-uri, documente de aprobare și jurnale zilnice
+### Adnotări care acționează
 
-- **Fila Teren.** Deschideți fila {{ui:Teren}} și alegeți {{ui:RFI}}, {{ui:Document de aprobare}} sau {{ui:Jurnal zilnic}}. Atingeți sau faceți clic pe foaia unde aparține un RFI sau un document de aprobare, iar un pin marchează locul; un jurnal zilnic se pune pe foaia deschisă, fără pin ({{ui:Plasare pin}} adaugă unul mai târziu, {{ui:Mutare pin}} mută orice pin). Fiecare înregistrare are propriul număr (RFI-0001, SUB-0001, LOG-0001), un titlu, text, o stare, o persoană desemnată, un termen, un fir de răspunsuri și o listă de nume de atașamente. Vezi [Urmărirea RFI-urilor, documentelor de aprobare și jurnalelor zilnice](topic:field-records).
-- **Vedeți ce întârzie.** Filtrați lista după tip, stare, termen (întârziate, scadente în 7 zile, cu sau fără termen), foaia aceasta sau toate foile, o căutare de text sau {{ui:Atribuite mie}}. O înregistrare depășită încă în așteptare este marcată **Întârziat**, în roșu, pe listă și pe pinul ei. Vezi [Găsiți ce contează](topic:field-records#find-what-matters).
-- **CSV și BCF.** {{ui:CSV}} scrie înregistrările listate ca tabel de calcul; {{ui:BCF}} le scrie ca subiecte BCF, fiecare cu un instantaneu al locului său pe foaie. Amândouă urmează filtrele. Vezi [Export](topic:field-records#export).
-- **Offline, și două copii devin una.** Înregistrările se salvează în PDF și nu au nevoie de rețea, astfel încât o tabletă de pe șantier poate adăuga, răspunde și salva. La birou, {{ui:Îmbinare}} unește înregistrările altei copii a aceluiași PDF după identificatori, ca un singur pas de anulare. Vezi [Salvarea, offline și îmbinarea copiilor](topic:field-records#save-offline-and-merging-copies).
+- **Transformați o adnotare într-o sarcină.** Selectați una sau mai multe adnotări, deschideți fila {{ui:Sarcini}} și alegeți {{ui:Transformare selecție în sarcină}}. O sarcină are un titlu, o persoană sau asistentul conectat care o face, o zi scadentă opțională și o stare, și își păstrează locul pe planșă și firul de discuție. Vezi [Transformarea unei adnotări în sarcină](topic:markups-that-act).
+- **Sarcini care se închid singure.** O sarcină poate urmări desenul din interiorul adnotării sale. Deschideți o revizie mai nouă a planșei și alegeți {{ui:Verificare acum}}: dacă liniile din zona respectivă s-au schimbat cu mai mult decât un fir de păr, sarcina este marcată ca Realizată, adnotarea devine Finalizată, iar o notă din firul de discuție spune ce s-a schimbat. O ștampilă nouă de dată sau linii care s-au mutat cu mai puțin de 1.5 points nu contează. În schimb, o sarcină poate urmări un element al modelului: asistentul conectat raportează elementul cu `tasks_check`, iar un raport ulterior care diferă, sau un element șters, închide sarcina. Un pas de anulare o redeschide.
+- **Găsiți lucrul de făcut.** Filtrați lista {{ui:Sarcini}} după stare și după persoana pentru care este, inclusiv {{ui:Întârziate}}; alegeți {{ui:Atribuită lui}}, apoi {{ui:Asistent}}, ca să vedeți ce așteaptă asistentul. O sarcină depășită după ziua scadentă apare ca avertisment în panoul Probleme. {{ui:CSV}} exportă lista. Sarcinile sunt salvate în PDF împreună cu adnotarea și circulă prin Live ca alte proprietăți ale adnotărilor.
+
+### Ce s-a schimbat, ca listă simplă
+
+- **Listarea modificărilor.** Deschideți fila {{ui:Comparare}}, apoi {{ui:Comparare un set întreg}}, alegeți fișierul mai vechi și pe cel mai nou și alegeți {{ui:Listare modificări}}. Lista începe cu un număr, apoi acoperă fiecare planșă modificată, cea mai mare modificare prima: unde se află pe planșă, cât de mare este (în unități reale, precum și în in pe hârtie la o planșă calibrată), dacă au fost adăugate sau eliminate linii, câte adnotări se află acolo și ce cuvinte au apărut sau au dispărut. {{ui:Copiere listă}} pune lista în clipboard, iar {{ui:CSV}} scrie câte un rând pentru fiecare modificare. Vezi [Listarea a ce s-a schimbat între revizii](topic:what-changed-in-words).
+
+### Note vocale și decizii
+
+- **Note vocale.** În fila {{ui:Note}} alegeți {{ui:Înregistrare notă vocală}}, apoi {{ui:Oprire înregistrare}}; înregistrările se opresc singure după două minute. Nota este fixată în centrul planșei, o trageți unde trebuie și scrieți o legendă în {{ui:Proprietăți}}, iar {{ui:Redare}} din listă o redă. Înregistrarea este salvată în PDF.
+- **Decizii.** {{ui:Fixare decizie}} scrie una sau două propoziții pe planșă. Dacă înlocuiește o decizie anterioară, alegeți-o în {{ui:Înlocuiește}}: cea veche rămâne, marcată ca Înlocuită, și trimite la cea nouă. Un pas de anulare o readuce. Vezi [Fixarea notelor vocale și a deciziilor pe o planșă](topic:voice-notes-and-decisions).
+
+### Linii roșii către revizie
+
+- **Trimitere și răspuns.** În fila {{ui:Sarcini}} deschideți {{ui:Linii roșii către revizie}}, scrieți revizia la care se referă adnotările și alegeți {{ui:Export fișier de linii roșii}}. Veți primi un fișier `.redline.json` cu câte un element pentru fiecare adnotare deschisă: planșa, poziția (ca fracții din planșă, astfel încât o re-trasare la altă dimensiune tot se aliniază), cuvintele, autorul, firul de discuție și sarcina sa. Cel care desenează modificările răspunde cu Acceptată, Respinsă sau Realizată, într-un fișier `.redline-answers.json`; {{ui:Încărcare fișier de răspunsuri…}} dă fiecărei adnotări starea respectivă și nota desenatorului, ca un singur pas de anulare. Vezi [Trimiterea adnotărilor către desenator ca linii roșii](topic:redline-to-revision).
 
 ### Asistenți AI
 
-- **Mai mult pot face asistenții.** Propriul asistent, conectat prin CadCraft Studio, poate acum să seteze starea unei adnotări (`markup_status`, înregistrată în firul ei), să răspundă într-un fir (`markup_reply`) și să exporte lista {{ui:Adnotări}} ca CSV sau BCF (`markups_export`, adică ce arată lista cu filtrele ei). Fiecare modificare este un singur pas de anulare, semnată cu numele asistentului. Vezi [Ce poate cere un asistent](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Mai multe instrumente.** Un asistent conectat prin CadCraft Studio poate lista sarcini (`tasks_list`), crea sau modifica una (`task_set`), o scoate (`task_clear`), o verifica față de o revizie mai nouă sau un element (`tasks_check`) și citi lista simplă a modificărilor dintre două seturi de planșe deschise (`revisions_changes`). Primește doar instrumentele bifate sub comutatorul pentru asistenți, iar fiecare modificare este un singur pas de anulare. Vezi [Folosirea MarkupCraft cu un asistent AI](topic:use-with-ai-assistants).
 
-## În toate aplicațiile
+## În fiecare aplicație
 
-- **Unități.** {{ui:Setări}} › {{ui:General}} › {{ui:Unități}} are câte o listă pentru lungime, arie, volum, unghi și pantă, cu dimensiunile exacte date de definițiile unităților (piciorul topografic al SUA este o unitate separată). Dezactivați unitățile pe care nu le folosiți și ies din listele de unități; marcați una cu stea și lucrul nou începe în ea. Un fișier își păstrează întotdeauna propria unitate. În MarkupCraft, unitățile de măsurare și de poziție din {{ui:Setări}} › {{ui:MarkupCraft}} și unitatea din caseta de calibrare urmează comutatoarele, steaua stabilește unitatea de măsurare până salvați setările proprii ale MarkupCraft, iar distanța reală pe care o tastați la calibrare poate avea semnul oricărei unități, cum ar fi `3 yd` sau `1.5 km`. Vezi [Unități, valori tastate și listele de unități](common:unit-lists).
-- **Un aspect mai dens și panouri care se ascund.** {{ui:Setări}} › {{ui:General}} › {{ui:Densitatea aspectului}} › {{ui:Compactă}} încape mai mult pe ecran (ecranele tactile și telefoanele își păstrează butoanele mari). Fiecare panou lateral are o bară de titlu subțire: trageți-o ca să ancorați sau să detașați panoul, lăsați-o pe bara altui panou ca să partajați un cadru ca file, fixați-o ca să alunece spre margine sau ascundeți panoul și aduceți-l înapoi de la margine. Vezi [Aranjarea panourilor](common:arrange-panels#make-the-layout-denser).
-- **Casetele de dialog se mută.** Trageți o casetă de dialog de bara ei de titlu, ca să nu stea în calea desenului; revine acolo unde ați lăsat-o. Faceți dublu clic pe bara de titlu ca să o centrați din nou. Vezi [Mutarea unei casete de dialog](common:arrange-panels#move-a-dialog).
-- **Rețete pentru asistenți AI.** Zece cereri exemplu pentru propriul asistent (ordonați un desen, trasați un set, verificați desene, puneți întrebări despre model, totalizați o extragere de cantități, încercați o variantă de piesă…), fiecare cu instrumentele pe care le apelează și permisiunile de care are nevoie, și fiecare reluată de testele noastre. Aplicațiile nu conțin AI. Vezi [Rețete pentru asistenți AI](common:assistants-recipes).
-- **Limbi.** **Português (Portugal)** este nou în {{ui:Setări}} › {{ui:General}} › {{ui:Limbă}}. Împreună cu **Português (Brasil)**, **Español (México)** și **Bahasa Indonesia**, acestea au acum fiecare cuvânt din aplicații, ca ciorne neverificate încă de un vorbitor nativ. Subiectele de ajutor sunt în engleză.
-- **CadCraft Studio** spune de ce a eșuat verificarea actualizărilor (nu există încă fișier pentru acest sistem, lipsă de rețea, semnătură greșită) în loc să spună doar „Gata”, și nu mai readuce un card Noutăți pe care l-ați închis, până la o versiune mai nouă.
+- **Limbi.** CadCraft Studio are acum 54 de limbi. Zece sunt noi: lituaniană, letonă, bosniacă, marathi, telugu, albaneză, afrikaans, filipineză, swahili și uzbecă. Toate limbile non-engleze sunt ciorne automate până când le citește un vorbitor nativ.
+- **Dispozitive de intrare.** {{ui:Setări}} › {{ui:Global}} › {{ui:Dispozitive de intrare}} stabilește ce fac un trackpad, butoanele laterale ale mouse-ului, un creion, atingerile cu degetul, un mouse 3D, un controler de jocuri sau un controler MIDI, pentru toate aplicațiile sau doar pentru aceasta. Până schimbați ceva, fiecare dispozitiv funcționează ca înainte. Vezi [Folosirea unui trackpad, a mouse-ului 3D sau a unui controler](common:input-devices).
+- **Rânduri ale barei de instrumente.** {{ui:Setări}} › {{ui:General}} › {{ui:Rânduri ale barei de instrumente}} are {{ui:Încadrare}} (implicit), {{ui:2 rânduri}} și {{ui:1 rând}}, astfel încât desenul are mai mult spațiu. Vezi [Aranjarea panourilor](common:arrange-panels).
+- **Grila de proprietăți.** Câmpurile de stil ale unei adnotări folosesc grila comună, cu categorii care se pot restrânge și coloane pentru etichetă și valoare.
+- **Panoul Probleme.** Avertismentele aplicației, precum o sarcină întârziată, se adună într-un singur panou Probleme.
+- **Live și suplimentele.** Sesiunile Live sunt descrise în [Lucrul împreună în Live](common:work-together-live); lista de suplimente din cont este în [Suplimente și lista din cont](common:addons-basics).
+- **Conectați-vă AI-ul.** CadCraft Studio este centrul pentru propriul asistent: conectați-l o singură dată pentru toate cele opt aplicații. Aplicațiile nu conțin AI propriu.
 
-## Încă nu este în această versiune
+## Remediat în 0.8.1
 
-- **0.7 nu este semnat cu cod.** Semnarea și pachetul Microsoft Store au trecut în 0.8, pentru că validarea certificatului nu a sosit încă. Verificați SHA-256 de lângă fiecare fișier de pe getcadcraft.com/download. Pe Windows, dacă SmartScreen oprește programul de instalare, alegeți {{ui:Mai multe informații}}, apoi {{ui:Executare oricum}}. Pe Mac, prima dată, faceți clic dreapta pe CadCraft Studio și alegeți {{ui:Deschidere}}. CadCraft Studio nu este încă într-un magazin de aplicații, iar nu există încă versiune pentru iPad sau iPhone.
-- Listele de unghi și pantă din {{ui:Unități}} sunt salvate, dar nicio casetă nu le citește încă.
-- Înregistrările de teren nu sunt partajate într-o sesiune live CadCraft Studio (sesiunile live transportă doar adnotări); aduceți copiile împreună cu {{ui:Îmbinare}}.
-- Îmbinarea preia o înregistrare întreagă din copia modificată ultima dată: dacă două persoane au modificat câmpuri diferite ale unei înregistrări, câmpurile copiei mai recente câștigă. Firele și numele atașamentelor sunt unite.
-- Atașamentele sunt doar nume; fișierele rămân unde sunt. Nu există echipe, notificări sau proiecte cloud pentru înregistrări, iar asistenții nu au încă instrumente pentru înregistrări.
-- Înregistrările de teren au fost testate într-un browser, la dimensiuni de telefon și tabletă, cu rețeaua oprită, dar încă nu manual pe o tabletă reală.
-- Încă din 0.6: rotirea obiectelor paginii la orice unghi, desenarea de forme noi direct în pagină, schimbarea fontului sau a dimensiunii unei linii și textul care curge pe mai multe rânduri. O copie salvată cu modificări ale paginii nu a fost deschisă încă în Acrobat.
-- Încă din 0.5: anularea unei modificări a paginii (cum ar fi adăugarea unei pagini goale), citirea textului din foi scanate și sesiunile live dincolo de propria rețea.
+- **Studio poate schimba limba cât timp rulează.** Înainte, aplicația desktop și edițiile împachetate rămâneau în engleză. Nu este încă testat pe toate platformele: spuneți-ne dacă limba nu se schimbă.
+- Instalările Studio 0.8 primesc oferta de actualizare la 0.8.1 prin {{ui:Setări}} › {{ui:Actualizări}}.
 
-Restul se află în [Ce nu este încă realizat](topic:not-built-yet).
+## Nu este încă în această versiune
+
+- **Fără semnătură de cod.** Programele de instalare pentru Windows și fișierul .dmg pentru macOS nu au încă semnătură. Pe Windows, dacă SmartScreen oprește instalatorul, alegeți {{ui:Mai multe informații}}, apoi {{ui:Rulare oricum}}. Pe Mac, faceți clic dreapta pe CadCraft Studio și alegeți {{ui:Deschidere}}. Versiunile pentru magazine sunt suspendate.
+- **Conectarea AI-ului este neterminată în unele părți.** Conectarea dintr-un clic în Studio, conectorul găzduit pentru asistenții din browser și propria cheie API în Studio nu sunt promise pentru această versiune. Bucla de sarcini a fost testată, dar nu încă cu un asistent real.
+- **Verificarea sarcinilor cere aceeași dimensiune a paginii.** O planșă re-trasată la altă dimensiune nu se va potrivi, deci sarcinile ei nu se închid. Planșele sunt asociate după numărul planșei, altfel după poziția paginii.
+- **Notele vocale sunt doar înregistrări.** Nu există transcriere, iar un asistent vede lungimea notei, autorul și legenda, nu sunetul. Înregistrarea a fost încercată cu un microfon fals într-un browser fără interfață; un microfon real pe telefon, tabletă sau laptop mai trebuie verificat.
+- **Foile de calcul și motivele dintr-un PDF** sunt păstrate într-o intrare privată a fișierului. O versiune mai veche de MarkupCraft ignoră acea intrare și o elimină la următoarea salvare, deci deschideți și salvați astfel de fișiere cu versiunea 0.8 sau ulterioară.
+- **Partea desenatorului din liniile roșii.** Citirea fișierului de linii roșii de către CadCraft și răspunsul la el nu sunt încă realizate.
+- **Alte limbi.** Bara de aplicație în tamilă depășește cu 528 px.
+
+Restul se află în [Ce nu este încă realizat](topic:not-built-yet). Pentru versiunea dinainte, vezi [Noutăți în 0.7](topic:whats-new-0-7).

@@ -1,43 +1,60 @@
 ---
-title: Kas naujo 0.7 versijoje
-summary: RFI, pateikimai ir dienos žurnalai naujame skirtuke Laukas, su terminais, pavėlavę – raudonai, CSV ir BCF, darbas neprisijungus ir sujungimas; asistentai, kurie nustato būsenas, atsako ir eksportuoja sąrašą; vienetų sąrašai, kurie seka parametrus; skydeliai, kurie susitvarko, ir dialogai, kurie juda.
-keywords: kas naujo, naujienos, išleidimo pastabos, pakeitimų žurnalas, pakeitimai, 0.7, versija, naujos funkcijos, laukas, lauko įrašai, rfi, informacijos prašymas, pateikimas, dienos žurnalas, darbo dienoraštis, pavėlavimas, terminas, priskirta man, žymeklis, sujungti, neprisijungus, planšetė, bcf, csv, asistentas, mcp, žymėjimo būsena, atsakymas, eksportas, vienetai, vienetų sąrašai, žvaigždutė, kalibruoti, kompaktiškas, skydeliai, dialogai, portugalų
-from: 142e1a1e
+title: Kas naujo 0.8 ir 0.8.1 versijose
+summary: Žymėjimai, kurie tampa užduotimis ir užsidaro patys, paprastas sąrašas, kas pasikeitė tarp revizijų, balso pastabos ir sprendimai ant brėžinio, raudonųjų pakeitimų failai braižytojui ir bendri 0.8 pakeitimai: įvesties įrenginiai, įrankių juostos eilutės, problemos, daugiau kalbų.
+keywords: kas naujo, what's new, išleidimo pastabos, keitimų žurnalas, pakeitimai, 0.8, 0.8.1, versija, nauji elementai, užduotis, užduotys, atsakingasis, terminas, pavėluota, tikrinti dabar, kas pasikeitė, revizijos, palyginti, balso pastaba, sprendimas, raudonasis žymėjimas, atsakymų failas, braižytojas, asistentas, mcp, problemos, kalbos, įvesties įrenginiai, jutiklinė plokštelė, įrankių juostos eilutės, ypatybių lentelė, atnaujinimas
+from: 40368796
 ---
 
-Tai, kas pasikeitė MarkupCraft 0.7 versijoje, palyginti su 0.6. Didžiausia naujiena – lauko įrašai: RFI, pateikimai ir dienos žurnalai, saugomi PDF šalia jūsų žymėjimų.
+Tai, kas pakeista MarkupCraft 0.8 ir 0.8.1 versijose, palyginti su 0.7. Didžiausias naujovė: žymėjimas gali būti užduotis, kurią atlieka kas nors arba jūsų asistentas, o ji užsidaro pati, kai brėžinys iš tikrųjų pasikeičia.
 
-## Nauja
+## Naujovės
 
-### RFI, pateikimai ir dienos žurnalai
+### Žymėjimai, kurie veikia
 
-- **Skirtukas Laukas.** Atidarykite skirtuką {{ui:Laukas}} ir pasirinkite {{ui:RFI}}, {{ui:Pateikimas}} arba {{ui:Dienos žurnalas}}. Palieskite ar spustelėkite lapą, kur priklauso RFI ar pateikimas, ir žymeklis pažymės vietą; dienos žurnalas dedamas į atvirą lapą be žymeklio ({{ui:Padėti žymeklį}} pridės vėliau, {{ui:Perkelti žymeklį}} perkelia bet kurį žymeklį). Kiekvienas įrašas turi savo numerį (RFI-0001, SUB-0001, LOG-0001), pavadinimą, tekstą, būseną, atsakingąjį, terminą, atsakymų giją ir priedų pavadinimų sąrašą. Žr. [Sekite RFI, pateikimus ir dienos žurnalus](topic:field-records).
-- **Matykite, kas vėluoja.** Filtruokite sąrašą pagal tipą, būseną, terminą (pavėlavę, baigiasi per 7 dienas, turi arba neturi termino), šį lapą ar visus lapus, teksto paiešką arba {{ui:Priskirta man}}. Įrašas, praėjęs terminą ir vis dar laukiantis, pažymimas raudonai **Pavėlavęs** – sąraše ir ant savo žymeklio. Žr. [Raskite, kas svarbu](topic:field-records#find-what-matters).
-- **CSV ir BCF.** {{ui:CSV}} įrašo išvardytus įrašus kaip skaičiuoklę; {{ui:BCF}} įrašo juos kaip BCF temas, kiekvieną su momentine nuotrauka apie jo vietą lape. Abu seka filtrus. Žr. [Eksportas](topic:field-records#export).
-- **Neprisijungus ir dvi kopijos tampa viena.** Įrašai saugomi PDF viduje ir jiems nereikia tinklo, todėl planšetė aikštelėje gali pridėti, atsakyti ir įrašyti. Biure {{ui:Sujungti}} sujungia to paties PDF kitos kopijos įrašus pagal jų ID kaip vieną atšaukimo žingsnį. Žr. [Įrašymas, darbas neprisijungus ir kopijų sujungimas](topic:field-records#save-offline-and-merging-copies).
+- **Padaryti žymėjimą užduotimi.** Pasirinkite vieną ar kelis žymėjimus, atidarykite skirtuką {{ui:Tasks}} ir pasirinkite {{ui:Make selected a task}}. Užduotis turi pavadinimą, asmenį arba jūsų prijungtą asistentą, kuris ją atliks, neprivalomą terminą ir būseną; ji išlaiko savo vietą lape ir savo giją. Žr. [Padaryti žymėjimą užduotimi](topic:markups-that-act).
+- **Užduotys, kurios užsidaro pačios.** Užduotis gali stebėti brėžinį žymėjimo viduje. Atidarykite naujesnę lapo reviziją ir pasirinkite {{ui:Check now}}: jei linijos tame plote pakito daugiau nei truputį, užduotis pažymima kaip atlikta, jos žymėjimas tampa užbaigtas, o gijoje atsiranda pastaba, kas pasikeitė. Nauja datos žyma arba linijos, pasislinkusios mažiau nei 1,5 taško, neskaičiuojamos. Užduotis taip pat gali stebėti modelio elementą: jūsų asistentas praneša apie elementą su `tasks_check`, o vėlesnis skirtingas pranešimas arba ištrintas elementas uždaro užduotį. Vienas atšaukimo žingsnis ją vėl atidaro.
+- **Raskite darbą.** Filtruokite sąrašą {{ui:Tasks}} pagal būseną ir pagal tai, kam ji skirta, įskaitant {{ui:Overdue}}; pasirinkite {{ui:Assigned to}}, tada {{ui:Assistant}}, kad pamatytumėte, ką laukia jūsų asistentas. Užduotis, kurios terminas praėjo, Problemų skydelyje rodoma kaip įspėjimas. {{ui:CSV}} eksportuoja sąrašą. Užduotys išsaugomos PDF faile kartu su žymėjimu ir per Live keliauja kaip kitos žymėjimo ypatybės.
+
+### Kas pasikeitė, paprastu sąrašu
+
+- **Išvardyti pakeitimus.** Atidarykite skirtuką {{ui:Compare}}, tada {{ui:Compare a whole set}}, pasirinkite ankstesnį ir vėlesnį failą ir pasirinkite {{ui:List the changes}}. Sąrašas prasideda skaičiumi, tada aprašo kiekvieną pakeistą lapą, didžiausius pakeitimus pirmus: kur lape, koks didelis (tikrais vienetais ir popieriaus coliais kalibruotame lape), ar linijos buvo pridėtos ar pašalintos, kiek žymėjimų ten yra ir kurie žodžiai atsirado ar dingo. {{ui:Copy the list}} įdeda jį į iškarpinę, o {{ui:CSV}} įrašo po vieną eilutę kiekvienam pakeitimui. Žr. [Išvardyti, kas pasikeitė tarp revizijų](topic:what-changed-in-words).
+
+### Balso pastabos ir sprendimai
+
+- **Balso pastabos.** Skirtuke {{ui:Notes}} pasirinkite {{ui:Record a voice note}}, tada {{ui:Stop recording}}; įrašai savaime sustoja po dviejų minučių. Pastaba prikabinama prie lapo centro, ją patempiate ten, kur jai vieta, ir įrašote antraštę lange {{ui:Properties}}, o {{ui:Play}} sąraše ją paleidžia. Įrašas išsaugomas PDF viduje.
+- **Sprendimai.** {{ui:Pin a decision}} įrašo vieną ar du sakinius ant lapo. Jei jis pakeičia ankstesnį sprendimą, pasirinkite tą sprendimą lauke {{ui:It replaces}}: senasis lieka, pažymėtas kaip Pakeistas, ir nurodo į naująjį. Vienas atšaukimo žingsnis jį panaikina. Žr. [Prikabinti balso pastabas ir sprendimus prie lapo](topic:voice-notes-and-decisions).
+
+### Raudonasis žymėjimas iki revizijos
+
+- **Siųskite ir atsakykite.** Skirtuke {{ui:Tasks}} atidarykite {{ui:Redline to revision}}, įveskite revizijos numerį, su kuriuo lyginami žymėjimai, ir pasirinkite {{ui:Export redline file}}. Gausite failą `.redline.json` su vienu elementu kiekvienam atviram žymėjimui: lapu, pozicija (kaip lapo dalimis, kad perbraižymas kitu dydžiu vis tiek sutaptų), žodžiais, autoriumi, gija ir jos užduotimi. Tas, kas daro pakeitimus, atsako Priimta, Atmesta arba Atlikta faile `.redline-answers.json`; {{ui:Load answers file…}} suteikia kiekvienam žymėjimui tą būseną ir braižytojo pastabą kaip vieną atšaukimo žingsnį. Žr. [Siųsti žymėjimus braižytojui kaip raudonąjį žymėjimą](topic:redline-to-revision).
 
 ### DI asistentai
 
-- **Daugiau, ką asistentas gali daryti.** Jūsų asistentas, prijungtas per CadCraft Studio, dabar gali nustatyti žymėjimo būseną (`markup_status`, įrašoma jo gijoje), atsakyti gijoje (`markup_reply`) ir eksportuoti sąrašą {{ui:Žymėjimai}} kaip CSV ar BCF (`markups_export`, ką rodo sąrašas su filtrais). Kiekvienas pakeitimas – vienas atšaukimo žingsnis, pasirašytas asistento vardu. Žr. [Ko gali paprašyti asistentas](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Daugiau įrankių.** Asistentas, prijungtas per CadCraft Studio, gali išvardyti užduotis (`tasks_list`), sukurti ar pakeisti vieną (`task_set`), nuimti užduotį (`task_clear`), patikrinti vieną pagal naujesnę reviziją ar elementą (`tasks_check`) ir perskaityti paprastą pakeitimų sąrašą tarp dviejų atvirų planų rinkinių (`revisions_changes`). Jis gauna tik tuos įrankius, kuriuos pažymėjote jungiklio Assistants skiltyje, ir kiekvienas pakeitimas yra vienas atšaukimo žingsnis. Žr. [Naudoti MarkupCraft su DI asistentu](topic:use-with-ai-assistants).
 
 ## Visose programose
 
-- **Vienetai.** {{ui:Parametrai}} › {{ui:Bendra}} › {{ui:Vienetai}} turi po vieną sąrašą ilgiui, plotui, tūriui, kampui ir nuolydžiui, su tikslius dydžius pagal vienetų apibrėžimus (JAV geodezinė pėda yra atskiras vienetas). Išjunkite vienetus, kurių niekada nenaudojate, – jie išeina iš vienetų sąrašų; pažymėkite vieną žvaigždute – ir naujas darbas prasidės su juo. Failas visada išlaiko savo vienetą. MarkupCraft programoje matavimo ir padėties vienetai {{ui:Parametrai}} › {{ui:MarkupCraft}} ir vienetas kalibravimo dialoge seka jungiklius; žvaigždutė nustato matavimo vienetą, kol neįrašysite savo MarkupCraft parametrų; o tikras atstumas, kurį įvedate kalibruodami, gali turėti bet kurio vieneto žymą, pavyzdžiui `3 yd` ar `1.5 km`. Žr. [Vienetai, įvesti dydžiai ir vienetų sąrašai](common:unit-lists).
-- **Tankesnis išdėstymas ir skydeliai, kurie susitvarko.** {{ui:Parametrai}} › {{ui:Bendra}} › {{ui:Išdėstymo tankis}} › {{ui:Kompaktiškas}} telpa daugiau ekrane (jutikliniai ekranai ir telefonai išlaiko didelius mygtukus). Kiekvienas šoninis skydelis turi siaurą antraštės juostą: vilkite ją, kad skydelis prisitvirtintų ar atsiskirtų, numeskite ją ant kito skydelio juostos, kad dalintųsi vienu rėmu kaip skirtukais, prisekite, kad slystų į kraštą, arba paslėpkite ir grąžinkite iš krašto. Žr. [Išdėstykite skydelius](common:arrange-panels#make-the-layout-denser).
-- **Dialogai juda.** Vilkite dialogą už antraštės juostos iš kelio brėžiniui; jis grįžta ten, kur paliktas. Dukart spustelėkite antraštės juostą, kad vėl centruotumėte. Žr. [Perkelti dialogą](common:arrange-panels#move-a-dialog).
-- **Receptai DI asistentams.** Dešimt pavyzdinių užklausų jūsų asistentui (sutvarkyti brėžinį, atspausdinti rinkinį, patikrinti brėžinius, uždavinėti modeliui klausimus, sudėti kiekių skaičiavimą, išbandyti detalės variantą…), kiekviena su įrankiais, kuriuos ji kviečia, ir leidimais, kurių reikia, ir kiekviena patikrinta mūsų testais. Programose DI nėra. Žr. [Receptai DI asistentams](common:assistants-recipes).
-- **Kalbos.** **Português (Portugal)** naujai pasirodo {{ui:Parametrai}} › {{ui:Bendra}} › {{ui:Kalba}}. Ji ir **Português (Brasil)**, **Español (México)** bei **Bahasa Indonesia** dabar turi visus programų žodžius kaip juodraščius, dar neperžiūrėtus gimtosios kalbos. Žinyno temos yra anglų kalba.
-- **CadCraft Studio** nurodo, kodėl atnaujinimo tikrinimas nepavyko (dar nėra failo jūsų sistemai, nėra ryšio, neteisingas parašas), o ne tiesiog "Atlikta", ir nebesugrąžina uždaryto "Kas naujo" kortelės, kol nėra naujesnės versijos.
+- **Kalbos.** CadCraft Studio dabar turi 54 kalbas. Dešimt yra naujos: lietuvių, latvių, bosnių, maratių, telugu, albanų, afrikaans, filipiniečių, svahili ir uzbekų. Visos ne anglų kalbos yra mašininiai juodraščiai, kol jas perskaitys gimtoji kalba.
+- **Įvesties įrenginiai.** {{ui:Settings}} › {{ui:Global}} › {{ui:Input devices}} nustato, ką daro jutiklinė plokštelė, pelės šoniniai mygtukai, rašiklis, pirštų bakstelėjimai, 3D pelė, žaidimų valdiklis ar MIDI valdiklis, visoms programoms arba tik šiai. Kol nieko nekeičiate, kiekvienas įrenginys veikia kaip anksčiau. Žr. [Naudoti jutiklinę plokštelę, 3D pelę ar valdiklį](common:input-devices).
+- **Įrankių juostos eilutės.** {{ui:Settings}} › {{ui:General}} › {{ui:Toolbar rows}} turi {{ui:Wrap}} (numatytoji), {{ui:2 rows}} ir {{ui:1 row}}, todėl brėžiniui lieka daugiau vietos. Žr. [Išdėstyti skydelius](common:arrange-panels).
+- **Ypatybių lentelė.** Žymėjimo Stiliaus laukai naudoja bendrą lentelę, su sutraukiamomis kategorijomis ir antraščių bei reikšmių stulpeliais.
+- **Problemų skydelis.** Programos įspėjimai, pavyzdžiui, pavėluota užduotis, surenkami viename Problemų skydelyje.
+- **Live ir priedai.** Live sesijos aprašytos [Dirbti kartu tiesiogiai](common:work-together-live); priedų sąrašas, sekantis jūsų paskyrą, aprašytas [Priedai ir jūsų paskyros sąrašas](common:addons-basics).
+- **Prijunkite savo DI.** CadCraft Studio yra jūsų asistento centras: prijunkite vieną kartą visoms aštuonioms programoms. Programos savo DI neturi.
 
-## Dar nėra šioje versijoje
+## Ištaisyta 0.8.1 versijoje
 
-- **0.7 nėra pasirašyta kodu.** Pasirašymas ir Microsoft Store paketas perkelti į 0.8, nes sertifikato patvirtinimas dar negautas. Patikrinkite SHA-256 šalia kiekvieno failo getcadcraft.com/download. Windows sistemoje, jei SmartScreen sustabdo diegimo programą, pasirinkite {{ui:Daugiau informacijos}}, tada {{ui:Vis tiek paleisti}}. Mac kompiuteryje pirmą kartą dešiniu pelės mygtuku spustelėkite CadCraft Studio ir pasirinkite {{ui:Atidaryti}}. CadCraft Studio dar nėra programų parduotuvėje, o iPad ar iPhone versijos dar nėra.
-- Kampų ir nuolydžių sąrašai skiltyje {{ui:Vienetai}} išsaugomi, bet nė vienas langas jų dar nenaudoja.
-- Lauko įrašai nėra bendrinami CadCraft Studio tiesioginėje sesijoje (tiesioginėse sesijose perduodami tik žymėjimai); kopijas sujunkite su {{ui:Sujungti}}.
-- {{ui:Sujungti}} paima įrašą kaip visumą iš paskutinį pakeistos kopijos: jei du žmonės pakeitė skirtingus to paties įrašo laukus, vėlesnės kopijos laukai laimi. Gijos ir priedų pavadinimai sujungiami.
-- Priedai – tik pavadinimai; patys failai lieka, kur yra. Įrašams nėra narių, pranešimų ar debesies projektų, o asistentams įrašams įrankių dar nėra.
-- Lauko įrašai išbandyti naršyklėje telefono ir planšetės dydžiais nutrūkus ryšiui, bet dar nebandyti rankomis tikroje planšetėje.
-- Vis dar iš 0.6: puslapio objektų sukimas bet kuriuo kampu, naujų figūrų piešimas tiesiai į puslapį, linijos šrifto ar dydžio keitimas ir tekstas, tekantis per kelias eilutes. Įrašyta kopija su puslapio pakeitimais dar neatidaryta Acrobat programoje.
-- Vis dar iš 0.5: puslapio pakeitimo atšaukimas (pvz., tuščio puslapio pridėjimas), tekstų skaitymas iš nuskenuotų lapų ir tiesioginės sesijos už jūsų tinklo ribų.
+- **Studio gali keisti kalbą veikimo metu.** Anksčiau darbalaukio programa ir supakuoti leidimai liko anglų kalba. Tai dar nepatikrinta visose platformose: praneškite, jei kalba nepasikeičia.
+- Studio 0.8 diegimams siūlomas 0.8.1 per {{ui:Settings}} › {{ui:Updates}}.
 
-Viskas kita – [Kas dar nepadaryta](topic:not-built-yet).
+## Šios versijos dar nėra
+
+- **Nepasirašyta kodu.** Windows diegimo programos ir macOS .dmg dar neturi parašo. Windows sistemoje, jei SmartScreen sustabdo diegimo programą, pasirinkite {{ui:More info}}, tada {{ui:Run anyway}}. Mac kompiuteryje dešiniuoju pelės mygtuku spustelėkite CadCraft Studio ir pasirinkite {{ui:Open}}. Parduotuvės versijos sustabdytos.
+- **Savo DI prijungimas kai kur nebaigtas.** Vieno paspaudimo prijungimas Studio viduje, prijungiamas talpinamas jungtis naršyklės asistentams ir jūsų pačių API raktas Studio viduje šiai versijai neužtikrinami. Užduočių ciklas išbandytas, bet dar ne su tikru asistentu.
+- **Užduočių patikrinimui reikia to paties lapo dydžio.** Lapas, perbraižytas kitu dydžiu, nesutaps, todėl jo užduotys neužsidarys. Lapai poruojami pagal lapo numerį, o jei jo nėra, pagal puslapio vietą.
+- **Balso pastabos – tik įrašai.** Nėra transkripcijos, o asistentas mato pastabos trukmę, autorių ir antraštę, bet ne garsą. Įrašymas išbandytas su netikru mikrofonu be ekrano naršyklėje; tikras mikrofonas telefone, planšetėje ar nešiojamajame kompiuteryje dar turi būti patikrintas.
+- **Skaičiavimo lapai ir priežastys PDF faile** saugomi privačiame failo įraše. Senesnis MarkupCraft jį ignoruoja ir pašalina kitą kartą, kai įrašo failą, todėl tokius failus atidarykite ir įrašykite su 0.8 ar naujesne versija.
+- **Braižytojo pusė raudonųjų pakeitimų.** CadCraft, skaitantis raudonojo žymėjimo failą ir į jį atsakantis, dar nesukurtas.
+- **Kitos kalbos.** Tamilų kalbos programos juosta išsiplečia per 528 px.
+
+Visa kita yra [Kas dar nesukurta](topic:not-built-yet). Ankstesnį leidimą žr. [Kas naujo 0.7 versijoje](topic:whats-new-0-7).

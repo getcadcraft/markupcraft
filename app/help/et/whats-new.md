@@ -1,43 +1,60 @@
 ---
-title: Mis on uut versioonis 0.7
-summary: RFI-d, esitused ja päevaraamatud uues Väli-vahekaardis, tähtajad koos ületamisega punaselt, CSV ja BCF, töö võrguta ja Ühenda; assistendid, mis määravad staatusi, vastavad ja ekspordivad loendi; ühikute loendid, mis järgivad sätteid; paneelid, mis end kokku korjavad, ja dialoogid, mis liiguvad.
-keywords: mis on uut, väljaannete märkmed, muudatuste logi, muudatused, 0.7, versioon, uued funktsioonid, väli, väljakirjed, rfi, päringu teave, esitus, päevaraamat, tähtaeg, ületatud, määratud mulle, naast, ühenda, võrguta, tahvel, bcf, csv, assistent, mcp, märgistuse staatus, vastus, eksport, ühikud, ühikute loendid, täht, kalibreeri, tihe, paneelid, dialoogid, portugali
-from: 142e1a1e
+title: Mis on uut versioonides 0.8 ja 0.8.1
+summary: Märgistused, mis muutuvad ülesanneteks ja sulguvad ise, lihtne loend joonise muudatustest redaktsioonide vahel, häälmärkmed ja otsused plaanil, punase parandusega failid joonistajale ning ühised 0.8 muudatused: sisendseadmed, tööriistariba read, probleemid ja rohkem keeli.
+keywords: mis uut, mis on uut, väljalaskemärkmed, muudatuste logi, muudatused, 0.8, 0.8.1, versioon, uued funktsioonid, ülesanne, ülesanded, vastutaja, tähtpäev, tähtaeg ületatud, kontrolli kohe, mis muutus, redaktsioonid, võrdle, häälmärkus, otsus, punane parandus, vastusefail, joonistaja, assistent, mcp, probleemid, keeled, sisendseadmed, puuteplaat, tööriistariba read, omaduste ruudustik, värskendus
+from: 40368796
 ---
 
-See on, mis MarkupCraftis muutus versioonis 0.7 võrreldes versiooniga 0.6. Suurim uus asi on väljakirjed: RFI-d, esitused ja päevaraamatud, mis hoitakse PDF-is märgistuste kõrval.
+See on, mis muutus MarkupCraftis versioonides 0.8 ja 0.8.1 võrreldes versiooniga 0.7. Suur uus asi on see, et märgistus võib olla ülesanne, mille teeb keegi või sinu enda assistent ja mis sulgub ise, kui joonis tegelikult muutub.
 
-## Uut
+## Uus
 
-### RFI-d, esitused ja päevaraamatud
+### Märgistused, mis tegutsevad
 
-- **Väli-vahekaart.** Ava {{ui:Väli}} vahekaart ja vali {{ui:RFI}}, {{ui:Esitus}} või {{ui:Päevaraamat}}. Puuduta või klõpsa lehel kohta, kuhu RFI või esitus kuulub, ja naast märgib koha. Päevaraamat läheb avatud lehele ilma naastuta ({{ui:Aseta naast}} lisab naasti hiljem, {{ui:Teisalda naast}} teisaldab mis tahes naasti). Igal kirjel on oma number (RFI-0001, SUB-0001, LOG-0001), pealkiri, tekst, staatus, määratud isik, tähtaeg, vastuste lõim ja manuste nimede loend. Vt [Jälgi RFI-sid, esitusi ja päevaraamatuid](topic:field-records).
-- **Vaata, mis on hilinenud.** Filtreeri loendit tüübi, staatuse, tähtaja (tähtaeg ületatud, tähtaeg 7 päeva pärast, tähtajaga või ilma), selle lehe või kõigi lehtede, tekstiotsingu või {{ui:Määratud mulle}} järgi. Kirje, mis on tähtajast üle ja ootab endiselt, on loendis ja oma naastul märgitud punasena **Tähtaeg ületatud**. Vt [Leia see, mis loeb](topic:field-records#find-what-matters).
-- **CSV ja BCF.** {{ui:CSV}} kirjutab loendatud kirjed tabelina; {{ui:BCF}} kirjutab need BCF-teemadena, igaühel koha hetktõmmis lehel. Mõlemad järgivad filtreid. Vt [Eksport](topic:field-records#export).
-- **Võrguta ja kaks koopiat üheks.** Kirjed salvestatakse PDF-i sisse ja ei vaja võrku, nii et tahvelarvuti kohapeal saab neid lisada, vastata ja salvestada. Kontoris ühendab {{ui:Ühenda}} teise sama PDF-i koopia kirjed nende ID-de järgi ühe tagasivõtmise sammuna. Vt [Salvestamine, võrguta töö ja koopiate ühendamine](topic:field-records#save-offline-and-merging-copies).
+- **Tee märgistus ülesandeks.** Vali üks või mitu märgistust, ava {{ui:Tasks}} sakk ja vali {{ui:Make selected a task}}. Ülesandel on pealkiri, isik või sinu ühendatud assistent, kes selle teeb, valikuline tähtpäev ja olek ning see säilitab oma koha lehel ja oma lõimes. Vt [Märgistuse tegemine ülesandeks](topic:markups-that-act).
+- **Ülesanded, mis sulguvad ise.** Ülesanne võib jälgida joonist oma märgistuse sees. Ava lehe uuem redaktsioon ja vali {{ui:Check now}}: kui selle ala jooned on muutunud rohkem kui veidi, märgitakse ülesanne tehtuks, märgistus muutub lõpetatuks ning lõimes olev märkus ütleb, mis muutus. Uus kuupäevamärk või jooned, mis on nihkunud vähem kui 1,5 punkti, ei loe. Ülesanne võib selle asemel jälgida mudeli elementi: assistent teatab elemendi aruande `tasks_check` abil ja hilisem erinev teade või kustutatud element sulgeb ülesande. Üks tagasivõtmise samm avab selle uuesti.
+- **Leia töö.** Filtreeri {{ui:Tasks}} loendit oleku ja selle järgi, kellele see on mõeldud, kaasa arvatud {{ui:Overdue}}; vali {{ui:Assigned to}}, seejärel {{ui:Assistant}}, et näha, mis ootab sinu assistenti. Tähtpäeva ületanud ülesanne kuvatakse probleemide paneelis hoiatusena. {{ui:CSV}} ekspordib loendi. Ülesanded salvestatakse PDF-i koos märgistusega ning liiguvad Live'i kaudu nagu teised märgistuse omadused.
+
+### Mis muutus, lihtsa loendina
+
+- **Loetle muudatused.** Ava {{ui:Compare}} sakk, seejärel {{ui:Compare a whole set}}, vali varasem ja hilisem fail ning vali {{ui:List the changes}}. Loend algab arvuga ja hõlmab iga muudetud lehte, suurima muudatusega esimesena: kus lehel, kui suur (tegelikes ühikutes ning kalibreeritud lehel ka paberi tollides), kas jooni lisati või eemaldati, mitu märgistust seal asub ning millised sõnad ilmusid või kadusid. {{ui:Copy the list}} kopeerib loendi lõikelauale ja {{ui:CSV}} kirjutab iga muudatuse kohta ühe rea. Vt [Redaktsioonide vahel muutunu loend](topic:what-changed-in-words).
+
+### Häälmärkmed ja otsused
+
+- **Häälmärkmed.** Sakis {{ui:Notes}} vali {{ui:Record a voice note}}, seejärel {{ui:Stop recording}}; salvestus lõpeb iseenesest kahe minuti pärast. Märkus kinnitatakse lehe keskele. Lohista see sinna, kuhu see kuulub, ja kirjuta pealdis aknas {{ui:Properties}}. Loendis {{ui:Play}} esitab märkme. Salvestis salvestatakse PDF-i sisse.
+- **Otsused.** {{ui:Pin a decision}} kirjutab lehele ühe või kaks lauset. Kui see asendab varasema otsuse, vali too väljal {{ui:It replaces}}: vana jääb alles, märgitakse Asendatud ja osutab uuele. Üks tagasivõtmise samm võtab selle tagasi. Vt [Häälmärkmete ja otsuste kinnitamine lehele](topic:voice-notes-and-decisions).
+
+### Punane parandus redaktsiooniks
+
+- **Saada ja vasta.** Sakis {{ui:Tasks}} ava {{ui:Redline to revision}}, kirjuta redaktsioon, millega märgistused võrduvad, ja vali {{ui:Export redline file}}. Saad faili `.redline.json`, kus on üks kirje iga avatud märgistuse kohta: leht, asukoht (lehe murdosana, et uuesti teisel suurusel printimine ikka kohakuti jääks), sõnad, autor, lõim ja selle ülesanne. Joonistaja, kes muudatused teeb, vastab failis `.redline-answers.json` olekuga Aktsepteeritud, Tagasi lükatud või Tehtud. {{ui:Load answers file…}} annab igale märgistusele selle oleku ja joonistaja märkuse ühe tagasivõtmise sammuna. Vt [Märgistuste saatmine joonistajale punase parandusena](topic:redline-to-revision).
 
 ### AI-assistendid
 
-- **Rohkem, mida assistent teha saab.** Sinu enda assistent, mis on ühendatud CadCraft Studio kaudu, saab nüüd määrata märgistuse staatust (`markup_status`, logitakse selle lõimes), vastata lõimes (`markup_reply`) ja eksportida {{ui:Märgistused}} loendi CSV- või BCF-na (`markups_export`, mida loend näitab oma filtritega). Iga muudatus on üks tagasivõtmise samm ja on allkirjastatud assistendi nimega. Vt [Mida assistent võib küsida](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Veel tööriistu.** CadCraft Studio kaudu ühendatud assistent saab loetleda ülesandeid (`tasks_list`), luua või muuta ühte (`task_set`), ülesande eemaldada (`task_clear`), kontrollida ühte uuema redaktsiooni või elemendi vastu (`tasks_check`) ning lugeda kahe avatud plaanikomplekti vahelise muudatuste lihtloendi (`revisions_changes`). Ta saab ainult need tööriistad, mille oled märkinud lüliti Assistendid all, ja iga muudatus on üks tagasivõtmise samm. Vt [MarkupCrafti kasutamine AI-assistendiga](topic:use-with-ai-assistants).
 
-## Kõigis rakendustes
+## Igas rakenduses
 
-- **Ühikud.** {{ui:Sätted}} › {{ui:Üldine}} › {{ui:Ühikud}} sisaldab eraldi loendit pikkuse, pindala, mahu, nurga ja kalde jaoks, täpsete suurustega, mis tulevad ühikute definitsioonidest (USA mõõdu-jalg on oma ühik). Lülita välja ühikud, mida ei kasuta, ja need lahkuvad ühikute loenditest; tähista üks tärniga ja uus töö algab selles. Fail säilitab alati oma ühiku. MarkupCraftis järgivad mõõtmise ja asukoha ühikud ning kalibreerimisdialoogi ühik {{ui:Sätted}} › {{ui:MarkupCraft}} lülitusi; täht määrab mõõtühiku, kuni salvestad MarkupCraft'i enda sätted; ja tegelik kaugus, mille kalibreerimisel sisestad, võib kanda mis tahes ühiku tähist, nagu `3 yd` või `1.5 km`. Vt [Ühikud, sisestatud väärtused ja ühikute loendid](common:unit-lists).
-- **Tihedam paigutus ja paneelid, mis end kokku korjavad.** {{ui:Sätted}} › {{ui:Üldine}} › {{ui:Paigutuse tihedus}} › {{ui:Tihe}} mahutab ekraanile rohkem (puuteekraanid ja telefonid säilitavad suured nupud). Igal külgpaneelil on kitsas pealkirjariba: lohista see, et paneel kinnitada või vabaks teha; pane see teise paneeli ribale, et jagada üks raam vahekaartidena; kinnita see, et see libiseks servale; või peida ja too servast tagasi. Vt [Paneelide paigutamine](common:arrange-panels#make-the-layout-denser).
-- **Dialoogid liiguvad.** Lohista dialoog pealkirjaribast jooniselt eemale; see tuleb tagasi sinna, kus jätsid. Topeltklõps pealkirjaribal tsentreerib selle uuesti. Vt [Dialoogi liigutamine](common:arrange-panels#move-a-dialog).
-- **Retseptid AI-assistentidele.** Kümme läbi töötatud päringut sinu enda assistendile (korista joonis, joonista plaanikomplekt, kontrolli jooniseid, küsi mudeli kohta, koosta kogus, proovi detaili varianti…), igaüks koos kutsutavate tööriistade ja vajalike lubadega ning igaüks meie testidega uuesti läbi mängitud. Rakendused ei sisalda AI-d. Vt [Retseptid AI-assistentidele](common:assistants-recipes).
-- **Keeled.** **Português (Portugal)** on uus valik {{ui:Sätted}} › {{ui:Üldine}} › {{ui:Keel}} all. See, **Português (Brasil)**, **Español (México)** ja **Bahasa Indonesia** on nüüd kõigi rakenduste sõnadega, kuid mustanditena, mida emakeelne kasutaja pole veel üle vaadanud. Abi teemad on inglise keeles.
-- **CadCraft Studio** ütleb nüüd, miks uuenduse kontroll ebaõnnestus (sinu süsteemile pole faili, võrku pole, allkiri on vigane), selle asemel et lihtsalt „Valmis“, ja ei too enam tagasi suletud kaarti Mis on uut, kuni on uuem väljaanne.
+- **Keeled.** CadCraft Studio toetab nüüd 54 keelt. Kümme on uued: leedu, läti, bosnia, marathi, telugu, albaania, afrikaani, filipiini, suahiili ja usbeki keel. Kõik inglisest erinevad keeled on masinmustandid, kuni emakeelne kõneleja need üle loeb.
+- **Sisendseadmed.** {{ui:Settings}} › {{ui:Global}} › {{ui:Input devices}} määrab, mida teevad puuteplaat, hiire külgnupud, pliiats, sõrmepuuted, 3D-hiir, mängukontroller või MIDI-kontroller, kõigi rakenduste või ainult selle jaoks. Kuni midagi muudad, töötab iga seade nagu varem. Vt [Puuteplaadi, 3D-hiire või kontrolleri kasutamine](common:input-devices).
+- **Tööriistariba read.** {{ui:Settings}} › {{ui:General}} › {{ui:Toolbar rows}} sisaldab valikuid {{ui:Wrap}} (vaikimisi), {{ui:2 rows}} ja {{ui:1 row}}, nii et joonisele jääb rohkem ruumi. Vt [Paneelide korraldamine](common:arrange-panels).
+- **Omaduste ruudustik.** Märgistuse stiiliväljad kasutavad jagatud ruudustikku, mille kategooriaid saab kokku klapida ning millel on sildi- ja väärtuseveerud.
+- **Probleemide paneel.** Rakenduse hoiatused, näiteks tähtaja ületanud ülesanne, kogutakse ühte probleemide paneeli.
+- **Live ja lisandmoodulid.** Live'i seansid on kirjeldatud jaotises [Koostöö reaalajas](common:work-together-live). Sinu kontoga seotud lisandmoodulite loend on jaotises [Lisandmoodulid ja sinu konto loend](common:addons-basics).
+- **Ühenda oma AI.** CadCraft Studio on sinu enda assistendi keskus: ühenda üks kord kõigi kaheksa rakenduse jaoks. Rakendustel endil ei ole ühtegi oma tehisintellekti.
 
-## Pole selles versioonis veel
+## Parandatud versioonis 0.8.1
 
-- **0.7 pole koodiga allkirjastatud.** Allkirjastamine ja Microsoft Store’i pakett lükati versioonile 0.8, sest sertifikaadi kinnitus pole veel tulnud. Kontrolli iga faili kõrval olevat SHA-256 räsi lehel getcadcraft.com/download. Windowsis, kui SmartScreen peatab installija, vali {{ui:Lisateave}}, seejärel {{ui:Käivita siiski}}. Macis tuleb esmakordselt paremklõpsata CadCraft Studiol ja valida {{ui:Ava}}. CadCraft Studio pole veel ühegi rakenduspoes ega iPadi ega iPhone'i versiooni pole veel.
-- Ühikute {{ui:Ühikud}} nurga- ja kaldeloendid salvestatakse, aga ükski kast neid veel ei loe.
-- Väljakirjeid ei jagata CadCraft Studio reaalajaseansis (reaalajaseansid kannavad ainult märgistusi); too koopiad kokku {{ui:Ühenda}} abil.
-- Ühenda võtab kirje tervikuna sellest koopiast, mida viimati muudeti: kui kaks inimest muutsid ühe kirje eri välju, võidavad hilisema koopia väljad. Lõimed ja manuste nimed ühendatakse.
-- Manused on ainult nimed; failid jäävad sinna, kus on. Väljakirjetel ei ole tiime, teavitusi ega pilveprojekte ning assistentidel pole veel väljakirjete tööriistu.
-- Väljakirjeid testiti brauseris telefoni ja tahvli suurustes ja võrgu ühenduse katkestamisel, aga pole veel käsitsi päris tahvelarvutil proovitud.
-- Veel versioonist 0.6: lehe objektide pööramine mis tahes nurga alla, uute kujundite joonistamine otse lehele, joone fondi või suuruse muutmine ning tekst, mis voolab mitmele reale. Lehe muudatustega salvestatud koopiat pole veel Acrobatis avatud.
-- Veel versioonist 0.5: lehe muudatuse tagasivõtmine (näiteks tühja lehe lisamine), tekstide lugemine skaneeritud lehtedelt ja reaalajaseansid väljaspool sinu oma võrku.
+- **Studio saab töötamise ajal keelt vahetada.** Varem jäid töölauarakendus ja pakendatud väljaanded inglise keelde. Seda ei ole veel testitud igal platvormil: anna meile teada, kui keel ei muutu.
+- Studio 0.8 paigaldustele pakutakse versiooni 0.8.1 jaotises {{ui:Settings}} › {{ui:Updates}}.
 
-Kõik muu on jaotises [Mida pole veel ehitatud](topic:not-built-yet).
+## Veel selles versioonis puudub
+
+- **Pole koodiga allkirjastatud.** Windowsi paigaldusprogrammidel ja macOS-i .dmg-failil ei ole veel allkirja. Windowsis, kui SmartScreen peatab paigaldusprogrammi, vali {{ui:More info}}, seejärel {{ui:Run anyway}}. Macis klõpsa CadCraft Studio'l hiire parema nupuga ja vali {{ui:Open}}. Poe versioonid on ootel.
+- **Ühenda oma AI on mõnes kohas pooleli.** Ühe klikiga ühendamine Studio sees, hostitud konnektor brauseri assistentidele ja oma API-võti Studio sees ei ole selles väljalaskes lubatud. Ülesannete tsükkel on testitud, kuid mitte veel päris assistendiga.
+- **Ülesannete kontroll nõuab sama lehe suurust.** Teisel suurusel uuesti printimine ei sobitu, seega selle ülesanded ei sulgu. Lehed seotakse lehe numbri järgi, muidu lehe asukoha järgi.
+- **Häälmärkmed on ainult salvestised.** Transkripti ei ole. Assistent näeb märkme pikkust, autorit ja pealdist, mitte heli. Salvestamist prooviti ilma kasutajaliideseta brauseris valemikrofoniga; päris mikrofon telefonis, tahvelarvutis või sülearvutis on veel kontrollimata.
+- **Arvutuslehed ja põhjendused PDF-is** hoitakse faili privaatses kirjes. Vanem MarkupCraft ignoreerib seda kirjet ja eemaldab selle järgmisel faili salvestamisel, seega ava ja salvesta sellist faili versiooniga 0.8 või hilisemaga.
+- **Joonistaja pool punastest parandustest.** Punase parandusega faili lugemine ja sellele vastamine rakenduses CadCraft ei ole veel valmis.
+- **Teised keeled.** Tamili keele rakenduse riba ületab 528 px.
+
+Kõik muu on jaotises [Mis pole veel valmis](topic:not-built-yet). Eelmise väljalaske kohta vt [Mis uut versioonis 0.7](topic:whats-new-0-7).

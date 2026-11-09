@@ -1,43 +1,60 @@
 ---
-title: Novidades da versão 0.7
-summary: RFI, submissões e diários de obra num novo separador Obra, com prazos, atrasados a vermelho, CSV e BCF, trabalho offline e Juntar; assistentes que definem estados, respondem e exportam a lista; listas de unidades que seguem as Definições; painéis que se recolhem e caixas de diálogo que se movem.
-keywords: novidades, o que há de novo, notas de versão, registo de alterações, alterações, 0.7, versão, novas funcionalidades, obra, registos de obra, rfi, pedido de informação, submissão, diário de obra, atrasado, prazo, atribuídos a mim, marcador, juntar, offline, tablet, bcf, csv, assistente, mcp, estado da anotação, resposta, exportar, unidades, listas de unidades, estrela, calibrar, compacto, painéis, caixas de diálogo, português
-from: 142e1a1e
+title: Novidades na 0.8 e na 0.8.1
+summary: Anotações que se tornam tarefas e se fecham sozinhas, uma lista simples do que mudou entre revisões, notas de voz e decisões no plano, ficheiros de marcação para o desenhador, e as alterações partilhadas da 0.8, como dispositivos de entrada, linhas da barra de ferramentas, Problemas e mais idiomas.
+keywords: novidades, o que há de novo, notas de lançamento, registo de alterações, alterações, 0.8, 0.8.1, versão, novas funcionalidades, tarefa, tarefas, responsável, dia limite, em atraso, verificar agora, o que mudou, revisões, comparar, nota de voz, decisão, marcação, ficheiro de respostas, desenhador, assistente, mcp, problemas, idiomas, dispositivos de entrada, trackpad, linhas da barra de ferramentas, grelha de propriedades, atualização
+from: 40368796
 ---
 
-Isto é o que mudou no MarkupCraft 0.7 em comparação com a 0.6. A grande novidade são os registos de obra: RFI, submissões e diários de obra guardados dentro do PDF, junto das suas anotações.
+Isto é o que mudou na MarkupCraft 0.8 e 0.8.1, comparado com a 0.7. A grande novidade é que uma anotação pode ser uma tarefa que alguém, ou o seu assistente, executa, e que se fecha sozinha quando o desenho muda de facto.
 
 ## Novo
 
-### RFI, submissões e diários de obra
+### Anotações que agem
 
-- **O separador Obra.** Abra o separador {{ui:Obra}} e escolha {{ui:RFI}}, {{ui:Submissão}} ou {{ui:Diário de obra}}. Toque ou clique na folha a que pertence um RFI ou uma submissão e um marcador assinala o sítio; um diário de obra fica na folha aberta sem marcador ({{ui:Colocar marcador}} acrescenta um mais tarde, {{ui:Mover marcador}} move qualquer marcador). Cada registo tem o seu próprio número (RFI-0001, SUB-0001, LOG-0001), um título, texto, um estado, um responsável, um prazo, uma conversa de respostas e uma lista de nomes de anexos. Veja [Acompanhar RFI, submissões e diários de obra](topic:field-records).
-- **Ver o que está atrasado.** Filtre a lista por tipo, estado, prazo (atrasado, a terminar em 7 dias, com ou sem prazo), esta folha ou todas as folhas, uma pesquisa de texto ou {{ui:Atribuídos a mim}}. Um registo que passou o prazo e continua à espera fica marcado como **Atrasado**, a vermelho, na lista e no respetivo marcador. Veja [Encontrar o que importa](topic:field-records#find-what-matters).
-- **CSV e BCF.** {{ui:CSV}} escreve os registos listados como folha de cálculo; {{ui:BCF}} escreve-os como tópicos BCF, cada um com uma imagem instantânea do seu local na folha. Ambos seguem os filtros. Veja [Exportar](topic:field-records#export).
-- **Offline, e duas cópias transformadas numa.** Os registos são guardados dentro do PDF e não precisam de rede, pelo que um tablet na obra pode acrescentá-los, respondê-los e guardá-los. De volta ao gabinete, {{ui:Juntar}} junta os registos de outra cópia do mesmo PDF através dos respetivos ids, num único passo de anulação. Veja [Guardar, offline e juntar cópias](topic:field-records#save-offline-and-merging-copies).
+- **Transformar uma anotação numa tarefa.** Selecione uma ou mais anotações, abra o separador {{ui:Tarefas}} e escolha {{ui:Fazer da seleção uma tarefa}}. Uma tarefa tem um título, uma pessoa ou o seu assistente ligado para a executar, um dia limite opcional e um estado, e mantém o seu sítio na folha e a sua conversa. Ver [Transformar uma anotação numa tarefa](topic:markups-that-act).
+- **Tarefas que se fecham sozinhas.** Uma tarefa pode acompanhar o desenho dentro da sua anotação. Abra uma revisão mais recente da folha e escolha {{ui:Verificar agora}}: se as linhas dessa área mudaram mais do que um fio de cabelo, a tarefa é marcada como Concluída, a anotação passa a Concluída e uma nota na conversa diz o que mudou. Um novo carimbo de data, ou linhas que se deslocaram menos de 1.5 pontos, não contam. Em vez disso, uma tarefa pode acompanhar um elemento do modelo: o seu assistente comunica o elemento com `tasks_check`, e um relatório posterior que difere, ou um elemento eliminado, fecha a tarefa. Um passo de anulação reabre-a.
+- **Encontrar o trabalho.** Filtre a lista {{ui:Tarefas}} por estado e pela pessoa a quem se destina, incluindo {{ui:Em atraso}}; escolha {{ui:Atribuída a}} e depois {{ui:Assistente}} para ver o que espera pelo seu assistente. Uma tarefa passada do dia limite aparece como aviso no painel Problemas. {{ui:CSV}} exporta a lista. As tarefas são guardadas no PDF com a anotação e viajam pela Live como as outras propriedades das anotações.
+
+### O que mudou, numa lista simples
+
+- **Listar as alterações.** Abra o separador {{ui:Comparar}}, depois {{ui:Comparar um conjunto de folhas completo}}, escolha o ficheiro anterior e o posterior e escolha {{ui:Listar as alterações}}. A lista começa com uma contagem e depois cobre cada folha alterada, começando pela maior alteração: onde está na folha, qual a sua dimensão (em unidades reais e também em polegadas (in) de papel numa folha calibrada), se foram acrescentadas ou removidas linhas, quantas anotações lá estão e que palavras apareceram ou desapareceram. {{ui:Copiar a lista}} coloca-a na área de transferência, e {{ui:CSV}} escreve uma linha por alteração. Ver [Listar o que mudou entre revisões](topic:what-changed-in-words).
+
+### Notas de voz e decisões
+
+- **Notas de voz.** No separador {{ui:Notas}} escolha {{ui:Gravar uma nota de voz}}, depois {{ui:Parar a gravação}}; as gravações param sozinhas ao fim de dois minutos. A nota fica fixada no centro da folha; arrasta-se para onde pertence e escreve-se uma legenda em {{ui:Propriedades}}, e {{ui:Reproduzir}} na lista reproduz a nota. A gravação fica guardada dentro do PDF.
+- **Decisões.** {{ui:Afixar uma decisão}} escreve uma ou duas frases na folha. Se a nova substituir uma decisão anterior, escolha essa em {{ui:Substitui}}: a antiga mantém-se, marcada como Substituída, e aponta para a nova. Um único passo de anulação a retira. Ver [Afixar notas de voz e decisões numa folha](topic:voice-notes-and-decisions).
+
+### Marcação para revisão
+
+- **Enviar e responder.** No separador {{ui:Tarefas}} abra {{ui:Marcação para revisão}}, escreva a revisão a que as anotações se referem e escolha {{ui:Exportar ficheiro de marcação}}. Obtém-se um ficheiro `.redline.json` com um item por cada anotação aberta: folha, posição (em frações da folha, para que uma nova impressão a outra escala continue alinhada), palavras, autor, conversa e a sua tarefa. Quem desenha as alterações responde Aceite, Rejeitada ou Concluída num ficheiro `.redline-answers.json`; {{ui:Carregar ficheiro de respostas…}} dá a cada anotação esse estado e a nota do desenhador, como um único passo de anulação. Ver [Enviar anotações ao desenhador como marcação para revisão](topic:redline-to-revision).
 
 ### Assistentes de IA
 
-- **Mais coisas que um assistente pode fazer.** O seu próprio assistente, ligado através do CadCraft Studio, pode agora definir o estado de uma anotação (`markup_status`, registado na sua conversa), responder numa conversa (`markup_reply`) e exportar a lista {{ui:Anotações}} como CSV ou BCF (`markups_export`, o que a lista mostra com os seus filtros). Cada alteração é um passo de anulação, assinado com o nome do assistente. Veja [O que um assistente pode pedir](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Mais ferramentas.** Um assistente ligado através do CadCraft Studio pode listar tarefas (`tasks_list`), criar ou alterar uma (`task_set`), retirá-la (`task_clear`), verificá-la contra uma revisão mais recente ou um elemento (`tasks_check`) e ler a lista simples de alterações entre dois conjuntos de planos abertos (`revisions_changes`). Só recebe as ferramentas que assinalou sob o interruptor Assistentes, e cada alteração é um passo de anulação. Ver [Usar o MarkupCraft com um assistente de IA](topic:use-with-ai-assistants).
 
 ## Em todas as aplicações
 
-- **Unidades.** {{ui:Definições}} › {{ui:Geral}} › {{ui:Unidades}} tem uma lista para cada um de comprimento, área, volume, ângulo e inclinação, com os tamanhos exatos que as definições das unidades dão (o pé de agrimensura dos EUA é uma unidade própria). Desative as unidades que nunca usa e elas saem das listas de unidades; marque uma com estrela e o trabalho novo começa nela. Um ficheiro conserva sempre a sua própria unidade. No MarkupCraft, as unidades de medição e de posição em {{ui:Definições}} › {{ui:MarkupCraft}} e a unidade da caixa de diálogo de calibração seguem os interruptores, a estrela define a unidade de medição até guardar as definições próprias do MarkupCraft, e a distância real que escreve ao calibrar pode levar a marca de qualquer unidade, como `3 yd` ou `1.5 km`. Veja [Unidades, valores escritos e listas de unidades](common:unit-lists).
-- **Um esquema mais denso e painéis que se recolhem.** {{ui:Definições}} › {{ui:Geral}} › {{ui:Densidade do esquema}} › {{ui:Compacta}} faz caber mais coisas no ecrã (os ecrãs táteis e os telemóveis mantêm os botões grandes). Cada painel lateral tem uma barra de título fina: arraste-a para ancorar ou fazer flutuar o painel, largue-a na barra de outro painel para partilharem uma moldura como separadores, fixe-a para deslizar para a margem, ou oculte-a e traga-a de volta a partir da margem. Veja [Organizar os painéis](common:arrange-panels#make-the-layout-denser).
-- **As caixas de diálogo movem-se.** Arraste uma caixa de diálogo pela barra de título para a tirar da frente do desenho; ela volta onde a deixou. Faça duplo clique na barra de título para a centrar de novo. Veja [Mover uma caixa de diálogo](common:arrange-panels#move-a-dialog).
-- **Receitas para assistentes de IA.** Dez pedidos completos para o seu próprio assistente (arrumar um desenho, imprimir um conjunto, verificar desenhos, fazer perguntas a um modelo, totalizar uma medição, experimentar uma variante de peça…), cada um com as ferramentas que chama e as permissões de que precisa, e cada um reproduzido pelos nossos testes. As aplicações não contêm IA. Veja [Receitas para assistentes de IA](common:assistants-recipes).
-- **Idiomas.** **Português (Portugal)** é novo em {{ui:Definições}} › {{ui:Geral}} › {{ui:Idioma}}. Este, o **Português (Brasil)**, o **Español (México)** e o **Bahasa Indonesia** têm agora todas as palavras das aplicações, como rascunhos ainda não revistos por um falante nativo. Os tópicos de ajuda estão em inglês.
-- **O CadCraft Studio** diz porque falhou uma verificação de atualização (ainda não há ficheiro para o seu sistema, sem rede, uma assinatura inválida) em vez de dizer apenas «Concluído», e deixa de trazer de volta um cartão de Novidades que fechou até haver uma versão mais recente.
+- **Idiomas.** O CadCraft Studio tem agora 54 idiomas. Dez são novos: lituano, letão, bósnio, marata, télugu, albanês, africâner, filipino, suaíli e uzbeque. Todos os não ingleses são rascunhos automáticos até que um falante nativo os leia.
+- **Dispositivos de entrada.** {{ui:Definições}} › {{ui:Global}} › {{ui:Dispositivos de entrada}} define o que faz um trackpad, os botões laterais do seu rato, uma caneta, toques com os dedos, um rato 3D, um controlador de jogos ou um controlador MIDI, para todas as aplicações ou só para esta. Até alterar algo, todos os dispositivos funcionam como antes. Ver [Usar um trackpad, rato 3D ou controlador](common:input-devices).
+- **Linhas da barra de ferramentas.** {{ui:Definições}} › {{ui:Geral}} › {{ui:Linhas da barra de ferramentas}} tem {{ui:Quebrar}} (a predefinição), {{ui:2 linhas}} e {{ui:1 linha}}, para que o desenho ganhe mais espaço. Ver [Organizar os painéis](common:arrange-panels).
+- **Grelha de propriedades.** Os campos de Estilo de uma anotação usam a grelha partilhada, com categorias recolhíveis e colunas de rótulo e de valor.
+- **Painel Problemas.** Os avisos da aplicação, como uma tarefa em atraso, reúnem-se num só painel Problemas.
+- **Live e suplementos.** As sessões Live estão descritas em [Trabalhar em conjunto em Live](common:work-together-live); a lista de suplementos que segue a sua conta está em [Suplementos e a lista da sua conta](common:addons-basics).
+- **Ligar a sua IA.** O CadCraft Studio é o centro do seu próprio assistente: ligar uma vez serve para as oito aplicações. As aplicações não têm IA própria.
+
+## Corrigido na 0.8.1
+
+- **O Studio pode mudar de idioma enquanto corre.** Antes, a aplicação de ambiente de trabalho e as edições empacotadas ficavam em inglês. Isto ainda não foi testado em todas as plataformas: se o idioma não mudar, convém comunicá-lo.
+- As instalações do Studio 0.8 recebem a oferta da 0.8.1 através de {{ui:Definições}} › {{ui:Atualizações}}.
 
 ## Ainda não nesta versão
 
-- **A 0.7 não está assinada com código.** A assinatura, e o pacote da Microsoft Store, passaram para a 0.8 porque a validação do certificado ainda não chegou. Verifique o SHA-256 junto a cada ficheiro em getcadcraft.com/download. No Windows, se o SmartScreen parar o instalador, escolha {{ui:Mais informações}} e depois {{ui:Executar mesmo assim}}. Num Mac, da primeira vez, clique com o botão direito no CadCraft Studio e escolha {{ui:Abrir}}. O CadCraft Studio ainda não está numa loja de aplicações, e ainda não há versão para iPad ou iPhone.
-- As listas de ângulo e inclinação em {{ui:Unidades}} ficam guardadas, mas nenhuma caixa as lê ainda.
-- Os registos de obra não são partilhados numa sessão Live do CadCraft Studio (as sessões Live só transportam anotações); junte as cópias com {{ui:Juntar}}.
-- Juntar toma um registo por inteiro da cópia alterada em último lugar: se duas pessoas alteraram campos diferentes do mesmo registo, prevalecem os campos da cópia mais recente. As conversas e os nomes dos anexos são juntados.
-- Os anexos são só nomes; os ficheiros ficam onde estão. Não há equipas, notificações nem projetos na nuvem para registos, e os assistentes ainda não têm ferramentas para registos.
-- Os registos de obra foram testados num navegador com tamanhos de telemóvel e de tablet e com a rede cortada, mas ainda não à mão num tablet verdadeiro.
-- Ainda da 0.6: rodar objetos de página para qualquer ângulo, desenhar formas novas diretamente na página, alterar o tipo de letra ou o tamanho de uma linha, e texto que flui por várias linhas. Uma cópia guardada com edições de página ainda não foi aberta no Acrobat.
-- Ainda da 0.5: anular uma alteração de página (como acrescentar uma página em branco), ler texto de folhas digitalizadas, e sessões Live para além da sua própria rede.
+- **Sem assinatura de código.** Os instaladores do Windows e o .dmg do macOS ainda não têm assinatura. No Windows, se o SmartScreen impedir o instalador, escolha {{ui:Mais informações}}, depois {{ui:Executar mesmo assim}}. Num Mac, clique com o botão direito no CadCraft Studio e escolha {{ui:Abrir}}. As versões para as lojas estão suspensas.
+- **Ligar a sua IA ainda está incompleto em alguns pontos.** A ligação com um clique dentro do Studio, o conector alojado para assistentes de navegador e a chave de API própria dentro do Studio não estão prometidos para esta versão. O ciclo de tarefas foi testado, mas ainda não com um assistente real.
+- **As verificações de tarefas exigem o mesmo tamanho de página.** Uma folha reimpressa com outro tamanho não coincide, por isso as suas tarefas não se fecham. As folhas são emparelhadas pelo número da folha ou, na falta dele, pela posição na página.
+- **As notas de voz são apenas gravações.** Não há transcrição, e um assistente vê a duração, o autor e a legenda de uma nota, não o som. A gravação foi testada com um microfone falso num navegador sem interface gráfica; um microfone real num telemóvel, tablet ou portátil ainda está por verificar.
+- **Folhas de cálculo e motivos num PDF** são guardados numa entrada privada do ficheiro. Um MarkupCraft mais antigo ignora essa entrada e descarta-a na próxima vez que guardar o ficheiro, por isso abra e guarde esse ficheiro com a versão 0.8 ou posterior.
+- **O lado do desenhador nas marcações para revisão.** A leitura do ficheiro de marcação pelo CadCraft e a resposta a esse ficheiro ainda não estão feitas.
+- **Outros idiomas.** A barra de aplicação em tâmil transborda 528 px.
 
-Tudo o resto está em [O que ainda não está implementado](topic:not-built-yet).
+Tudo o resto está em [O que ainda não está implementado](topic:not-built-yet). Para a versão anterior, ver [Novidades na 0.7](topic:whats-new-0-7).

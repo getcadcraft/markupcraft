@@ -49,31 +49,4 @@ export function cleanBookmarks(v, depth = 0) {
 
 export const count = (items) => items.reduce((n, b) => n + 1 + count(b.children || []), 0);
 
-export function writeOutline(lib, pdfDoc, items) {
-  const { PDFName, PDFHexString, PDFNumber } = lib;
-  const ctx = pdfDoc.context;
-  const N = (s) => PDFName.of(s);
-  pdfDoc.catalog.delete(N('Outlines'));
-  if (!items?.length) return;
-  const pages = pdfDoc.getPages();
-  const rootRef = ctx.nextRef();
-  const build = (list, parentRef) => {
-    const refs = list.map(() => ctx.nextRef());
-    let total = 0;
-    list.forEach((b, i) => {
-      const kids = build(b.children || [], refs[i]);
-      const d = ctx.obj({ Title: PDFHexString.fromText(b.title), Parent: parentRef });
-      if (i > 0) d.set(N('Prev'), refs[i - 1]);
-      if (i < list.length - 1) d.set(N('Next'), refs[i + 1]);
-      if (kids.refs.length) { d.set(N('First'), kids.refs[0]); d.set(N('Last'), kids.refs.at(-1)); d.set(N('Count'), PDFNumber.of(kids.total)); }
-      const pg = pages[b.page];
-      if (pg) d.set(N('Dest'), ctx.obj([pg.ref, N('Fit')]));
-      ctx.assign(refs[i], d);
-      total += 1 + kids.total;
-    });
-    return { refs, total };
-  };
-  const top = build(items, rootRef);
-  ctx.assign(rootRef, ctx.obj({ Type: 'Outlines', First: top.refs[0], Last: top.refs.at(-1), Count: PDFNumber.of(top.total) }));
-  pdfDoc.catalog.set(N('Outlines'), rootRef);
-}
+export { writeOutline } from './report/outline.js';   // lib/report, shared with the report binder

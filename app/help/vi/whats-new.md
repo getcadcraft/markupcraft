@@ -1,43 +1,60 @@
 ---
-title: Có gì mới trong 0.7
-summary: RFI, hồ sơ trình duyệt và nhật ký hằng ngày trong thẻ Hiện trường mới, có hạn, quá hạn hiện màu đỏ, CSV và BCF, làm việc ngoại tuyến và Gộp; trợ lý đặt trạng thái, phản hồi và xuất danh sách; danh sách đơn vị theo Cài đặt; các bảng tự thu gọn và hộp thoại di chuyển được.
-keywords: có gì mới, ghi chú phát hành, nhật ký thay đổi, thay đổi, 0.7, phiên bản, tính năng mới, hiện trường, hồ sơ hiện trường, rfi, yêu cầu thông tin, hồ sơ trình duyệt, nhật ký hằng ngày, nhật ký công trường, quá hạn, hạn, giao cho tôi, ghim, gộp, ngoại tuyến, máy tính bảng, bcf, csv, trợ lý, mcp, trạng thái đánh dấu, phản hồi, xuất, đơn vị, danh sách đơn vị, gắn sao, hiệu chuẩn, gọn, bảng, hộp thoại, tiếng bồ đào nha
-from: 142e1a1e
+title: Có gì mới trong 0.8 và 0.8.1
+summary: Markup có thể trở thành nhiệm vụ và tự đóng, danh sách đơn giản về những gì đã thay đổi giữa các bản sửa đổi, ghi chú giọng nói và quyết định trên mặt bằng, tệp redline cho người soạn thảo, và các thay đổi chung của 0.8: thiết bị nhập, số hàng thanh công cụ, Vấn đề, thêm ngôn ngữ.
+keywords: có gì mới, what's new, ghi chú phát hành, nhật ký thay đổi, thay đổi, 0.8, 0.8.1, phiên bản, tính năng mới, nhiệm vụ, task, người được giao, ngày hạn, quá hạn, kiểm tra ngay, đã thay đổi gì, bản sửa đổi, so sánh, ghi chú giọng nói, quyết định, redline, tệp trả lời, người soạn thảo, trợ lý, mcp, vấn đề, ngôn ngữ, thiết bị nhập, bàn di chuột, số hàng thanh công cụ, lưới thuộc tính, cập nhật
+from: 40368796
 ---
 
-Đây là những gì đã thay đổi trong MarkupCraft 0.7 so với 0.6. Điều mới lớn nhất là hồ sơ hiện trường: RFI, hồ sơ trình duyệt và nhật ký hằng ngày được giữ ngay trong PDF, bên cạnh các đánh dấu của bạn.
+Đây là những gì đã thay đổi trong MarkupCraft 0.8 và 0.8.1, so với 0.7. Điểm mới lớn nhất là một markup có thể là nhiệm vụ do ai đó, hoặc trợ lý của chính bạn, thực hiện, và nhiệm vụ đó tự đóng khi bản vẽ thực sự thay đổi.
 
 ## Mới
 
-### RFI, hồ sơ trình duyệt và nhật ký hằng ngày
+### Markup có thể hành động
 
-- **Thẻ Hiện trường.** Mở thẻ {{ui:Hiện trường}} và chọn {{ui:RFI}}, {{ui:Hồ sơ trình duyệt}} hoặc {{ui:Nhật ký hằng ngày}}. Chạm hoặc bấm vào tờ nơi RFI hay hồ sơ trình duyệt thuộc về và một ghim đánh dấu vị trí; nhật ký hằng ngày được đặt lên tờ đang mở mà không có ghim ({{ui:Đặt ghim}} thêm ghim sau, {{ui:Di chuyển ghim}} di chuyển bất kỳ ghim nào). Mỗi hồ sơ có số riêng (RFI-0001, SUB-0001, LOG-0001), tiêu đề, nội dung, trạng thái, người phụ trách, hạn, một chuỗi phản hồi và danh sách tên tệp đính kèm. Xem [Theo dõi RFI, hồ sơ trình duyệt và nhật ký hằng ngày](topic:field-records).
-- **Thấy cái gì đang trễ.** Lọc danh sách theo loại, trạng thái, hạn (quá hạn, đến hạn trong 7 ngày, có hoặc không có hạn), tờ này hay mọi tờ, tìm văn bản, hoặc {{ui:Giao cho tôi}}. Một hồ sơ đã quá hạn mà vẫn đang chờ được đánh dấu **Quá hạn**, màu đỏ, trên danh sách và trên ghim của nó. Xem [Tìm điều quan trọng](topic:field-records#find-what-matters).
-- **CSV và BCF.** {{ui:CSV}} ghi các hồ sơ đang liệt kê thành bảng tính; {{ui:BCF}} ghi chúng thành các chủ đề BCF, mỗi chủ đề kèm ảnh chụp vị trí của nó trên tờ. Cả hai theo các bộ lọc. Xem [Xuất](topic:field-records#export).
-- **Ngoại tuyến, và hai bản sao gộp thành một.** Hồ sơ được lưu trong PDF và không cần mạng, nên máy tính bảng ngoài công trường có thể thêm, trả lời và lưu chúng. Khi về văn phòng, {{ui:Gộp}} nối hồ sơ của một bản sao khác của cùng PDF theo mã của chúng, trong một bước hoàn tác. Xem [Lưu, ngoại tuyến và gộp các bản sao](topic:field-records#save-offline-and-merging-copies).
+- **Biến markup thành nhiệm vụ.** Chọn một hoặc nhiều markup, mở thẻ {{ui:Nhiệm vụ}} và chọn {{ui:Biến mục đã chọn thành nhiệm vụ}}. Nhiệm vụ có tiêu đề, người hoặc trợ lý đã kết nối của bạn để thực hiện, ngày hạn tùy chọn và một trạng thái; nhiệm vụ giữ vị trí trên tờ và chuỗi phản hồi của nó. Xem [Biến markup thành nhiệm vụ](topic:markups-that-act).
+- **Nhiệm vụ tự đóng.** Nhiệm vụ có thể theo dõi bản vẽ bên trong markup của nó. Mở bản sửa đổi mới hơn của tờ và chọn {{ui:Kiểm tra ngay}}: nếu các đường trong khu vực đó thay đổi nhiều hơn một chút, nhiệm vụ được đánh dấu Done, markup của nó chuyển thành Completed và một ghi chú trong chuỗi phản hồi cho biết những gì đã thay đổi. Dấu ngày mới, hoặc các đường chỉ dịch chuyển ít hơn 1.5 điểm, không được tính. Thay vào đó, nhiệm vụ có thể theo dõi một cấu kiện mô hình: trợ lý của bạn báo cáo cấu kiện bằng `tasks_check`, và một báo cáo sau đó khác đi, hoặc cấu kiện bị xóa, sẽ đóng nhiệm vụ. Một bước hoàn tác sẽ mở lại nhiệm vụ.
+- **Tìm công việc.** Lọc danh sách {{ui:Nhiệm vụ}} theo trạng thái và theo người được giao, bao gồm {{ui:Quá hạn}}; chọn {{ui:Giao cho}}, rồi {{ui:Trợ lý}} để xem những việc đang chờ trợ lý của bạn. Nhiệm vụ quá ngày hạn được hiển thị dưới dạng cảnh báo trong bảng Vấn đề. {{ui:CSV}} xuất danh sách. Nhiệm vụ được lưu trong PDF cùng với markup và được truyền qua Live như các thuộc tính markup khác.
+
+### Những thay đổi, dưới dạng danh sách đơn giản
+
+- **Liệt kê các thay đổi.** Mở thẻ {{ui:So sánh}}, rồi {{ui:So sánh cả bộ}}, chọn tệp cũ hơn và tệp mới hơn, và chọn {{ui:Liệt kê các thay đổi}}. Danh sách bắt đầu bằng một số đếm, rồi liệt kê từng tờ đã thay đổi, thay đổi lớn nhất đứng trước: vị trí trên tờ, mức độ lớn (theo đơn vị thực cũng như inch trên giấy đối với tờ đã hiệu chuẩn), các đường đã thêm hoặc xóa hay không, có bao nhiêu markup nằm ở đó, và những từ nào đã xuất hiện hoặc biến mất. {{ui:Sao chép danh sách}} đưa danh sách vào bộ nhớ tạm, còn {{ui:CSV}} ghi một hàng cho mỗi thay đổi. Xem [Liệt kê những gì đã thay đổi giữa các bản sửa đổi](topic:what-changed-in-words).
+
+### Ghi chú giọng nói và quyết định
+
+- **Ghi chú giọng nói.** Trong thẻ {{ui:Ghi chú}}, chọn {{ui:Ghi âm ghi chú giọng nói}}, rồi {{ui:Dừng ghi âm}}; bản ghi tự dừng sau hai phút. Ghi chú được ghim ở giữa tờ, bạn kéo nó đến đúng vị trí và nhập chú thích trong {{ui:Thuộc tính}}, còn {{ui:Phát}} trong danh sách sẽ phát nó. Bản ghi được lưu trong PDF.
+- **Quyết định.** {{ui:Ghim một quyết định}} ghi một hoặc hai câu lên tờ. Nếu quyết định này thay thế một quyết định trước đó, hãy chọn quyết định cũ trong {{ui:Thay thế}}: quyết định cũ vẫn còn, được đánh dấu Replaced, và trỏ đến quyết định mới. Một bước hoàn tác sẽ lấy lại nó. Xem [Ghim ghi chú giọng nói và quyết định lên tờ](topic:voice-notes-and-decisions).
+
+### Redline thành bản sửa đổi
+
+- **Gửi và trả lời.** Trong thẻ {{ui:Nhiệm vụ}}, mở {{ui:Đánh dấu đỏ gửi bản sửa đổi}}, nhập bản sửa đổi mà các markup đang đối chiếu và chọn {{ui:Xuất tệp redline}}. Bạn nhận được tệp `.redline.json` với một mục cho mỗi markup đang mở: tờ, vị trí (dạng phân số của tờ, để bản in lại ở kích thước khác vẫn khớp), từ ngữ, tác giả, chuỗi phản hồi và nhiệm vụ của nó. Người vẽ các thay đổi trả lời Accepted, Rejected hoặc Done trong tệp `.redline-answers.json`; {{ui:Tải tệp trả lời…}} gán trạng thái đó và ghi chú của người soạn thảo cho từng markup, như một bước hoàn tác. Xem [Gửi markup cho người soạn thảo dưới dạng redline](topic:redline-to-revision).
 
 ### Trợ lý AI
 
-- **Trợ lý làm được nhiều hơn.** Trợ lý của riêng bạn, kết nối qua CadCraft Studio, giờ có thể đặt trạng thái của một đánh dấu (`markup_status`, ghi vào chuỗi của nó), phản hồi trong một chuỗi (`markup_reply`) và xuất danh sách {{ui:Đánh dấu}} thành CSV hoặc BCF (`markups_export`, đúng như danh sách hiển thị với các bộ lọc). Mỗi thay đổi là một bước hoàn tác, ký bằng tên của trợ lý. Xem [Trợ lý có thể yêu cầu gì](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Thêm công cụ.** Trợ lý bạn đã kết nối qua CadCraft Studio có thể liệt kê nhiệm vụ (`tasks_list`), tạo hoặc thay đổi một nhiệm vụ (`task_set`), gỡ nhiệm vụ (`task_clear`), kiểm tra một nhiệm vụ với bản sửa đổi mới hơn hoặc một cấu kiện (`tasks_check`), và đọc danh sách thay đổi dạng đơn giản giữa hai bộ mặt bằng đang mở (`revisions_changes`). Trợ lý chỉ nhận các công cụ bạn đã chọn trong công tắc Assistants, và mỗi thay đổi là một bước hoàn tác. Xem [Dùng MarkupCraft với trợ lý AI](topic:use-with-ai-assistants).
 
 ## Trong mọi ứng dụng
 
-- **Đơn vị.** {{ui:Cài đặt}} › {{ui:Chung}} › {{ui:Đơn vị}} có một danh sách riêng cho chiều dài, diện tích, thể tích, góc và độ dốc, với kích thước chính xác theo định nghĩa của từng đơn vị (foot khảo sát Hoa Kỳ là một đơn vị riêng). Tắt những đơn vị bạn không bao giờ dùng và chúng sẽ rời khỏi danh sách đơn vị; gắn sao cho một đơn vị và công việc mới sẽ bắt đầu bằng nó. Tệp luôn giữ đơn vị riêng của nó. Trong MarkupCraft, các đơn vị đo và vị trí trong {{ui:Cài đặt}} › {{ui:MarkupCraft}} và đơn vị trong hộp thoại hiệu chuẩn theo các công tắc này, dấu sao đặt đơn vị đo cho đến khi bạn lưu cài đặt riêng của MarkupCraft, và khoảng cách thật bạn nhập khi hiệu chuẩn có thể kèm ký hiệu của bất kỳ đơn vị nào, như `3 yd` hoặc `1.5 km`. Xem [Đơn vị, giá trị nhập và danh sách đơn vị](common:unit-lists).
-- **Bố cục dày đặc hơn và các bảng tự thu gọn.** {{ui:Cài đặt}} › {{ui:Chung}} › {{ui:Mật độ bố cục}} › {{ui:Gọn}} chứa được nhiều hơn trên màn hình (màn hình cảm ứng và điện thoại giữ các nút lớn). Mỗi bảng bên có một thanh tiêu đề mỏng: kéo nó để neo hoặc cho bảng nổi, thả lên thanh của bảng khác để dùng chung một khung dạng thẻ, ghim nó để trượt về mép, hoặc ẩn nó và gọi lại từ mép. Xem [Sắp xếp các bảng](common:arrange-panels#make-the-layout-denser).
-- **Hộp thoại di chuyển được.** Kéo hộp thoại bằng thanh tiêu đề để dời nó khỏi bản vẽ; nó trở lại đúng nơi bạn để. Bấm đúp thanh tiêu đề để căn giữa lại. Xem [Di chuyển một hộp thoại](common:arrange-panels#move-a-dialog).
-- **Công thức cho trợ lý AI.** Mười yêu cầu mẫu cho trợ lý của riêng bạn (dọn một bản vẽ, in một bộ, kiểm tra bản vẽ, hỏi một mô hình, tổng hợp một bản bóc tách khối lượng, thử một biến thể chi tiết…), mỗi yêu cầu kèm các công cụ nó gọi và quyền nó cần, và đều được các bài kiểm thử của chúng tôi chạy lại. Các ứng dụng không chứa AI. Xem [Công thức cho trợ lý AI](common:assistants-recipes).
-- **Ngôn ngữ.** **Português (Portugal)** là mới trong {{ui:Cài đặt}} › {{ui:Chung}} › {{ui:Ngôn ngữ}}. Ngôn ngữ này cùng **Português (Brasil)**, **Español (México)** và **Bahasa Indonesia** nay có từng chữ của các ứng dụng, là bản nháp chưa được người bản ngữ duyệt. Các chủ đề trợ giúp bằng tiếng Anh.
-- **CadCraft Studio** cho biết vì sao việc kiểm tra cập nhật thất bại (chưa có tệp cho hệ thống của bạn, không có mạng, chữ ký sai) thay vì chỉ ghi "Xong", và không đưa lại thẻ Có gì mới mà bạn đã đóng cho đến khi có bản phát hành mới hơn.
+- **Ngôn ngữ.** CadCraft Studio hiện có 54 ngôn ngữ. Mười ngôn ngữ mới là: tiếng Litva, tiếng Latvia, tiếng Bosnia, tiếng Marathi, tiếng Telugu, tiếng Albania, tiếng Afrikaans, tiếng Philippines, tiếng Swahili và tiếng Uzbek. Tất cả các ngôn ngữ không phải tiếng Anh đều là bản nháp máy cho đến khi người bản ngữ đọc lại.
+- **Thiết bị nhập.** {{ui:Cài đặt}} › {{ui:Chung toàn cục}} › {{ui:Thiết bị nhập}} quy định bàn di chuột, nút bên của chuột, bút, chạm bằng ngón tay, chuột 3D, tay cầm chơi game hoặc bộ điều khiển MIDI sẽ làm gì, cho mọi ứng dụng hoặc chỉ cho ứng dụng này. Cho đến khi bạn thay đổi gì đó, mọi thiết bị vẫn hoạt động như trước. Xem [Dùng bàn di chuột, chuột 3D hoặc bộ điều khiển](common:input-devices).
+- **Số hàng thanh công cụ.** {{ui:Cài đặt}} › {{ui:Chung}} › {{ui:Số hàng thanh công cụ}} có {{ui:Xuống dòng}} (mặc định), {{ui:2 hàng}} và {{ui:1 hàng}}, để bản vẽ có thêm chỗ. Xem [Sắp xếp các bảng](common:arrange-panels).
+- **Lưới thuộc tính.** Các trường Style của markup dùng lưới chung, với các nhóm thu gọn được và cột nhãn và cột giá trị.
+- **Bảng Vấn đề.** Cảnh báo từ ứng dụng, chẳng hạn một nhiệm vụ quá hạn, được gom vào một bảng Vấn đề.
+- **Live và tiện ích bổ sung.** Phiên Live được mô tả trong [Làm việc cùng nhau trực tuyến](common:work-together-live); danh sách tiện ích bổ sung theo tài khoản của bạn nằm trong [Tiện ích bổ sung và danh sách tài khoản của bạn](common:addons-basics).
+- **Kết nối AI của bạn.** CadCraft Studio là trung tâm cho trợ lý riêng của bạn: kết nối một lần cho cả tám ứng dụng. Bản thân các ứng dụng không có AI riêng.
+
+## Đã sửa trong 0.8.1
+
+- **Studio có thể đổi ngôn ngữ khi đang chạy.** Trước đây, ứng dụng máy tính và các bản đóng gói vẫn ở tiếng Anh. Điều này chưa được kiểm tra trên mọi nền tảng: hãy cho chúng tôi biết nếu ngôn ngữ không đổi.
+- Các bản cài đặt Studio 0.8 được cung cấp bản 0.8.1 qua {{ui:Cài đặt}} › {{ui:Cập nhật}}.
 
 ## Chưa có trong phiên bản này
 
-- **0.7 chưa được ký mã.** Việc ký, và gói Microsoft Store, dời sang 0.8 vì việc xác thực chứng chỉ chưa xong. Hãy kiểm tra SHA-256 bên cạnh mỗi tệp trên getcadcraft.com/download. Trên Windows, nếu SmartScreen chặn trình cài đặt, hãy chọn {{ui:Thông tin thêm}}, rồi {{ui:Vẫn chạy}}. Trên Mac, lần đầu tiên, bấm chuột phải vào CadCraft Studio và chọn {{ui:Mở}}. CadCraft Studio chưa có trên cửa hàng ứng dụng nào, và chưa có bản cho iPad hay iPhone.
-- Các danh sách góc và độ dốc trong {{ui:Đơn vị}} được lưu, nhưng chưa có ô nhập nào đọc chúng.
-- Hồ sơ hiện trường không được chia sẻ trong phiên live của CadCraft Studio (phiên live chỉ mang các đánh dấu); hãy hợp các bản sao lại bằng {{ui:Gộp}}.
-- Gộp lấy một hồ sơ nguyên vẹn từ bản sao thay đổi sau cùng: nếu hai người đổi các trường khác nhau của cùng một hồ sơ, các trường của bản sao sau thắng. Các chuỗi và tên tệp đính kèm được nối lại.
-- Tệp đính kèm chỉ là tên; các tệp vẫn ở nguyên chỗ cũ. Chưa có nhóm, thông báo hay dự án đám mây cho hồ sơ, và trợ lý chưa có công cụ cho hồ sơ.
-- Hồ sơ hiện trường đã được thử trong trình duyệt ở cỡ điện thoại và máy tính bảng với mạng bị ngắt, nhưng chưa thử bằng tay trên máy tính bảng thật.
-- Vẫn còn từ 0.6: xoay các đối tượng trên trang theo góc bất kỳ, vẽ hình mới thẳng vào trang, đổi phông chữ hoặc cỡ chữ của một dòng, và văn bản tự xuống nhiều dòng. Một bản sao đã lưu có chỉnh sửa trang chưa được mở trong Acrobat.
-- Vẫn còn từ 0.5: hoàn tác một thay đổi trang (như thêm trang trống), đọc văn bản từ các tờ quét, và phiên live ngoài mạng của riêng bạn.
+- **Chưa ký mã.** Trình cài đặt Windows và tệp .dmg macOS chưa có chữ ký. Trên Windows, nếu SmartScreen chặn trình cài đặt, hãy chọn {{ui:Thêm thông tin}}, rồi {{ui:Vẫn chạy}}. Trên Mac, nhấp chuột phải vào CadCraft Studio và chọn {{ui:Mở}}. Các bản phát hành trên cửa hàng đang tạm dừng.
+- **Kết nối AI của bạn vẫn chưa hoàn thiện ở một số chỗ.** Kết nối một cú nhấp trong Studio, bộ kết nối lưu trữ cho trợ lý trình duyệt và khóa API riêng trong Studio chưa được hứa cho bản phát hành này. Vòng lặp nhiệm vụ đã được kiểm tra, nhưng chưa kiểm tra với trợ lý thật.
+- **Kiểm tra nhiệm vụ cần cùng kích thước trang.** Một tờ được in lại ở kích thước khác sẽ không khớp, nên nhiệm vụ của nó không đóng. Các tờ được ghép theo số tờ, nếu không thì theo vị trí trang.
+- **Ghi chú giọng nói chỉ là bản ghi âm.** Không có bản chép lời, và trợ lý chỉ thấy độ dài, tác giả và chú thích của ghi chú, không nghe được âm thanh. Việc ghi âm đã được thử với micro giả trong trình duyệt không giao diện; micro thật trên điện thoại, máy tính bảng hay máy tính xách tay vẫn cần kiểm tra.
+- **Bảng tính và lý do trong PDF** được lưu trong một mục riêng của tệp. MarkupCraft cũ hơn bỏ qua mục đó và xóa nó lần lưu tiếp theo, nên hãy mở và lưu tệp như vậy bằng 0.8 trở lên.
+- **Phía người soạn thảo của redline.** CadCraft đọc tệp redline và trả lời nó hiện chưa được xây dựng.
+- **Các ngôn ngữ khác.** Thanh ứng dụng tiếng Tamil bị tràn 528 px.
 
-Mọi thứ còn lại nằm trong [Những gì chưa xây dựng](topic:not-built-yet).
+Mọi thứ khác có trong [Chưa xây dựng](topic:not-built-yet). Về bản phát hành trước đó, xem [Có gì mới trong 0.7](topic:whats-new-0-7).

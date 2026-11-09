@@ -28,6 +28,7 @@
   "teamwork": true,
   "totals": true,
   "lessons": true,
+  "docinfo": true,
   "problems": true,
   "panels": [
     "move",
@@ -43,7 +44,7 @@
     "layouts": [
       "docked",
       "toolbox",
-      "autorev"
+      "autorev", "duncan", "vector", "sketch"
     ],
     "adapter": "workspace-markupcraft.js"
   },

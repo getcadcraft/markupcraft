@@ -17,8 +17,10 @@
 import { t } from './i18n.js';
 import { el } from './ui-util.js';
 
-export const PEOPLE = ['#c8102e', '#1f6fd1', '#d9640a', '#b5179e', '#9a7b00', '#1d8a4b', '#6a3fd6', '#008c9e'];
-export const personColour = (c) => PEOPLE[((((c || 1) - 1) % PEOPLE.length) + PEOPLE.length) % PEOPLE.length];
+// one palette for every app's Live: the shared presence layer's (0.9 SU.1112, live-presence.js)
+import { PEOPLE, personColour } from './live-presence.js';
+import { attachFollow } from './live-follow.js';   // 0.9 ED.1 / ED.2: follow a view, the people list
+export { PEOPLE, personColour };
 const NAME_MAX = 24, SEL_MAX = 200;
 const short = (s) => { s = String(s ?? '').replace(/[\u0000-\u001f\u007f\u2028\u2029\u202a-\u202e\u2066-\u2069]/g, ' ').trim(); return s.length > NAME_MAX ? s.slice(0, NAME_MAX - 1) + '\u2026' : s; };
 const num = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -54,6 +56,7 @@ export function attachUi(app, adapter, client) {
     const pt = app.pointer && view.page ? view.toUser(app.pointer[0], app.pointer[1]) : null;
     return {
       sh: sheet ? sheet.page.key : '',
+      sp: sheet ? sheet.page.key : '',   // 0.9 ED.1: the same key under the name every other app uses (live-follow.js)
       cur: pt && num(pt[0]) && num(pt[1]) ? [Math.round(pt[0] * 10) / 10, Math.round(pt[1] * 10) / 10] : null,
       sel: [...app.sel].slice(0, SEL_MAX),
     };
@@ -62,7 +65,7 @@ export function attachUi(app, adapter, client) {
     const p = mine(), k = JSON.stringify(p);
     if (k === sent) return;
     sent = k;
-    client.setPresence(p);
+    client.setPresence({ ...(client.lastPresence || {}), ...p });   // keep what live-follow.js adds (vw, ld)
   }
   let seenSheet = '';
   const timer = setInterval(() => { push(); const k = app.sheets[app.cur] ? app.sheets[app.cur].page.key : ''; if (k !== seenSheet) { seenSheet = k; renderStrip(); } }, 33);
@@ -142,6 +145,17 @@ export function attachUi(app, adapter, client) {
   // someone joins or leaves, or you change sheets: the strip and the list's colours follow
   const offPeer = client.on('peer', () => { renderStrip(); app.refreshList?.(); });
   if (typeof offPeer === 'function') offs.push(offPeer);
+
+  // ---- follow someone's view, and the people list (0.9 ED.1 / ED.2; live-follow.js) ----------------------------------
+  const sheetKey = () => (app.sheets[app.cur] ? app.sheets[app.cur].page.key : '');
+  offs.push(attachFollow(client, {
+    get el() { const v = (window.ccViews || []).find((x) => x && x.kind === '2d' && x.el); return v ? v.el : null; },
+    space: sheetKey,
+    spaceName: (key) => { const s = app.sheets.find((x) => x.page.key === key); return s ? short(s.page.title) : ''; },
+    goSpace: (key) => { const i = app.sheets.findIndex((x) => x.page.key === key); if (i >= 0 && app.goTo) app.goTo(i); },
+    toModel: (x, y) => (view.page ? view.toUser(x, y) : null),
+    toScreen: (p) => (view.page ? view.toScreen(p) : null),
+  }, { t, colour: personColour }));
 
   app.authorColour = (name) => authorColour(client, name);
   offs.push(() => { app.authorColour = null; app.refreshList?.(); });

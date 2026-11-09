@@ -1,43 +1,60 @@
 ---
-title: Yang baru di 0.7
-summary: RFI, submittal, dan laporan harian di tab Lapangan yang baru, dengan tenggat, yang terlambat berwarna merah, CSV dan BCF, kerja offline dan Gabungkan; asisten yang mengatur status, membalas, dan mengekspor daftar; daftar satuan yang mengikuti Pengaturan; panel yang dapat disimpan dan dialog yang dapat dipindahkan.
-keywords: yang baru, catatan rilis, changelog, perubahan, 0.7, versi, fitur baru, lapangan, catatan lapangan, rfi, permintaan informasi, submittal, laporan harian, buku harian proyek, terlambat, tenggat, ditugaskan kepada saya, pin, gabungkan, offline, tablet, bcf, csv, asisten, mcp, status markup, balasan, ekspor, satuan, daftar satuan, bintang, kalibrasi, padat, panel, dialog, portugis
-from: 142e1a1e
+title: Yang baru di 0.8 dan 0.8.1
+summary: Markup yang menjadi tugas dan menutup sendiri, daftar biasa tentang apa yang berubah antarrevisi, catatan suara dan keputusan pada rencana, file redline untuk drafter, serta perubahan 0.8 yang dipakai bersama: perangkat input, baris bilah alat, Masalah, lebih banyak bahasa.
+keywords: yang baru, what's new, catatan rilis, changelog, perubahan, 0.8, 0.8.1, versi, fitur baru, tugas, tasks, penerima tugas, hari jatuh tempo, lewat batas waktu, periksa sekarang, apa yang berubah, revisi, bandingkan, catatan suara, keputusan, redline, file jawaban, drafter, asisten, mcp, masalah, bahasa, perangkat input, trackpad, baris bilah alat, kisi properti, perbarui
+from: 40368796
 ---
 
-Ini yang berubah di MarkupCraft 0.7 dibandingkan dengan 0.6. Hal baru yang terbesar adalah catatan lapangan: RFI, submittal, dan laporan harian yang disimpan di dalam PDF di samping markup Anda.
+Ini yang berubah di MarkupCraft 0.8 dan 0.8.1, dibandingkan dengan 0.7. Hal baru yang paling besar adalah markup bisa menjadi tugas yang dikerjakan seseorang, atau asisten Anda sendiri, dan tugas itu menutup sendiri saat gambar benar-benar berubah.
 
 ## Baru
 
-### RFI, submittal, dan laporan harian
+### Markup yang bekerja
 
-- **Tab Lapangan.** Buka tab {{ui:Lapangan}} dan pilih {{ui:RFI}}, {{ui:Submittal}} atau {{ui:Laporan harian}}. Ketuk atau klik lembar tempat RFI atau submittal berada dan sebuah pin menandai tempatnya; laporan harian ditaruh di lembar yang terbuka tanpa pin ({{ui:Tempatkan pin}} menambahkannya nanti, {{ui:Pindahkan pin}} memindahkan pin mana pun). Setiap catatan punya nomornya sendiri (RFI-0001, SUB-0001, LOG-0001), judul, teks, status, penerima tugas, tenggat, utas balasan, dan daftar nama lampiran. Lihat [Lacak RFI, submittal, dan laporan harian](topic:field-records).
-- **Lihat apa yang terlambat.** Saring daftar menurut tipe, status, tenggat (terlambat, jatuh tempo dalam 7 hari, punya atau tanpa tenggat), lembar ini atau semua lembar, pencarian teks, atau {{ui:Ditugaskan kepada saya}}. Catatan yang melewati tenggat dan masih menunggu ditandai **Lewat batas waktu**, berwarna merah, di daftar dan pada pinnya. Lihat [Temukan yang penting](topic:field-records#find-what-matters).
-- **CSV dan BCF.** {{ui:CSV}} menulis catatan yang tercantum sebagai spreadsheet; {{ui:BCF}} menulisnya sebagai topik BCF, masing-masing dengan snapshot tempatnya di lembar. Keduanya mengikuti filter. Lihat [Ekspor](topic:field-records#export).
-- **Offline, dan dua salinan dijadikan satu.** Catatan disimpan di dalam PDF dan tidak memerlukan jaringan, sehingga tablet di lokasi dapat menambah, menjawab, dan menyimpannya. Kembali di kantor, {{ui:Gabungkan}} menyatukan catatan dari salinan lain PDF yang sama menurut id-nya, sebagai satu langkah urungkan. Lihat [Simpan, offline, dan menggabungkan salinan](topic:field-records#save-offline-and-merging-copies).
+- **Jadikan markup sebagai tugas.** Pilih satu atau lebih markup, buka tab {{ui:Tasks}} lalu pilih {{ui:Make selected a task}}. Tugas memiliki judul, orang atau asisten Anda yang terhubung untuk mengerjakannya, hari jatuh tempo opsional dan status, serta tetap berada di posisinya pada lembar dan utasnya. Lihat [Jadikan markup sebagai tugas](topic:markups-that-act).
+- **Tugas yang menutup sendiri.** Tugas dapat memantau gambar di dalam markup-nya. Buka revisi lembar yang lebih baru lalu pilih {{ui:Check now}}: jika garis di area itu berubah lebih dari sedikit, tugas ditandai Selesai, markup-nya menjadi Tuntas, dan catatan di utas menjelaskan apa yang berubah. Cap tanggal baru, atau garis yang bergeser kurang dari 1.5 poin, tidak dihitung. Sebagai gantinya, tugas dapat memantau elemen model: asisten Anda melaporkan elemen dengan `tasks_check`, dan laporan berikutnya yang berbeda, atau elemen yang dihapus, menutup tugas. Satu langkah urungkan akan membukanya kembali.
+- **Temukan pekerjaannya.** Saring daftar {{ui:Tasks}} menurut status dan untuk siapa tugas itu, termasuk {{ui:Overdue}}; pilih {{ui:Assigned to}}, lalu {{ui:Assistant}} untuk melihat apa yang menunggu asisten Anda. Tugas yang melewati hari jatuh temponya tampil sebagai peringatan di panel Masalah. {{ui:CSV}} mengekspor daftar. Tugas disimpan di PDF bersama markup dan ikut berpindah melalui Live seperti properti markup lainnya.
+
+### Apa yang berubah, sebagai daftar biasa
+
+- **Daftarkan perubahan.** Buka tab {{ui:Compare}}, lalu {{ui:Compare a whole set}}, pilih file yang lebih lama dan yang lebih baru lalu pilih {{ui:List the changes}}. Daftar dimulai dengan jumlah, lalu mencakup setiap lembar yang berubah, yang perubahannya paling besar lebih dulu: di mana letaknya pada lembar, seberapa besar (dalam satuan sebenarnya serta inci kertas pada lembar yang dikalibrasi), apakah garis ditambahkan atau dihapus, berapa banyak markup yang ada di sana, dan kata mana yang muncul atau hilang. {{ui:Copy the list}} menempatkannya di papan klip, dan {{ui:CSV}} menulis satu baris untuk setiap perubahan. Lihat [Daftarkan apa yang berubah antarrevisi](topic:what-changed-in-words).
+
+### Catatan suara dan keputusan
+
+- **Catatan suara.** Di tab {{ui:Notes}} pilih {{ui:Record a voice note}}, lalu {{ui:Stop recording}}; rekaman berhenti sendiri setelah dua menit. Catatan disematkan di tengah lembar, Anda menyeretnya ke tempat yang seharusnya, dan mengetik keterangan di {{ui:Properties}}. {{ui:Play}} pada daftar akan memutarnya. Rekaman disimpan di dalam PDF.
+- **Keputusan.** {{ui:Pin a decision}} menulis satu atau dua kalimat pada lembar. Jika menggantikan keputusan sebelumnya, pilih keputusan itu di {{ui:It replaces}}: keputusan lama tetap ada, ditandai Diganti, dan mengarah ke keputusan baru. Satu langkah urungkan akan mengembalikannya. Lihat [Sematkan catatan suara dan keputusan pada lembar](topic:voice-notes-and-decisions).
+
+### Redline ke revisi
+
+- **Kirim dan jawab.** Di tab {{ui:Tasks}} buka {{ui:Redline to revision}}, ketik revisi yang menjadi acuan markup, lalu pilih {{ui:Export redline file}}. Anda mendapatkan file `.redline.json` dengan satu item untuk setiap markup yang masih terbuka: lembar, posisi (sebagai pecahan dari lembar, sehingga cetak ulang pada ukuran lain tetap sejajar), kata, penulis, utas dan tugasnya. Siapa pun yang menggambar perubahan menjawab Diterima, Ditolak atau Selesai di file `.redline-answers.json`; {{ui:Load answers file…}} memberi setiap markup status itu beserta catatan drafter, sebagai satu langkah urungkan. Lihat [Kirim markup ke drafter sebagai redline](topic:redline-to-revision).
 
 ### Asisten AI
 
-- **Lebih banyak yang dapat dilakukan asisten.** Asisten Anda sendiri, yang tersambung lewat CadCraft Studio, kini dapat mengatur status markup (`markup_status`, dicatat di utasnya), membalas di utas (`markup_reply`), dan mengekspor daftar {{ui:Markup}} sebagai CSV atau BCF (`markups_export`, apa yang ditampilkan daftar beserta filternya). Setiap perubahan adalah satu langkah urungkan, ditandatangani dengan nama asisten. Lihat [Yang dapat diminta asisten](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Lebih banyak alat.** Asisten yang Anda hubungkan melalui CadCraft Studio dapat mendaftar tugas (`tasks_list`), membuat atau mengubah satu tugas (`task_set`), melepas tugas (`task_clear`), memeriksa satu tugas terhadap revisi yang lebih baru atau elemen (`tasks_check`), dan membaca daftar biasa perubahan antara dua set rencana yang terbuka (`revisions_changes`). Asisten hanya mendapat alat yang Anda centang di bawah sakelar Asisten, dan setiap perubahan adalah satu langkah urungkan. Lihat [Gunakan MarkupCraft dengan asisten AI](topic:use-with-ai-assistants).
 
 ## Di setiap aplikasi
 
-- **Satuan.** {{ui:Pengaturan}} › {{ui:Umum}} › {{ui:Satuan}} punya satu daftar masing-masing untuk panjang, luas, volume, sudut, dan kemiringan, dengan ukuran persis sesuai definisi satuannya (kaki survei AS adalah satuan tersendiri). Matikan satuan yang tidak pernah Anda pakai dan satuan itu hilang dari daftar satuan; beri bintang pada satu satuan dan pekerjaan baru dimulai dengannya. File selalu mempertahankan satuannya sendiri. Di MarkupCraft, satuan pengukuran dan posisi di {{ui:Pengaturan}} › {{ui:MarkupCraft}} serta satuan di dialog kalibrasi mengikuti sakelar itu, bintang menentukan satuan pengukuran sampai Anda menyimpan pengaturan MarkupCraft sendiri, dan jarak sebenarnya yang Anda ketik saat kalibrasi dapat membawa tanda satuan apa pun, seperti `3 yd` atau `1.5 km`. Lihat [Satuan, nilai yang diketik, dan daftar satuan](common:unit-lists).
-- **Tata letak yang lebih padat dan panel yang dapat disimpan.** {{ui:Pengaturan}} › {{ui:Umum}} › {{ui:Kepadatan tata letak}} › {{ui:Padat}} memuat lebih banyak di layar (layar sentuh dan ponsel tetap memakai tombol besarnya). Setiap panel samping punya bilah judul tipis: seret untuk menambatkan atau mengambangkan panel, jatuhkan di bilah panel lain agar berbagi satu bingkai sebagai tab, sematkan agar meluncur ke tepi, atau sembunyikan dan panggil kembali dari tepi. Lihat [Atur panel](common:arrange-panels#make-the-layout-denser).
-- **Dialog dapat dipindahkan.** Seret dialog pada bilah judulnya agar tidak menghalangi gambar; dialog kembali di tempat Anda meninggalkannya. Klik dua kali bilah judul untuk menengahkannya lagi. Lihat [Pindahkan dialog](common:arrange-panels#move-a-dialog).
-- **Resep untuk asisten AI.** Sepuluh permintaan yang sudah dikerjakan untuk asisten Anda sendiri (merapikan gambar, mem-plot set, memeriksa gambar, bertanya kepada model, menjumlahkan takeoff, mencoba varian part…), masing-masing dengan alat yang dipanggilnya dan izin yang diperlukannya, dan masing-masing diputar ulang oleh pengujian kami. Aplikasi tidak mengandung AI. Lihat [Resep untuk asisten AI](common:assistants-recipes).
-- **Bahasa.** **Português (Portugal)** baru ada di {{ui:Pengaturan}} › {{ui:Umum}} › {{ui:Bahasa}}. Bahasa itu, **Português (Brasil)**, **Español (México)** dan **Bahasa Indonesia** kini memiliki setiap kata aplikasi, sebagai draf yang belum ditinjau penutur asli. Topik bantuan dalam bahasa Inggris.
-- **CadCraft Studio** menjelaskan mengapa pemeriksaan pembaruan gagal (belum ada file untuk sistem Anda, tidak ada jaringan, tanda tangan buruk) alih-alih hanya "Selesai", dan berhenti memunculkan kembali kartu Yang baru yang sudah Anda tutup sampai ada rilis yang lebih baru.
+- **Bahasa.** CadCraft Studio sekarang memiliki 54 bahasa. Sepuluh di antaranya baru: Lituania, Latvia, Bosnia, Marathi, Telugu, Albania, Afrikaans, Filipina, Swahili dan Uzbek. Semua bahasa selain bahasa Inggris masih berupa draf mesin sampai penutur asli membacanya.
+- **Perangkat input.** {{ui:Settings}} › {{ui:Global}} › {{ui:Input devices}} menentukan apa yang dilakukan trackpad, tombol samping mouse Anda, pena, ketukan jari, mouse 3D, pengontrol game, atau pengontrol MIDI, untuk setiap aplikasi atau hanya untuk aplikasi ini. Sampai Anda mengubah sesuatu, setiap perangkat bekerja seperti sebelumnya. Lihat [Gunakan trackpad, mouse 3D, atau pengontrol](common:input-devices).
+- **Baris bilah alat.** {{ui:Settings}} › {{ui:General}} › {{ui:Toolbar rows}} memiliki {{ui:Wrap}} (bawaan), {{ui:2 rows}} dan {{ui:1 row}}, sehingga gambar mendapat lebih banyak ruang. Lihat [Atur panel](common:arrange-panels).
+- **Kisi properti.** Kolom Gaya pada markup menggunakan kisi bersama, dengan kategori yang dapat diciutkan serta kolom label dan nilai.
+- **Panel Masalah.** Peringatan dari aplikasi, seperti tugas yang lewat batas waktu, dikumpulkan dalam satu panel Masalah.
+- **Live dan add-on.** Sesi Live dijelaskan di [Bekerja bersama secara langsung](common:work-together-live); daftar add-on yang mengikuti akun Anda ada di [Add-on dan daftar akun Anda](common:addons-basics).
+- **Hubungkan AI Anda.** CadCraft Studio adalah hub untuk asisten Anda sendiri: hubungkan sekali untuk kedelapan aplikasi. Aplikasi itu sendiri tidak memiliki AI.
+
+## Diperbaiki di 0.8.1
+
+- **Studio bisa mengganti bahasa saat berjalan.** Sebelumnya, aplikasi desktop dan edisi paket tetap dalam bahasa Inggris. Ini belum diuji di setiap platform: beri tahu kami jika bahasanya tidak berubah.
+- Instalasi Studio 0.8 ditawari 0.8.1 melalui {{ui:Settings}} › {{ui:Updates}}.
 
 ## Belum ada di versi ini
 
-- **0.7 belum ditandatangani kode.** Penandatanganan, dan paket Microsoft Store, dipindah ke 0.8 karena validasi sertifikat belum selesai. Periksa SHA-256 di samping setiap file di getcadcraft.com/download. Di Windows, jika SmartScreen menghentikan penginstal, pilih {{ui:Info lebih lanjut}}, lalu {{ui:Tetap jalankan}}. Di Mac, pertama kali, klik kanan CadCraft Studio dan pilih {{ui:Buka}}. CadCraft Studio belum ada di toko aplikasi, dan belum ada build untuk iPad atau iPhone.
-- Daftar sudut dan kemiringan di {{ui:Satuan}} tersimpan, tetapi belum ada kotak yang membacanya.
-- Catatan lapangan tidak dibagikan dalam sesi Live CadCraft Studio (sesi Live hanya membawa markup); satukan salinan dengan {{ui:Gabungkan}}.
-- Gabungkan mengambil satu catatan secara utuh dari salinan yang terakhir diubah: jika dua orang mengubah kolom berbeda dari satu catatan, kolom salinan yang lebih baru yang menang. Utas dan nama lampiran digabungkan.
-- Lampiran hanya berupa nama; filenya tetap di tempatnya. Belum ada tim, notifikasi, atau proyek cloud untuk catatan, dan asisten belum punya alat untuk catatan.
-- Catatan lapangan diuji di peramban pada ukuran ponsel dan tablet dengan jaringan diputus, tetapi belum dengan tangan di tablet sungguhan.
-- Masih dari 0.6: memutar objek halaman ke sudut apa pun, menggambar bentuk baru langsung ke halaman, mengubah font atau ukuran satu baris, dan teks yang mengalir melewati beberapa baris. Salinan tersimpan dengan edit halaman belum dibuka di Acrobat.
-- Masih dari 0.5: mengurungkan perubahan halaman (seperti menambah halaman kosong), membaca teks dari lembar hasil pindai, dan sesi Live di luar jaringan Anda sendiri.
+- **Belum ditandatangani kode.** Installer Windows dan .dmg macOS belum memiliki tanda tangan. Di Windows, jika SmartScreen menghentikan installer, pilih {{ui:More info}}, lalu {{ui:Run anyway}}. Di Mac, klik kanan CadCraft Studio dan pilih {{ui:Open}}. Build toko ditunda.
+- **Hubungkan AI masih belum lengkap di beberapa bagian.** Penghubungan satu klik di dalam Studio, konektor hosted untuk asisten peramban, dan kunci API Anda sendiri di dalam Studio belum dijanjikan untuk rilis ini. Alur tugas sudah diuji, tetapi belum dengan asisten sungguhan.
+- **Pemeriksaan tugas memerlukan ukuran halaman yang sama.** Lembar yang dicetak ulang pada ukuran lain tidak akan cocok, sehingga tugasnya tidak tertutup. Lembar dipasangkan menurut nomor lembar, atau jika tidak ada, menurut posisi halaman.
+- **Catatan suara hanya berupa rekaman.** Tidak ada transkrip, dan asisten hanya melihat panjang, penulis dan keterangan catatan, bukan suaranya. Perekaman sudah dicoba dengan mikrofon palsu di peramban tanpa tampilan; mikrofon sungguhan pada ponsel, tablet atau laptop masih perlu diperiksa.
+- **Lembar kalkulasi dan alasan dalam PDF** disimpan di entri privat file. MarkupCraft yang lebih lama mengabaikan entri itu dan membuangnya saat menyimpan file lagi, jadi buka dan simpan file seperti itu dengan 0.8 atau yang lebih baru.
+- **Sisi drafter dari redline.** CadCraft membaca file redline dan menjawabnya belum dibuat.
+- **Bahasa lain.** Bilah aplikasi bahasa Tamil meluap 528 px.
 
-Yang lainnya ada di [Yang belum dibuat](topic:not-built-yet).
+Yang lainnya ada di [Yang belum dibuat](topic:not-built-yet). Untuk rilis sebelumnya, lihat [Yang baru di 0.7](topic:whats-new-0-7).

@@ -25,7 +25,7 @@
 
 import { mountUndoHook } from './undo-hook.js';   // 0.8 EG.77: tells Studio each finished step
 import { el, bytes as fmtBytes, frame, download, shortDate, dateTime } from './ui-util.js';
-import { Store, makeMarkup, cleanLayerName, TYPES, STATUSES, PUNCH_STATUSES, STAMPS, stamps, stampLabel, defaultStyle, stampColor, clone, nowIso, statusReply, cleanReply } from './model.js';
+import { Store, makeMarkup, roughBox, cleanLayerName, TYPES, STATUSES, PUNCH_STATUSES, STAMPS, stamps, stampLabel, defaultStyle, stampColor, clone, nowIso, statusReply, cleanReply } from './model.js';
 import { View, PX_PER_PT, hexRgb, mix } from './view.js';
 import { displayOf, boundsOf, pick, pickWindow, grips, applyGrip, moveBy, simplify, snap45, squareFrom, BOX_TYPES, similarity, apply as applyT, inv } from './geom.js';
 import { shapes, NOTE_SIZE, stampSub, frame as textFrame } from './shapes.js';
@@ -39,6 +39,8 @@ import { getHost } from "./host.js";
 import { handoffParam, takeHandoff, sendHandoff } from "./handoff.js";
 import { textIndex, findHits, hitCloud, rangeBox } from './textsearch.js';
 import { arcThrough, arcLength, angleAt, formatAngle } from './arcs.js';
+import { ARC_METHODS, arcSession, typedValue } from './arc-tool.js';
+import { pointerValue } from './arcs/arcs.js';   // 0.9 FX.137: the ten ways to draw an arc
 import { holeProblem } from './holes.js';
 import { spaceOf } from './spaces.js';
 import { sketchPoint } from './sketch.js';
@@ -46,7 +48,8 @@ import { TYPES_OF_COLUMN, newColumnKey, compareBy, fieldOk } from './columns.js'
 import { pageSegments, diffSegments, clusters } from './vecdiff.js';
 import { legendRows, rowsKey } from './legend.js';
 import { fromSheets, count, cleanBookmarks } from './bookmarks.js';
-import { linkTarget, calloutRefs } from './link.js';
+import { linkTarget } from './link.js';
+import { findCallouts, sheetViews, resolveCallout, planLinks, linkViewFor } from './batchlink.js';   // 0.9 SU.1085
 import { cleanImage, imageInfo, fitBox, placeRect, pictureKind, clearPaper, inkBox, cleanSignatures, MAX_SIGNATURES } from './imagestamp.js';
 import { summarySheets, summaryPdf } from './summary.js';
 import { readBcf, planImport } from './bcf-read.js';
@@ -79,6 +82,7 @@ import { pageProblems, taskProblems, pageMarkers } from './problems-markupcraft.
 import { installOcr } from './ocr-ui.js';   // 0.7.1 71.10: Read text (OCR)
 import { ocrState, cleanOcrState } from './ocr.js';
 import { installTextSelect } from './textsel-ui.js';
+import { installNotes } from './notes-ui.js';   // 0.9 NOTES.1: notes, the pasteboard, private notes
 import { installAreaCopy } from './areacopy-ui.js';   // 0.8 D8.15: Copy area (rectangle, ellipse, freeform), as a picture or an overlay
 import { AREA_KEY, cleanAreaClip, sameImage, fitTwoPoints, turnedSize } from './areaclip.js';   // 0.7.1 71.10: Select text
 import { panButton, wheelFactor } from './input-mouse.js';   // 0.5 IP.3: the menu style's wheel and pan buttons (input-markupcraft.js)
@@ -88,7 +92,7 @@ const NEEDS_SCALE = new Set(['measure', 'area']);
 const KIND = {
   pen: 'free', highlight: 'free', line: 'two', arrow: 'two', measure: 'two', calibrate: 'two',
   rect: 'box', ellipse: 'box', cloudrect: 'box', text: 'box', stamp: 'box',
-  arc: 'three', angle: 'three',   // three clicks (0.4 K4)
+  arc: 'arcm', angle: 'three',   // angle: three clicks (0.4 K4); arc: the method's own steps (arc-tool.js)
   polyline: 'poly', polygon: 'poly', cloud: 'poly', area: 'poly', callout: 'callout', note: 'note', count: 'count',
 };
 const KEYS = { f: 'fill', b: 'content', o: 'arc', x: 'angle', v: 'select', h: 'pan', p: 'pen', i: 'highlight', l: 'line', a: 'arrow', r: 'rect', e: 'ellipse', y: 'polyline', g: 'polygon', c: 'cloudrect', k: 'callout', t: 'text', n: 'note', s: 'stamp', m: 'measure', q: 'area', u: 'count' };
@@ -101,7 +105,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); retu
 // 71.12 Page contrast (user69q: pale text from other programs, faint scans): a view-only filter on the sheet; saved files are untouched.
 const CONTRAST = { normal: '', stronger: 'contrast(1.35) brightness(0.92)', strongest: 'contrast(1.8) brightness(0.8)' };
 // pageMode (0.8): 'tabs' = one page at a time (a tab per page in a workspace layout), 'scroll' = the file's pages in one column
-const SET_DEFAULTS = { markColor: '', weight: 'normal', pasteAt: 'pointer', unit: 'ft-in', posUnit: 'in', contrast: 'normal', pageMode: 'tabs' };
+const SET_DEFAULTS = { markColor: '', weight: 'normal', pasteAt: 'pointer', unit: 'ft-in', posUnit: 'in', contrast: 'normal', pageMode: 'tabs', arcMethod: '3P' };
 const COLOR_TYPES = new Set(['pen', 'line', 'arrow', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text']);
 const WEIGHTS = { thin: 0.5, normal: 1, heavy: 1.5 };
 const PASTE_STEP = 12;        // screen pixels down and right for "beside the copy" (each paste of the same copy steps again)
@@ -118,7 +122,8 @@ function init(root) {
   const $ = (s) => root.querySelector(s);
   // Panels may move to the panels window (shell app-panels.js), out of root's reach: late lookups search them too.
   const asides = [...root.children].filter((c) => c.tagName === 'ASIDE');
-  const findAll = (s) => [root, ...asides.filter((a) => !root.contains(a))].flatMap((n) => [...n.querySelectorAll(s)]);
+  // … and toolbars torn off into their own window (app-toolbar-tear.js; 0.9 fix 2026-11-02)
+  const findAll = (s) => [root, ...asides.filter((a) => !root.contains(a)), ...(window.ccToolbarTear?.torn?.() || []).filter((b) => !root.contains(b))].flatMap((n) => [...n.querySelectorAll(s)]);
   const find = (s) => findAll(s)[0] || null;
   const ui = {
     base: $('[data-base]'), over: $('[data-over]'), stage: $('[data-stage]'), canvases: $('[data-canvases]'), edit: $('[data-edit]'),
@@ -144,6 +149,7 @@ function init(root) {
   let formUi = null;            // filling in a PDF's form (form-ui.js, 0.8), set up once the page is built
   let textSel = null;           // the Select text tool (textsel-ui.js, 0.7.1 71.10)
   let areaUi = null;            // the Copy area tool (areacopy-ui.js, 0.8 D8.15)
+  let notesUi = null;           // notes, the pasteboard, private notes (0.9 NOTES.1, notes-ui.js)
   let areaClip = null;          // the newest copied area this tab made or read (areaclip.js)
   let lineUp = null;            // Line up a picture with two points (0.8 D8.15): { id, a1, b1, a2 }
   let ocrUi = null;             // Read text (OCR) (ocr-ui.js, 0.7.1 71.10)
@@ -174,6 +180,7 @@ function init(root) {
     if (v.posUnit === 'in' || v.posUnit === 'mm') out.posUnit = v.posUnit;
     if (Object.hasOwn(CONTRAST, v.contrast)) out.contrast = v.contrast;
     if (v.pageMode === 'scroll' || v.pageMode === 'tabs') out.pageMode = v.pageMode;
+    if (ARC_METHODS.includes(v.arcMethod)) out.arcMethod = v.arcMethod;
     if (!out.styles || typeof out.styles !== 'object') out.styles = {};
     return out;
   })();
@@ -190,7 +197,7 @@ function init(root) {
   const filters = { sheet: '', author: '', status: '', type: '', layer: '', space: '', field: '' };
 
   const saveSettings = () => lsSet(LS.settings, { styles: settings.styles, stamp: settings.stamp, countLabel: settings.countLabel,
-    markColor: settings.markColor, weight: settings.weight, pasteAt: settings.pasteAt, unit: settings.unit, posUnit: settings.posUnit, contrast: settings.contrast, pageMode: settings.pageMode });
+    markColor: settings.markColor, weight: settings.weight, pasteAt: settings.pasteAt, unit: settings.unit, posUnit: settings.posUnit, contrast: settings.contrast, pageMode: settings.pageMode, arcMethod: settings.arcMethod });
   let afterCalibrate = 'measure';
 
   // the menu styles (0.5 IP.3, input-markupcraft.js + the shell's app-input-ui.js): messages to the status bar; letters stay
@@ -206,8 +213,19 @@ function init(root) {
   const legendOf = (m) => legendRows(store.all(), { sheet: m.sheet, scope: m.legend?.scope, name: (x) => tname(x.type) });
   const envOf = (m) => { const e = { cal: store.calibrations.get(m.sheet) || null, badge: badgeFor(m.sheet) }; if (m.type === 'legend') { e.legend = legendOf(m); e.legendKey = rowsKey(e.legend); } return e; };
   // markups on hidden layers neither draw nor pick; on locked layers they draw but do not pick (0.4 K3)
-  const pageMarkups = () => store.onSheet(curKey()).filter((m) => store.shown(m));
-  const pickable = () => store.onSheet(curKey()).filter((m) => store.open(m));
+  // 0.9 NOTES.1: only what draws and edits on this screen sees notes and private notes (store.everyOn); see model.js
+  const offPageSeen = new WeakMap();
+  store.offPage = (m) => {
+    if (m.type === 'foreign') return false;
+    if (offPageSeen.has(m)) return offPageSeen.get(m);
+    const v = sheetByKey(m.sheet)?.page.view, b = roughBox(m);
+    if (!v || !b) return false;
+    const off = b[2] < v[0] || b[0] > v[2] || b[3] < v[1] || b[1] > v[3];
+    offPageSeen.set(m, off);
+    return off;
+  };
+  const pageMarkups = () => store.everyOn(curKey()).filter((m) => store.shown(m));
+  const pickable = () => store.everyOn(curKey()).filter((m) => store.open(m));
   let curLayer = '';                 // the layer new markups go on ('' = none)
   // Touch (0.4 S.8): with a finger, picking and grips take a bigger target (the last pointer used decides)
   let touchMode = false;
@@ -346,8 +364,9 @@ function init(root) {
         files.push(rec);
         if (opts.keepMarkups) store.load([], {}, {}, rec.layers, rec.columns);
         else store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
+        notesUi?.adopt(rec);   // 0.9 NOTES.1: this person's sealed notes, when unlocked
         fieldUi?.loadFrom(rec);
-        if (rec.shell && !shellData.calcs && !shellData.reasons) { shellData.calcs = rec.shell.calcs || null; shellData.reasons = rec.shell.reasons || null; shellOpened = true; }
+        if (rec.shell && !shellData.calcs && !shellData.reasons && !shellData.docinfo) { shellData.calcs = rec.shell.calcs || null; shellData.reasons = rec.shell.reasons || null; shellData.docinfo = rec.shell.docinfo || null; shellOpened = true; }
         fields += (await formUi?.prepare(rec)) || 0;
         read += rec.markups.length;
         opened++;
@@ -421,7 +440,7 @@ function init(root) {
       busy(t('save.saving', { file: f.name }));
       await frame();
       try {
-        const { bytes, report } = await bake(f, lib, { burn: true });
+        const { bytes, report } = await bake(f, lib, { burn: true, keepNotes: true });
         const name = f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') + ' (marked up).pdf';   // i18n-ignore: the copy's file name suffix, matched when reopened
         let shown = name;
         if (host.kind === 'desktop') {
@@ -438,7 +457,7 @@ function init(root) {
       }
     }
     busy('');
-    if (done.length) status(t('save.done', { list: done.join('; ') }));
+    if (done.length) status(t('save.done', { list: done.join('; ') }) + (notesUi?.takeFiled() ? ' ' + t('pnotes.filed') : ''));
     syncAutosave();
     refreshToolbar();
   }
@@ -447,9 +466,10 @@ function init(root) {
    * A file's markups written into its bytes — the marked-up copy Save downloads. `flatten` ('all' | Set of ids) draws those
    * markups into the pages instead; `rot` (page index → degrees) turns the text of that page's markups to read upright.
    * `burn` (Save, extract): markups marked "Flatten into the page when saved" (0.7.1 71.7) are drawn in too; page
-   * operations leave it off, so they stay markups while the file is open.
+   * operations leave it off, so they stay markups while the file is open. `keepNotes`: only this person's own working copy (Save, page
+   * operations) keeps notes and sealed private notes (0.9 NOTES.1); print, flattened copies, extracts and clean copies have none.
    */
-  async function bake(f, lib, { flatten = null, rot = null, remap = null, burn = false } = {}) {
+  async function bake(f, lib, { flatten = null, rot = null, remap = null, burn = false, keepNotes = false } = {}) {
     if (burn && flatten !== 'all') {
       const marked = f.pages.flatMap((pg) => store.onSheet(pg.key)).filter((m) => m.flat && !m.locked && m.type !== 'foreign').map((m) => m.id);
       if (marked.length) flatten = new Set([...(flatten || []), ...marked]);
@@ -461,9 +481,10 @@ function init(root) {
     // sheet numbers typed by hand become the file's page labels (other pages keep theirs)
     const renamed = f.pages.some((pg) => store.sheetNames.get(pg.key)?.number);
     const labels = renamed ? f.pages.map((pg) => store.sheetNames.get(pg.key)?.number || pg.label || String(pg.index + 1)) : null;
-    const linkPage = (link) => { const s = linkTarget(link, sheetList()); return s && s.file === f ? s.page.index : null; };
+    const linkPage = (link, m) => { const s = linkTarget(link, sheetList()); if (!s || s.file !== f) return null; return m?.linkView?.box ? { index: s.page.index, box: m.linkView.box } : s.page.index; };
     const out = await writeMarkedUp(lib, src, { pages, removeRefs: f.removeRefs, labels, flatten, layers: layerList(), linkPage, columns: store.columns, bookmarks: f.bookmarksEdited ? f.bookmarks : null, records: fieldUi?.packFor(f, remap) ?? null, shell: shellPack(),
-      ocr: [...(f.ocr || [])].filter(([, o]) => o.pdf).map(([index, o]) => ({ index, pdf: o.pdf, matrix: o.matrix })) });
+      ocr: [...(f.ocr || [])].filter(([, o]) => o.pdf).map(([index, o]) => ({ index, pdf: o.pdf, matrix: o.matrix })),
+      notes: keepNotes && notesUi ? await notesUi.packFor(f, remap) : null });
     return fillFormInto(lib, f, out, flatten === 'all');
   }
   /** The values typed into the file's form (form-ui.js) written into its fields; `flat` (print, the flattened copy) draws the form into the pages. */
@@ -482,9 +503,12 @@ function init(root) {
     if (!target) { status(t('link.missing', { sheet: m.link })); return; }
     const from = curKey();
     const i = sheets.findIndex((s) => s.page.key === target.key);
-    if (i === cur) { status(t('link.here', { sheet: target.title })); return; }
+    if (i === cur) { if (m.linkView?.box) { view.zoomTo(m.linkView.box, 0.9); status(t('link.went.view', { sheet: target.title, id: m.linkView.id || '' })); } else status(t('link.here', { sheet: target.title })); return; }
     backStack.push(from); if (backStack.length > 50) backStack.shift();
     await goTo(i);
+    // a batch link knows the view on that sheet (0.9 SU.1085): zoom to it
+    const vb = m.linkView?.box;
+    if (vb) { view.zoomTo(vb, 0.9); status(t('link.went.view', { sheet: target.title, id: m.linkView.id || '' })); return; }
     status(t('link.went', { sheet: target.title }));
   }
   async function goBack() {
@@ -588,7 +612,7 @@ function init(root) {
     await frame();
     try {
       const lib = await pdfLib();
-      const { bytes: baked } = await bake(f, lib, { rot, remap });
+      const { bytes: baked } = await bake(f, lib, { rot, remap, keepNotes: true });
       const out = await run(lib, baked);
       await replaceFile(f, out, show);
       status((typeof done === 'function' ? done() : done) + ' ' + t('pages.no_undo'));
@@ -612,6 +636,7 @@ function init(root) {
     f.auto?.close();
     files[at] = rec;
     store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
+    notesUi?.adopt(rec);   // 0.9 NOTES.1
     fieldUi?.loadFrom(rec);
     await formUi?.prepare(rec);   // the values typed so far were written into the copy (bake)
     for (const pg of rec.pages) store.dirtySheets.add(pg.key);
@@ -841,46 +866,127 @@ function init(root) {
     for (const b of findUi.list.querySelectorAll('button[data-hit]')) b.setAttribute('aria-current', b.dataset.hit === String(i) ? 'true' : 'false');
     view.invalidate();
   }
-  /** Batch auto-link (0.4 K16): every sheet callout like "3/A-501" in the drawings' text, reviewed, then made into link boxes. */
-  async function autoLink() {
-    if (!sheets.length) { status(t('need.pdf')); return; }
+  /**
+   * Batch links (0.9 SU.1085; 0.4 K16 before it). Three steps, re-runnable: (1) the sheet numbers and names as the title
+   * blocks gave them, every one editable (one undo step); (2) every sheet's text read for callouts ("3/A-501", a bubble "3" over
+   * "A-501", "DETAIL 2 ON A-501", "A-501") and every sheet's view titles; (3) a list of what links, what is already linked and
+   * what did not link, with a hand fix per missing sheet number and per missing view. Links are rect markups with `link` (the
+   * sheet number) and `linkView` {id, box, ref}; saved as MarkupCraft markups and as PDF Link annotations (/FitR on the view).
+   * Run again after sheets are added or renamed: links still right are kept, moved or broken batch links are updated or listed.
+   */
+  async function batchLinks() {
+    if (!sheets.length) { status(t('need.pdf')); return null; }
     commitEdit(); cancelOps();
+    // (1) sheet numbers and names, fixed by hand where the title block was wrong or empty
+    const fromLabel = (f) => t('blink.from.' + ({ manual: 'manual', label: 'label', 'title block': 'tb', file: 'file' }[f] || 'file'));
+    const rowsS = sheets.map((s, i) => el('tr', { dataset: { key: s.page.key } },
+      el('td', {}, el('input', { type: 'text', className: 'mc-input', maxlength: '40', id: 'mc-bl-no-' + i, dataset: { blNo: s.page.key }, value: s.page.sheetNo || '', 'aria-label': t('blink.sheets.no_for', { sheet: s.page.title }), placeholder: t('blink.sheets.no_ph') })),
+      el('td', {}, el('input', { type: 'text', className: 'mc-input', maxlength: '200', dataset: { blName: s.page.key }, value: s.page.name || '', 'aria-label': t('blink.sheets.name_for', { sheet: s.page.title }) })),
+      el('td', { className: 'mc-muted' }, fromLabel(s.page.from), s.page.sheetNo ? '' : el('strong', { className: 'mc-bl-need' }, ' ', t('blink.sheets.no_number')))));
+    const r1 = await dialog({ title: t('blink.h'), text: t('blink.sheets.text', { n: sheets.length }), wide: true,
+      body: [el('div', { className: 'mc-bl-scroll' }, el('table', { className: 'mc-bl-table mc-bl-sheets' },
+        el('thead', {}, el('tr', {}, el('th', {}, t('props.sheet_number')), el('th', {}, t('rename.title')), el('th', {}, t('blink.sheets.from')))), el('tbody', {}, ...rowsS)))],
+      buttons: [['cancel', t('dlg.cancel')], ['ok', t('blink.sheets.ok'), 'btn-plot']], submit: 'ok' });
+    if (r1.key !== 'ok') return null;
+    const edits = [];
+    for (const s of sheets) {
+      const no = r1.form.querySelector(`[data-bl-no="${CSS.escape(s.page.key)}"]`)?.value.trim().slice(0, 40) ?? s.page.sheetNo;
+      const name = r1.form.querySelector(`[data-bl-name="${CSS.escape(s.page.key)}"]`)?.value.trim().slice(0, 200) ?? s.page.name;
+      if (no === (s.page.sheetNo || '') && name === (s.page.name || '')) continue;
+      const now = store.sheetNames.get(s.page.key) || {};
+      edits.push([s.page.key, { number: no !== (s.page.sheetNo || '') ? no : (now.number || ''), title: name !== (s.page.name || '') ? name : (now.title || '') }]);
+    }
+    if (edits.length) { store.change(t('blink.undo.names', { n: edits.length }), (tx) => { for (const [k, v] of edits) tx.setSheetName(k, v.number || v.title ? v : null); }); applySheetNames(); }
     const nos = sheets.map((s) => s.page.sheetNo).filter(Boolean);
-    if (!nos.length) { await ask(t('autolink.h'), t('autolink.no_numbers'), [['cancel', t('dlg.ok'), 'btn-plot']]); return; }
-    const found = [];
+    if (!nos.length) { await ask(t('blink.h'), t('autolink.no_numbers'), [['cancel', t('dlg.ok'), 'btn-plot']]); return null; }
+
+    // (2) callouts and views on every sheet
+    const list = sheetList();
+    const views = new Map();
+    const rows = [];
     let blank = 0;
     for (let i = 0; i < sheets.length; i++) {
       const s = sheets[i];
-      findUi.count.textContent = t('find.searching', { sheet: s.page.title, i: i + 1, n: sheets.length });
+      status(t('find.searching', { sheet: s.page.title, i: i + 1, n: sheets.length }));
       const idx = await sheetText(s);
-      if (!idx.text.trim()) { blank++; continue; }
-      const linked = store.onSheet(s.page.key).filter((m) => m.link);
-      for (const r of calloutRefs(idx.text, nos)) {
-        if (sheetNoKey(r.no) === sheetNoKey(s.page.sheetNo)) continue;   // a sheet's own number is its title block
-        const box = rangeBox(idx, r.start, r.end);
-        if (!box) continue;
-        const c = [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2];
-        if (linked.some((m) => { const b = boundsOf(m, envOf(m)); return b && c[0] >= b[0] && c[0] <= b[2] && c[1] >= b[1] && c[1] <= b[3]; })) continue;   // already linked
-        found.push({ sheet: s, ref: r.ref, no: r.no, box });
-      }
+      if (!idx.text.trim()) { blank++; views.set(s.page.key, []); continue; }
+      // a sheet renumbered by hand still prints its old number (title block, view titles): both are its own
+      const own = [s.page.sheetNo, s.page.tb?.number, s.page.label].filter(Boolean);
+      views.set(s.page.key, sheetViews(idx, { sheetNo: own, view: s.page.view }));
+      for (const c of findCallouts(idx, { sheetNos: nos, ownNo: own })) rows.push({ ...c, sheet: s });
     }
-    findUi.count.textContent = '';
-    if (!found.length) { await ask(t('autolink.h'), t('autolink.none') + (blank ? ' ' + t('find.no_text', { n: blank }) : ''), [['cancel', t('dlg.ok'), 'btn-plot']]); return; }
-    const rows = found.slice(0, 400).map((f, i) => el('li', { className: 'mc-slip-row' }, el('input', { type: 'checkbox', id: 'mc-al-' + i, checked: true, dataset: { i: String(i) } }), ' ',
-      el('label', { for: 'mc-al-' + i }, el('strong', {}, f.sheet.page.sheetNo || f.sheet.page.title), ' ', t('autolink.row', { ref: f.ref, sheet: f.no }))));
-    const r = await dialog({ title: t('autolink.h'), text: t('autolink.text', { n: found.length, sheets: t('find.sheets', { n: new Set(found.map((f) => f.sheet.page.key)).size }) }) + (found.length > 400 ? ' ' + t('autolink.capped') : ''), wide: true,
-      body: [el('ol', { className: 'mc-slip-list' }, ...rows)], buttons: [['cancel', t('dlg.cancel')], ['ok', t('autolink.ok'), 'btn-plot']], submit: 'ok' });
-    if (r.key !== 'ok') return;
-    const pick = [...r.form.querySelectorAll('.mc-slip-list input:checked')].map((b) => found[+b.dataset.i]);
-    if (!pick.length) return;
+    const viewsOf = (k) => views.get(k) || [];
+    const resolveAll = (fixes) => { for (const r of rows) Object.assign(r, resolveCallout(r, list, viewsOf, fixes)); };
+    resolveAll(new Map());
+    const bySheet = new Map();
+    for (const r of rows) {
+      if (!bySheet.has(r.sheet.page.key)) bySheet.set(r.sheet.page.key, store.onSheet(r.sheet.page.key).filter((m) => m.link).map((m) => ({ id: m.id, box: boundsOf(m, envOf(m)), link: m.link, linkView: m.linkView, resolves: !!linkTarget(m.link, list) })));
+      planLinks([r], bySheet.get(r.sheet.page.key));
+    }
+    status('');
+    if (!rows.length) { await ask(t('blink.h'), t('blink.none') + (blank ? ' ' + t('find.no_text', { n: blank }) : ''), [['cancel', t('dlg.ok'), 'btn-plot']]); return { found: 0 }; }
+
+    // (3) the list: what links, what is already linked, what did not (hand fixes)
+    const sheetOpts = (sel) => [el('option', { value: '' }, t('blink.fix.leave')), ...sheets.map((s) => el('option', { value: s.page.key, selected: s.page.key === sel }, s.page.title))];
+    const viewOpts = (key, want) => [el('option', { value: '' }, t('blink.view.whole')), ...viewsOf(key).map((v) => el('option', { value: v.id, selected: v.id === want }, t('blink.view.opt', { id: v.id, title: v.title || '' })))];
+    const where = (r) => el('strong', {}, r.sheet.page.sheetNo || r.sheet.page.title);
+    const goes = rows.map((r, i) => ({ r, i })).filter(({ r }) => r.action === 'new' || r.action === 'update');
+    const misses = rows.map((r, i) => ({ r, i })).filter(({ r }) => r.action === 'miss' || r.action === 'broken');
+    const kept = rows.filter((r) => r.action === 'keep' || r.action === 'hand');
+    const linkRow = ({ r, i }) => el('li', { className: 'mc-slip-row mc-bl-row', dataset: { action: r.action, i: String(i) } },
+      el('input', { type: 'checkbox', id: 'mc-bl-' + i, checked: true, dataset: { blI: String(i) } }), ' ',
+      el('label', { for: 'mc-bl-' + i }, where(r), ' ', t('autolink.row', { ref: r.ref, sheet: r.target.sheetNo || r.target.title }),
+        r.view ? ' ' + t('blink.row.view', { id: r.view.id, title: r.view.title || '' }) : r.detail ? ' ' + t('blink.row.no_view', { id: r.detail }) : ' ' + t('blink.row.sheet'),
+        r.action === 'update' ? el('span', { className: 'mc-muted' }, ' ', t('blink.row.update')) : ''),
+      r.status === 'no-view' ? el('select', { className: 'mc-select mc-bl-sel', dataset: { blView: String(i) }, 'aria-label': t('blink.view.pick', { ref: r.ref }) }, ...viewOpts(r.target.key, r.pickedView || '')) : '');
+    // one fix per sheet number that names no open sheet: every callout to that number follows it
+    const missNos = [...new Map(misses.map(({ r }) => [sheetNoKey(r.no), r.no])).entries()];
+    const missRow = ([k, no]) => { const n = misses.filter(({ r }) => sheetNoKey(r.no) === k); return el('li', { className: 'mc-slip-row mc-bl-row', dataset: { action: 'miss', no: k } },
+      el('label', { for: 'mc-bl-fix-' + k }, t('blink.miss.row', { no, n: n.length, where: [...new Set(n.map(({ r }) => r.sheet.page.sheetNo || r.sheet.page.title))].join(', ') }), n.some(({ r }) => r.action === 'broken') ? el('span', { className: 'mc-muted' }, ' ', t('blink.miss.broken')) : ''), ' ',
+      el('select', { className: 'mc-select mc-bl-sel', id: 'mc-bl-fix-' + k, dataset: { blFix: k } }, ...sheetOpts(''))); };
+    const sec = (h, items, note) => el('section', { className: 'mc-bl-sec' }, el('h3', { className: 'mc-h mc-bl-h' }, h), note ? el('p', { className: 'mc-muted' }, note) : '', items.length ? el('ol', { className: 'mc-slip-list' }, ...items) : el('p', { className: 'mc-muted' }, t('blink.sec.empty')));
+    const nSheets = new Set(rows.map((r) => r.sheet.page.key)).size;
+    const r2 = await dialog({ title: t('blink.h'), text: t('blink.text', { n: rows.length, sheets: t('find.sheets', { n: nSheets }) }) + (blank ? ' ' + t('find.no_text', { n: blank }) : ''), wide: true,
+      body: [el('div', { className: 'mc-bl-scroll' },
+        sec(t('blink.sec.link', { n: goes.length }), goes.slice(0, 400).map(linkRow), goes.length > 400 ? t('autolink.capped') : ''),
+        sec(t('blink.sec.miss', { n: misses.length }), missNos.map(missRow), misses.length ? t('blink.sec.miss.note') : ''),
+        el('p', { className: 'mc-muted', dataset: { blKept: String(kept.length) } }, t('blink.sec.kept', { n: kept.length })))],
+      buttons: [['cancel', t('dlg.cancel')], ['ok', t('blink.ok'), 'btn-plot']], submit: 'ok' });
+    if (r2.key !== 'ok') return { found: rows.length, made: 0 };
+    // the person's fixes: a sheet for each missing number, a view for callouts whose view was not found
+    const fixes = new Map();
+    for (const sel of r2.form.querySelectorAll('select[data-bl-fix]')) if (sel.value) fixes.set(sel.dataset.blFix, sel.value);
+    const pickView = new Map([...r2.form.querySelectorAll('select[data-bl-view]')].map((sel) => [+sel.dataset.blView, sel.value]));
+    const ticked = new Set([...r2.form.querySelectorAll('input[data-bl-i]:checked')].map((b) => +b.dataset.blI));
+    const todo = [];
+    for (const { r, i } of goes) if (ticked.has(i)) {
+      const v = pickView.get(i) ? viewsOf(r.target.key).find((x) => x.id === pickView.get(i)) : r.view;
+      todo.push({ r, view: v || null });
+    }
+    for (const { r } of misses) {
+      const k = fixes.get(sheetNoKey(r.no));
+      if (!k) continue;
+      const res = resolveCallout(r, list, viewsOf, fixes);
+      if (!res.target) continue;
+      const kept = res.status === 'no-view' && r.pickedView ? viewsOf(res.target.key).find((x) => x.id === r.pickedView) : null;   // the view picked by hand before
+      todo.push({ r: { ...r, ...res }, view: kept || res.view });
+    }
+    if (!todo.length) { status(t('blink.nothing')); return { found: rows.length, made: 0, updated: 0, missed: misses.length }; }
     const who = await askAuthor();
-    store.change(t('undo.autolink', { n: pick.length }), (tx) => { for (const f of pick) {
-      const [x0, y0, x1, y1] = f.box;
-      tx.add(makeMarkup({ sheet: f.sheet.page.key, type: 'rect', rect: [x0 - 2, y0 - 2, x1 + 2, y1 + 2], rot: f.sheet.page.rotate, author: who, link: f.no,
+    let made = 0, updated = 0;
+    store.change(t('blink.undo', { n: todo.length }), (tx) => { for (const { r, view } of todo) {
+      const link = r.target.sheetNo || r.target.title;
+      const linkView = linkViewFor(r, view);
+      if (r.existing) { tx.update(r.existing, { link, linkView }); updated++; continue; }
+      const [x0, y0, x1, y1] = r.box;
+      tx.add(makeMarkup({ sheet: r.sheet.page.key, type: 'rect', rect: [x0 - 2, y0 - 2, x1 + 2, y1 + 2], rot: r.sheet.page.rotate, author: who, link, linkView,
         subject: t('autolink.subject'), style: { color: '#1e48c8', width: 0.75, fill: null, fillOpacity: 0.25, opacity: 0.85, fontSize: 12 } }));
+      made++;
     } });
-    status(t('autolink.done', { n: pick.length }));
+    const left = misses.filter(({ r }) => !fixes.get(sheetNoKey(r.no))).length;
+    status(t('blink.done', { n: made, u: updated, m: left }));
     refreshAll();
+    return { found: rows.length, made, updated, missed: left };
   }
 
   async function cloudFound() {
@@ -921,6 +1027,28 @@ function init(root) {
       const name = t('flat.file', { name: f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') }) + '.pdf';
       dl(bytes, name, 'application/pdf');
       status(t('flat.done', { file: name, n: report.flattened }) + (report.written ? ' ' + t('flat.kept', { n: report.written }) : ''));
+    } catch (e) {
+      busy('');
+      await ask(t('save.failed', { file: f.name }), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
+    }
+    busy('');
+  }
+
+  /** A copy to send: markups as they are, no notes, no private notes, nothing on the pasteboard (0.9 NOTES.1). */
+  async function saveClean() {
+    const s = curSheet();
+    if (!s) { status(t('need.pdf')); return; }
+    commitEdit(); cancelOps();
+    const f = s.file;
+    busy(t('save.loading'));
+    await frame();
+    try {
+      const lib = await pdfLib();
+      busy(t('save.saving', { file: f.name }));
+      const { bytes } = await bake(f, lib, { burn: true });
+      const name = t('pnotes.clean.file', { name: f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') }) + '.pdf';
+      dl(bytes, name, 'application/pdf');
+      status(t('pnotes.clean.done', { file: name }));
     } catch (e) {
       busy('');
       await ask(t('save.failed', { file: f.name }), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
@@ -1366,7 +1494,7 @@ function init(root) {
   };
   view.lockActive = () => !!drag || !!pending || !!editing || cmp.on;
   view.onBaseOther = (ctx, v, page, S) => {
-    for (const m of store.onSheet(page.key)) { if (m.type === 'foreign' || !store.shown(m)) continue; v.paint(ctx, displayOf(m, envOf(m)).list, { S }); }
+    for (const m of store.everyOn(page.key)) { if (m.type === 'foreign' || !store.shown(m)) continue; v.paint(ctx, displayOf(m, envOf(m)).list, { S }); }
     formUi?.paint(ctx, page, S);
   };
   // a page pdf.js could not draw says so on the sheet and in the status line, never a silent blank (0.7.1, blank-page reports)
@@ -1480,7 +1608,7 @@ function init(root) {
     tool = name;
     toolPreset = preset;
     formUi?.render();   // the form's inputs show while Fill form is on
-    for (const b of root.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === name));
+    for (const b of findAll('[data-tool]')) b.setAttribute('aria-pressed', String(b.dataset.tool === name));
     updateCursor();
     wsSoon();
     // the count tool keeps adding to a selected count group; every other drawing tool starts fresh
@@ -1491,10 +1619,12 @@ function init(root) {
     if (name === 'calibrate') status(t('hint.calibrate'));
     else if (name === 'stamp') status(!preset && currentPicture() ? (settings.stamp === SIG ? t('image.signature.ready') : t('image.ready', { name: currentPicture().label })) : t('hint.stamp', { stamp: preset?.label || stampLabel(settings.stamp) }));
     else if (KIND[name] === 'poly') status(t('hint.poly'));
+    else if (name === 'arc') status(arcHint());
     else if (KIND[name] === 'three') status(t('hint.' + name));
     else if (name === 'callout') status(t('hint.callout'));
     else if (name === 'count') status(t('hint.count'));
     if (name === 'area') status(t('hint.area'));
+    showArcBar();   // the Arc tool's method chooser (gone for every other tool)
     if (name === 'content') { sel = new Set(); baseUi.enter(); renderProps(); view.invalidate(true); }
     if (name === 'seltext') { sel = new Set(); renderProps(); textSel?.enter(); }
     if (name === 'areacopy') { sel = new Set(); renderProps(); areaUi?.enter(); }
@@ -1558,8 +1688,10 @@ function init(root) {
       case 'print-pages': printSheets(true); break;
       case 'ocr': ocrUi?.run(); break;
       case 'find-cloud': cloudFound(); break;
-      case 'auto-link': autoLink(); break;
+      case 'auto-link': case 'batch-links': batchLinks(); break;
       case 'save-flat': saveFlat(); break;
+      case 'save-clean': saveClean(); break;
+      case 'notes-toggle': notesUi?.toggle(); break;
       case 'slip-sheet': if (files.length) ui.slipFile.click(); else status(t('slip.need_old')); break;
       case 'page-rotate-cw': case 'page-rotate-ccw': case 'page-move-up': case 'page-move-down':
       case 'page-insert-pdf': case 'page-insert-blank': case 'page-add-blank': case 'page-delete': case 'page-extract': pagesOp(a); break;
@@ -1707,8 +1839,8 @@ function init(root) {
     if (tool === 'content') { copyContentSel(verb); return true; }
     if (tool === 'seltext') { textSel?.copy(); return true; }
     if (tool === 'areacopy') { areaUi?.copy(false); return true; }
-    const list = editable();
-    if (!list.length) { status(sel.size ? t('clip.' + verb + '.locked') : t('clip.' + verb + '.need')); return false; }
+    const list = editable().filter((m) => m.scope !== 'private');   // 0.9 NOTES.1: a clip goes to localStorage in clear
+    if (!list.length) { status(editable().length ? t('pnotes.nocopy') : sel.size ? t('clip.' + verb + '.locked') : t('clip.' + verb + '.need')); return false; }
     clip = makeClip(list, { source: TAB, sheet: curKey() });
     pasteRun = { key: '', n: 0 };
     let shared = false;
@@ -2089,7 +2221,7 @@ function init(root) {
   let tap = null;                // a deferred press: { id, x, y, e }
   let lastTap = null;            // for double-tap (finishes a polyline)
   const pinch = () => { const [a, b] = [...touches.values()]; return { mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], d: Math.max(1, Math.hypot(a[0] - b[0], a[1] - b[1])) }; };
-  const pressTool = () => tool !== 'select' && (tool === 'record' || KIND[tool] === 'count' || KIND[tool] === 'note' || KIND[tool] === 'poly' || KIND[tool] === 'three' || pending?.kind === 'two');
+  const pressTool = () => tool !== 'select' && (tool === 'record' || KIND[tool] === 'count' || KIND[tool] === 'note' || KIND[tool] === 'poly' || KIND[tool] === 'three' || KIND[tool] === 'arcm' || pending?.kind === 'two');
   // A long press (a finger held still) is the touch form of Enter / double-click: it finishes a polyline, area or free
   // cloud, and on a markup with the Select tool it opens its text for editing.
   let press = null;              // { id, x, y, timer }
@@ -2230,6 +2362,7 @@ function init(root) {
           status(t('three.last.' + tool));
         } else { pending = { kind: 'three', pts: [p, p] }; status(t('three.next.' + tool)); }
         break;
+      case 'arcm': arcPress(p); break;
       case 'callout': drag = { kind: 'callout', tip: p, b: p, sx, sy }; break;
       case 'note': placeNote(p); break;
       case 'count': countClick(p, e); break;
@@ -2254,6 +2387,7 @@ function init(root) {
       if (pending?.kind === 'two') { pending.b = constrain(pending.a, p, e); view.invalidate(); }
       else if (pending?.kind === 'poly') { const last = pending.pts[pending.pts.length - 2]; pending.pts[pending.pts.length - 1] = constrain(last, p, e); view.invalidate(); }
       else if (pending?.kind === 'three') { pending.pts[pending.pts.length - 1] = p; view.invalidate(); }
+      else if (pending?.kind === 'arcm') { pending.at = p; view.invalidate(); }
       else if (tool === 'select') hover(p);
       return;
     }
@@ -2612,6 +2746,78 @@ function init(root) {
   }
 
   /** Arc and angle (0.4 K4): three clicks, then one undo step. */
+  // ---- the Arc tool's ten methods (arc-tool.js) ----
+  const arcHint = () => {
+    const a = pending?.kind === 'arcm' ? pending.arc : null;
+    const role = a ? a.role : arcSession(settings.arcMethod).role;
+    return t('arc.method.' + settings.arcMethod.toLowerCase()) + ': ' + t('arc.role.' + role) + ' ' + t('arc.esc');
+  };
+  function setArcMethod(id) {
+    if (!ARC_METHODS.includes(id)) return;
+    if (pending?.kind === 'arcm') { pending = null; view.invalidate(); }
+    settings.arcMethod = id; saveSettings();
+    status(arcHint());
+    showArcBar(); if (tool === 'arc') renderProps();
+  }
+  /** The small options row over the page while the Arc tool is active: the method chooser. */
+  function showArcBar() {
+    ui.canvases.querySelector('.mc-arcbar')?.remove();
+    if (tool !== 'arc') return;
+    const id = fid();
+    const sel = el('select', { id, className: 'mc-select', 'aria-label': t('arc.method'), title: t('arc.method.title'), dataset: { arcMethod: '' },
+      onchange: (e) => { setArcMethod(e.target.value); ui.over.focus({ preventScroll: true }); } },
+    ...ARC_METHODS.map((m) => el('option', { value: m, selected: m === settings.arcMethod }, t('arc.method.' + m.toLowerCase()))));
+    ui.canvases.append(el('div', { className: 'mc-arcbar' }, sel));
+  }
+  function arcPress(p) {
+    if (pending?.kind !== 'arcm') pending = { kind: 'arcm', arc: arcSession(settings.arcMethod), at: p };
+    const a = pending.arc;
+    pending.at = p;
+    if (a.numeric) {
+      a.value(pointerValue(a.method, a.v, { x: p[0], y: p[1] }));
+    } else a.point(p);
+    arcAdvance();
+  }
+  function arcAdvance() {
+    const a = pending.arc;
+    if (a.v.length < a.roles.length) { status(arcHint()); view.invalidate(); return; }
+    const r = a.finish();
+    if (r.error) {
+      a.back(); status(t('arc.err.' + r.error)); view.invalidate(); return;   // the last input is taken back; the person tries again
+    }
+    const span = Math.hypot(r.pts[2][0] - r.pts[0][0], r.pts[2][1] - r.pts[0][1]);
+    if (span < 2 / view.z && a.method === '3P') { a.back(); status(t('poly.need', { type: tlow('arc'), n: 3 })); view.invalidate(); return; }
+    pending = null;
+    commitNew(newMarkup('arc', { pts: r.pts }));
+    status(arcHint());
+  }
+  /** Typing a number (or "-" first) for an angle, length, radius or direction: a small box at the pointer, Enter places it. */
+  function openArcValue(first) {
+    ui.canvases.querySelector('.mc-sketch')?.remove();
+    const a = pending.arc, role = a.role;
+    const box = el('input', { type: 'text', className: 'mc-input mc-sketch', value: first, autocomplete: 'off', spellcheck: false, 'aria-label': t('arc.type.' + role), title: t('arc.type.' + role) });
+    const at = pointer || [view.w / 2, view.h / 2];
+    box.style.left = Math.min(view.w - 160, at[0] + 14) + 'px';
+    box.style.top = Math.min(view.h - 40, at[1] + 14) + 'px';
+    const close = () => { box.remove(); ui.over.focus({ preventScroll: true }); };
+    box.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (pending?.kind !== 'arcm') { close(); return; }
+      const r = typedValue(role, box.value, store.calibrations.get(curKey()), view.seenRotate);
+      if (r.error) { status(t(r.error)); box.select(); return; }
+      close();
+      pending.arc.value(r.value);
+      arcAdvance();
+    });
+    box.addEventListener('blur', () => setTimeout(() => box.isConnected && box.remove(), 0));
+    ui.canvases.append(box);
+    box.focus();
+    box.setSelectionRange(box.value.length, box.value.length);
+  }
+
   function finishThree(pts) {
     const span = Math.max(Math.hypot(pts[1][0] - pts[0][0], pts[1][1] - pts[0][1]), Math.hypot(pts[2][0] - pts[1][0], pts[2][1] - pts[1][1]));
     if (span < 2 / view.z) { status(t('poly.need', { type: tlow(tool), n: 3 })); view.invalidate(); return; }
@@ -2758,11 +2964,18 @@ function init(root) {
   // ---- painting ----
   view.onBase = (ctx) => {
     for (const m of pageMarkups()) {
-      if (m.type === 'foreign') continue;
+      if (m.type === 'foreign' || !store.isShared(m)) continue;
       if (view.hidden?.has(m.id)) continue;
       view.paint(ctx, displayOf(m, envOf(m)).list);
     }
     if (view.page) formUi?.paint(ctx, view.page, view.S);   // form buttons with no appearance of their own (0.8)
+  };
+  // 0.9 NOTES.1: notes also reach off the sheet, so they are drawn after the sheet's clip
+  view.onBoard = (ctx) => {
+    for (const m of pageMarkups()) {
+      if (m.type === 'foreign' || store.isShared(m) || view.hidden?.has(m.id)) continue;
+      view.paint(ctx, displayOf(m, envOf(m)).list);
+    }
   };
 
   view.onOver = (ctx) => {
@@ -2782,6 +2995,7 @@ function init(root) {
     if (drag?.live) for (const m of drag.live) view.paint(ctx, shapes(m, envOf(m)));
     if (editing) boxOf(editing.m.rect || boundsOf(editing.m, envOf(editing.m)), view.colors.action, [4, 3]);
     fieldUi?.paint(ctx);   // field record pins (0.7 LC.7)
+    notesUi?.paintTags(ctx);   // 0.9 NOTES.1
     // sheet links (K9): a small arrow at the top right of each linked markup (screen only)
     for (const m of pageMarkups()) {
       if (!m.link) continue;
@@ -2855,6 +3069,11 @@ function init(root) {
       } else preview(newMarkup(tool, { pts: [two.a, two.b] }));
     }
     if (pending?.kind === 'three') preview(newMarkup(tool, { pts: pending.pts.slice() }));
+    if (pending?.kind === 'arcm' && pending.at) {
+      const pv = pending.arc.preview(pending.at);
+      if (pv.pts) preview(newMarkup('arc', { pts: pv.pts }));
+      else if (pv.guide) line(pv.guide, view.colors.action, 1.5, [4, 3]);
+    }
     if (pending?.kind === 'poly') {
       const pts = pending.pts;
       if (tool === 'polyline' || pts.length < 3) preview(newMarkup('polyline', { pts, style: styleFor(tool) }));
@@ -2934,6 +3153,8 @@ function init(root) {
       else if (tool !== 'select') setTool('select');
       return;
     }
+    if (pending?.kind === 'arcm' && !mod && pending.arc.numeric && /^[0-9.\-]$/.test(k)) { e.preventDefault(); openArcValue(k); return; }
+    if (k === 'Backspace' && pending?.kind === 'arcm') { e.preventDefault(); pending.arc.back(); if (!pending.arc.started) pending = null; else status(arcHint()); view.invalidate(); return; }
     if (/^[0-9.]$/.test(k) && !mod && (pending?.kind === 'poly' || pending?.kind === 'two') && store.calibrations.get(curKey())) { e.preventDefault(); openSketch(k); return; }
     if (k === 'Enter') { if (pending?.kind === 'poly') { e.preventDefault(); finishPoly(); } else if (sel.size === 1 && tool === 'select') { const m = store.get([...sel][0]); if (m && !m.locked) { e.preventDefault(); startEdit(m); } } return; }
     if (k === 'Backspace' && pending?.kind === 'poly') {
@@ -2966,6 +3187,7 @@ function init(root) {
     }
     const lk = k.toLowerCase();
     if (lk === 'c' && e.shiftKey) { toolPreset = null; setTool('cloud'); return; }
+    if (lk === 'h' && e.shiftKey && !e.altKey) { notesUi?.toggle(); return; }   // 0.9 NOTES.1
     if (KEYS[lk] && !e.altKey) { toolPreset = null; setTool(KEYS[lk]); }
   });
   window.addEventListener('keyup', (e) => { if (e.key === ' ') { spaceDown = false; updateCursor(); } });
@@ -3138,6 +3360,11 @@ function init(root) {
       ui.propsH.textContent = t('props.h.tool', { tool: toolPreset?.name ? toolPreset.name : tname(tool) });
       const st = styleFor(tool);
       const grid = el('div', { className: 'mc-props' });
+      if (tool === 'arc') {
+        const aid = fid();
+        grid.append(el('label', { for: aid, className: 'mc-k' }, t('arc.method')), el('select', { id: aid, className: 'mc-select', onchange: (e) => setArcMethod(e.target.value) },
+          ...ARC_METHODS.map((m) => el('option', { value: m, selected: m === settings.arcMethod }, t('arc.method.' + m.toLowerCase())))));
+      }
       if (tool === 'count') {
         const cid = fid();
         grid.append(el('label', { for: cid, className: 'mc-k' }, t('props.group')), el('input', { type: 'text', id: cid, className: 'mc-input', maxlength: '60', value: toolPreset?.label || settings.countLabel || t('count.default'),
@@ -3239,7 +3466,7 @@ function init(root) {
       grid.append(...field(c.name, input, id));
     }
     id = fid();
-    grid.append(...field(t('props.link'), el('select', { id, className: 'mc-select', onchange: (e) => upd(t('undo.link'), { link: e.target.value }) },
+    grid.append(...field(t('props.link'), el('select', { id, className: 'mc-select', onchange: (e) => upd(t('undo.link'), { link: e.target.value, linkView: null }) },
       el('option', { value: '', selected: !m.link }, t('link.none')),
       ...(m.link && !linkTarget(m.link, sheetList()) ? [el('option', { value: m.link, selected: true }, t('link.not_open', { sheet: m.link }))] : []),
       ...sheets.map((s) => { const v = s.page.sheetNo || s.page.title; return el('option', { value: v, selected: !!m.link && linkTarget(m.link, sheetList())?.key === s.page.key }, s.page.title); })), id));
@@ -3282,7 +3509,7 @@ function init(root) {
       pg.append(el('span', { className: 'span' }, el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => addToPunch([m.id]) }, t('punch.add.one'))));
     }
     wrap.append(pg);
-    if (!m.locked) wrap.append(flatToggle([m]));
+    if (!m.locked) wrap.append(notesUi.scopeControl([m]), flatToggle([m]));
     wrap.append(el('div', { className: 'mc-actions' },
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => saveToChest(m) }, t('chest.save.one')),
       m.locked ? null : el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('stamp.save.title'), dataset: { saveStamp: '' }, onclick: () => saveStamp() }, t('stamp.save')),
@@ -3396,7 +3623,7 @@ function init(root) {
       common ? null : el('option', { value: '', selected: true }, t('multi.mixed')), ...STATUSES.map((st) => el('option', { value: st, selected: st === common }, stname(st)))), id));
     if (!window.ccPropGrid) grid.append(el('p', { className: 'mc-props-sub' }, t('props.style')));   // the grid has its own Style heading
     grid.append(...styleControls(first.style, (patch) => patchSel(t('undo.style'), (m) => ({ style: { ...m.style, ...patch } })), types));
-    wrap.append(grid, flatToggle(ed), el('div', { className: 'mc-actions' },
+    wrap.append(grid, notesUi.scopeControl(ed), flatToggle(ed), el('div', { className: 'mc-actions' },
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => addToPunch() }, t('punch.add.one')),
       el('button', { type: 'button', className: 'btn-line btn-sm-cc', title: t('stamp.save.title'), dataset: { saveStamp: '' }, onclick: () => saveStamp() }, t('stamp.save')),
       sheets.length > 1 ? el('button', { type: 'button', className: 'btn-line btn-sm-cc', onclick: () => copyToSheets(), dataset: { copySheets: '' } }, t('batch.button')) : null,
@@ -4215,7 +4442,7 @@ function init(root) {
     q('close').disabled = !files.length;
     all('print', !files.length);
     all('slip-sheet', !files.length);
-    for (const a of ['print-pages', 'save-flat', 'page-rotate-cw', 'page-rotate-ccw', 'page-insert-pdf', 'page-insert-blank', 'page-delete', 'page-extract']) all(a, !curSheet());
+    for (const a of ['print-pages', 'save-flat', 'save-clean', 'page-rotate-cw', 'page-rotate-ccw', 'page-insert-pdf', 'page-insert-blank', 'page-delete', 'page-extract']) all(a, !curSheet());
     all('page-move-up', !curSheet() || curSheet().page.index === 0);
     const blankFile = curSheet()?.file.blank ? curSheet().file : null;   // "Add a blank page" under the sheets: blank sets only
     for (const b of findAll('[data-add-blank]')) { b.hidden = !blankFile; b.disabled = !blankFile; }
@@ -4314,17 +4541,18 @@ function init(root) {
 
   // ---- the shell's seven modules (0.8 round 3, markup_PART_3; docs/apps/shell-modules.md § Mounting) ----
   // Calc sheets and design reasons live in the PDF's Info entry /MarkupCraftShell; a change marks the open file as unsaved.
-  const shellData = { calcs: null, reasons: null };
+  const shellData = { calcs: null, reasons: null, docinfo: null };
   let shellOpened = false;
-  const shellPack = () => { shellMount?.beforeSave(); return shellData.calcs || shellData.reasons ? { calcs: shellData.calcs, reasons: shellData.reasons } : null; };
+  const shellPack = () => { shellMount?.beforeSave(); return shellData.calcs || shellData.reasons || shellData.docinfo ? { calcs: shellData.calcs, reasons: shellData.reasons, docinfo: shellData.docinfo } : null; };
   const shellMount = mountMarkupShell({
     store, control: getHost({ app: 'markupcraft' }).control,
     sel: () => sel, select: (id) => jumpTo(id), onSelection: (fn) => { selListeners.add(fn); return () => selListeners.delete(fn); },
     label: (m) => [tname(m.type), sheetByKey(m.sheet)?.page.title].filter(Boolean).join(', '),
     name: () => files[0]?.name || '', dirty: () => anyDirty(),
+    counts: () => ({ sheets: sheets.length, layers: store.layerNames().length, files: files.length }),   // 0.9 DI.1
     shell: () => shellData,
     setShell: (key, json, quiet) => {
-      if (key !== 'calcs' && key !== 'reasons') return;
+      if (key !== 'calcs' && key !== 'reasons' && key !== 'docinfo') return;
       const same = JSON.stringify(shellData[key] ?? null) === JSON.stringify(json ?? null);
       if (same) return;
       shellData[key] = json ?? null;
@@ -4484,7 +4712,7 @@ function init(root) {
   }
   function track(f) {
     if (f.auto) return;
-    f.auto = autosave.doc({ name: f.name, snapshot: async () => ({ data: { pdf: f.blob ||= new Blob([f.bytes], { type: 'application/pdf' }), state: fileState(f) }, meta: { name: f.name, pages: f.pages.length } }) });
+    f.auto = autosave.doc({ name: f.name, snapshot: async () => ({ data: { pdf: f.blob ||= new Blob([f.bytes], { type: 'application/pdf' }), state: { ...fileState(f), ...(await notesUi.stateFor(f)) } }, meta: { name: f.name, pages: f.pages.length } }) });
   }
   /** After any change: copies for files with unsaved work, none for the rest (saved, or undone back to the file). */
   function syncAutosave() {
@@ -4507,6 +4735,7 @@ function init(root) {
       Object.fromEntries(Object.entries(st.calibrations || {}).filter(([i]) => key(+i)).map(([i, c]) => [key(+i), c])),
       Object.fromEntries(Object.entries(st.sheetNames || {}).filter(([i]) => key(+i)).map(([i, nm]) => [key(+i), nm])), st.layers || [], st.columns || []);
     for (const pg of f.pages) store.dirtySheets.add(pg.key);
+    await notesUi.restore(f, st);   // 0.9 NOTES.1
     baseUi.restore(f, st.base);   // page-content edits (0.6 DF.14)
     fieldUi?.restore(f, st.records);   // field records (0.7 LC.7)
     formUi?.restore(f, st.form);   // values typed into the form (0.8)
@@ -4573,7 +4802,10 @@ function init(root) {
   window.markupcraft.setPageMode = setPageMode;
   showPageMode();
   textSel = installTextSelect({ view, curSheet, sheetText, status, t });
-  areaUi = installAreaCopy({ root, view, curSheet, status, t, tab: TAB,
+  notesUi = installNotes({ root, store, view, status, dialog, files: () => files, curSheet, sheetTitle: (k) => sheetByKey(k)?.page.title || '', author: () => author, tname,
+    jumpTo: (id) => jumpTo(id), setTool: (x) => setTool(x), clearSelection: () => { sel = new Set(); refreshToolbar(); }, saveClean: () => saveClean() });
+  window.markupcraft.notes = notesUi;
+  areaUi = installAreaCopy({ root, view, curSheet, status, t, tab: TAB, onToBoard: (c) => notesUi.placeSnapshot(c),
     markupLists: (s) => store.onSheet(s.page.key).filter((m) => store.shown(m) && m.type !== 'foreign').map((m) => displayOf(m, envOf(m)).list),
     calibration: (key) => store.calibrations.get(key) || null,
     onCopied: (c) => { areaClip = c; pasteRun = { key: '', n: 0 }; refreshToolbar(); } });

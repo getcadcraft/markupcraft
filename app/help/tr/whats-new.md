@@ -1,43 +1,60 @@
 ---
-title: 0.7'deki yenilikler
-summary: Yeni Saha sekmesinde RFI'lar, onay dosyaları ve günlük raporlar; bitiş tarihleri, gecikenler kırmızıyla, CSV ve BCF, çevrimdışı çalışma ve Birleştir; durum belirleyen, yanıtlayan ve listeyi dışa aktaran asistanlar; Ayarlar'ı izleyen birim listeleri; yana çekilen paneller ve taşınan iletişim kutuları.
-keywords: yenilikler, yenilikler nedir, sürüm notları, değişiklik günlüğü, değişiklikler, 0.7, sürüm, yeni özellikler, saha, saha kayıtları, rfi, bilgi talebi, onay dosyası, günlük rapor, şantiye defteri, gecikmiş, bitiş tarihi, bana atananlar, iğne, birleştir, çevrimdışı, tablet, bcf, csv, asistan, mcp, işaretleme durumu, yanıt, dışa aktarma, birimler, birim listeleri, yıldız, kalibre et, sıkı, paneller, iletişim kutuları, portekizce
-from: 142e1a1e
+title: Yenilikler: 0.8 ve 0.8.1
+summary: Göreve dönüşen ve kendini kapatan işaretlemeler, revizyonlar arasında neyin değiştiğine dair düz bir liste, planda sesli notlar ve kararlar, çizimci için kırmızı kalem dosyaları ve ortak 0.8 değişiklikleri: giriş aygıtları, araç çubuğu satırları, Sorunlar paneli, daha fazla dil.
+keywords: yenilikler, neler yeni, sürüm notları, değişiklik günlüğü, değişiklikler, 0.8, 0.8.1, sürüm, yeni özellikler, görev, görevler, atanan, bitiş günü, gecikmiş, şimdi denetle, neler değişti, revizyonlar, karşılaştır, sesli not, karar, kırmızı kalem, yanıt dosyası, çizimci, asistan, mcp, sorunlar, diller, giriş aygıtları, dokunmatik yüzey, araç çubuğu satırları, özellik tablosu, güncelle
+from: 40368796
 ---
 
-Bu, MarkupCraft 0.7'de 0.6'ya göre nelerin değiştiğidir. Büyük yenilik saha kayıtlarıdır: PDF'in içinde, işaretlemelerinizin yanında tutulan RFI'lar, onay dosyaları ve günlük raporlar.
+Bu, MarkupCraft 0.7 ile karşılaştırıldığında 0.8 ve 0.8.1 sürümlerinde neyin değiştiğidir. En büyük yenilik, bir işaretlemenin birinin ya da kendi asistanınızın yapacağı bir görev olabilmesi ve çizim gerçekten değiştiğinde kendini kapatabilmesidir.
 
 ## Yeni
 
-### RFI'lar, onay dosyaları ve günlük raporlar
+### İşaretlemeler harekete geçer
 
-- **Saha sekmesi.** {{ui:Saha}} sekmesini açın ve {{ui:RFI}}, {{ui:Onay dosyası}} veya {{ui:Günlük rapor}} seçeneğini seçin. Bir RFI veya onay dosyasının ait olduğu yere sayfada dokunun veya tıklayın; yeri bir iğne gösterir. Günlük rapor, iğnesiz olarak açık sayfaya konur (sonradan {{ui:İğne yerleştir}} ile eklenir, {{ui:İğneyi taşı}} herhangi bir iğneyi taşır). Her kaydın kendi numarası (RFI-0001, SUB-0001, LOG-0001), bir başlığı, metni, durumu, atanan kişisi, bitiş tarihi, yanıt dizisi ve ek adları listesi vardır. Bkz. [RFI'ları, onay dosyalarını ve günlük raporları izleme](topic:field-records).
-- **Geciken işleri görün.** Listeyi türe, duruma, bitiş tarihine (gecikmiş, 7 gün içinde bitecek, bitiş tarihi olan veya olmayan), bu sayfaya veya tüm sayfalara, metin aramasına ya da {{ui:Bana atananlar}} seçeneğine göre süzün. Bitiş tarihi geçmiş ve hâlâ bekleyen bir kayıt, listede ve iğnesinde kırmızıyla **Gecikmiş** olarak işaretlenir. Bkz. [Önemli olanı bulma](topic:field-records#find-what-matters).
-- **CSV ve BCF.** {{ui:CSV}} listelenen kayıtları e-tablo olarak yazar; {{ui:BCF}} bunları, her biri sayfadaki yerinin anlık görüntüsüyle birlikte BCF konuları olarak yazar. İkisi de süzgeçleri izler. Bkz. [Dışa aktarma](topic:field-records#export).
-- **Çevrimdışı ve iki kopyanın bire indirilmesi.** Kayıtlar PDF'in içine kaydedilir ve ağ gerektirmez; böylece sahadaki bir tablet kayıt ekleyebilir, yanıtlayabilir ve kaydedebilir. Ofise dönünce {{ui:Birleştir}}, aynı PDF'in başka bir kopyasının kayıtlarını kimliklerine göre, tek bir geri alma adımı olarak katar. Bkz. [Kaydetme, çevrimdışı çalışma ve kopyaları birleştirme](topic:field-records#save-offline-and-merging-copies).
+- **Bir işaretlemeyi göreve çevirin.** Bir veya daha fazla işaretleme seçin, {{ui:Görevler}} sekmesini açın ve {{ui:Seçileni göreve çevir}} seçeneğini seçin. Bir görevin bir başlığı, görevi yapacak bir kişi ya da bağlı asistanınız, isteğe bağlı bir bitiş günü ve bir durumu vardır; sayfadaki yerini ve yanıt dizisini korur. Bkz. [Bir işaretlemeyi göreve çevirme](topic:markups-that-act).
+- **Kendini kapatan görevler.** Bir görev, işaretlemesinin içindeki çizimi izleyebilir. Sayfanın daha yeni bir revizyonunu açın ve {{ui:Şimdi denetle}} seçeneğini seçin: o alandaki çizgiler kılcal bir farktan fazla değiştiyse görev Bitti olarak işaretlenir, işaretlemesi Tamamlandı olur ve yanıt dizisindeki bir not neyin değiştiğini söyler. Yeni bir tarih damgası ya da 1.5 nokta kadar az hareket eden çizgiler sayılmaz. Bunun yerine bir görev bir model öğesini izleyebilir: asistanınız öğeyi `tasks_check` ile bildirir; sonraki bildirim farklıysa ya da öğe silinmişse görev kapanır. Tek bir geri al adımı onu yeniden açar.
+- **İşi bulun.** {{ui:Görevler}} listesini duruma ve kime ait olduğuna göre süzün; buna {{ui:Gecikmiş}} da dahildir. {{ui:Atanan}} seçeneğini seçin, ardından {{ui:Asistan}} seçerek asistanınızı bekleyen işleri görün. Bitiş gününü geçmiş bir görev Sorunlar paneli içinde uyarı olarak görünür. {{ui:CSV}} listeyi dışa aktarır. Görevler işaretlemeyle birlikte PDF dosyasına kaydedilir ve Canlı üzerinden diğer işaretleme özellikleri gibi taşınır.
+
+### Neyin değiştiği, düz bir liste olarak
+
+- **Değişiklikleri listeleyin.** {{ui:Karşılaştır}} sekmesini açın, ardından Tüm sayfa takımını karşılaştır seçeneğini seçin, daha önceki ve daha sonraki dosyayı seçin ve {{ui:Değişiklikleri listele}} seçeneğini seçin. Liste önce bir sayıyla başlar, ardından değişen her sayfayı kapsar; en büyük değişiklik önce gelir: sayfada nerede olduğu, ne kadar büyük olduğu (gerçek birimlerle ve kalibre edilmiş bir sayfada kâğıt üzerinde inç olarak), çizgilerin eklenip eklenmediği ya da silinip silinmediği, orada kaç işaretleme bulunduğu ve hangi sözcüklerin ortaya çıkıp kaybolduğu. {{ui:Listeyi kopyala}} listeyi panoya koyar, {{ui:CSV}} ise her değişiklik için bir satır yazar. Bkz. [Revizyonlar arasında neyin değiştiğini listeleme](topic:what-changed-in-words).
+
+### Sesli notlar ve kararlar
+
+- **Sesli notlar.** {{ui:Notlar}} sekmesinde {{ui:Sesli not kaydet}} seçeneğini seçin, ardından {{ui:Kaydı durdur}} seçeneğini seçin; kayıtlar iki dakika sonra kendiliğinden durur. Not sayfanın merkezine iğnelenir; doğru olduğu yere sürükleyin ve {{ui:Özellikler}} içinde bir başlık yazın. Listedeki {{ui:Oynat}} seçeneği kaydı oynatır. Kayıt PDF dosyasının içine kaydedilir.
+- **Kararlar.** {{ui:Karar iğnele}} seçeneği sayfaya bir iki cümlelik bir karar yazar. Daha önceki bir kararın yerine geçiyorsa, {{ui:Yerine geçtiği}} içinde o kararı seçin: eski karar kalır, Yerine geçildi olarak işaretlenir ve yenisini gösterir. Tek bir geri al adımı onu geri alır. Bkz. [Sesli notları ve kararları sayfaya iğneleme](topic:voice-notes-and-decisions).
+
+### Kırmızı kalemi revizyona
+
+- **Gönderin ve yanıtlayın.** {{ui:Görevler}} sekmesinde {{ui:Revizyona kırmızı kalem}} seçeneğini açın, işaretlemelerin karşılaştırıldığı revizyonu yazın ve {{ui:Kırmızı kalem dosyasını dışa aktar}} seçeneğini seçin. Açık her işaretleme için bir öğe içeren bir `.redline.json` dosyası alırsınız: sayfa, konum (sayfanın kesirleri olarak, böylece farklı boyutta yeniden çizdirilen bir çizim yine hizalanır), sözcükler, yazar, yanıt dizisi ve görevi. Değişiklikleri çizen kişi bir `.redline-answers.json` dosyasında Kabul edildi, Reddedildi ya da Bitti yanıtı verir; {{ui:Yanıt dosyasını yükle…}} her işaretlemeye bu durumu ve çizimcinin notunu tek bir geri al adımı olarak verir. Bkz. [İşaretlemeleri kırmızı kalemle çizimciye gönderme](topic:redline-to-revision).
 
 ### Yapay zekâ asistanları
 
-- **Bir asistanın yapabilecekleri arttı.** CadCraft Studio üzerinden bağlanan kendi asistanınız artık bir işaretlemenin durumunu belirleyebilir (`markup_status`, dizisine kaydedilir), bir dizide yanıt verebilir (`markup_reply`) ve {{ui:İşaretlemeler}} listesini CSV veya BCF olarak dışa aktarabilir (`markups_export`, liste süzgeçleriyle neyi gösteriyorsa o). Her değişiklik tek bir geri alma adımıdır ve asistanın adıyla imzalanır. Bkz. [Bir asistan neler isteyebilir](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+- **Daha fazla araç.** CadCraft Studio üzerinden bağladığınız bir asistan, görevleri listeleyebilir (`tasks_list`), bir görevi oluşturabilir ya da değiştirebilir (`task_set`), görevi kaldırabilir (`task_clear`), bir görevi daha yeni bir revizyona ya da bir öğeye karşı denetleyebilir (`tasks_check`) ve iki açık plan takımı arasındaki değişikliklerin düz listesini okuyabilir (`revisions_changes`). Yalnızca Asistanlar anahtarının altında işaretlediğiniz araçları alır ve her değişiklik tek bir geri al adımıdır. Bkz. [MarkupCraft'ı bir yapay zekâ asistanıyla kullanma](topic:use-with-ai-assistants).
 
-## Her uygulamada
+## Tüm uygulamalarda
 
-- **Birimler.** {{ui:Ayarlar}} › {{ui:Genel}} › {{ui:Birimler}} içinde uzunluk, alan, hacim, açı ve eğim için birer liste vardır; boyutlar birimlerin tanımlarının verdiği kesin değerlerdir (ABD survey ayağı ayrı bir birimdir). Hiç kullanmadığınız birimleri kapatın, birim listelerinden çıkarlar; birine yıldız koyun, yeni işler onunla başlar. Bir dosya her zaman kendi birimini korur. MarkupCraft'ta {{ui:Ayarlar}} › {{ui:MarkupCraft}} içindeki ölçüm ve konum birimleri ile kalibre etme iletişim kutusundaki birim anahtarları izler; yıldız, MarkupCraft'ın kendi ayarlarını kaydedene kadar ölçüm birimini belirler; kalibre ederken yazdığınız gerçek uzaklık da `3 yd` veya `1.5 km` gibi herhangi bir birimin işaretini taşıyabilir. Bkz. [Birimler, yazılan değerler ve birim listeleri](common:unit-lists).
-- **Daha sıkı bir düzen ve yana çekilen paneller.** {{ui:Ayarlar}} › {{ui:Genel}} › {{ui:Düzen yoğunluğu}} › {{ui:Sıkı}} ekrana daha çok şey sığdırır (dokunmatik ekranlar ve telefonlar büyük düğmelerini korur). Her yan panelin ince bir başlık çubuğu vardır: paneli yerleştirmek veya yüzdürmek için sürükleyin, sekme olarak tek çerçeveyi paylaşmak için başka bir panelin çubuğuna bırakın, kenara kayıp gizlenmesi için iğneleyin ya da gizleyip kenardan geri getirin. Bkz. [Panelleri düzenleme](common:arrange-panels#make-the-layout-denser).
-- **İletişim kutuları taşınır.** Bir iletişim kutusunu başlık çubuğundan tutup çizimin önünden çekin; bıraktığınız yere geri gelir. Yeniden ortalamak için başlık çubuğuna çift tıklayın. Bkz. [İletişim kutusunu taşıma](common:arrange-panels#move-a-dialog).
-- **Yapay zekâ asistanları için tarifler.** Kendi asistanınız için on uygulamalı istek (bir çizimi düzenleme, bir takımı yazdırma, çizimleri denetleme, bir modele soru sorma, bir metrajı toplama, bir parça varyantını deneme…); her biri çağırdığı araçlar ve gereken izinlerle birlikte ve her biri testlerimizce yeniden oynatılmıştır. Uygulamalarda yapay zekâ yoktur. Bkz. [Yapay zekâ asistanları için tarifler](common:assistants-recipes).
-- **Diller.** {{ui:Ayarlar}} › {{ui:Genel}} › {{ui:Dil}} içinde **Português (Portugal)** yenidir. O, **Português (Brasil)**, **Español (México)** ve **Bahasa Indonesia** artık uygulamaların her sözcüğüne sahiptir; anadili konuşan biri tarafından henüz gözden geçirilmemiş taslaklar olarak. Yardım konuları İngilizcedir.
-- **CadCraft Studio**, bir güncelleme denetimi başarısız olduğunda yalnızca "Bitti" demek yerine nedenini söyler (sisteminiz için henüz dosya yok, ağ yok, geçersiz imza) ve kapattığınız bir Yenilikler kartını daha yeni bir sürüm çıkana kadar geri getirmez.
+- **Diller.** CadCraft Studio artık 54 dile sahip. Bunların on tanesi yeni: Litvanca, Letonca, Boşnakça, Marathice, Telugu, Arnavutça, Afrikanca, Filipince, Svahilice ve Özbekçe. İngilizce olmayan dillerin tümü, ana dili konuşan biri okuyana kadar makine taslağıdır.
+- **Giriş aygıtları.** {{ui:Ayarlar}} › {{ui:Genel}} › {{ui:Giriş aygıtları}} bölümünde bir dokunmatik yüzeyin, farenin yan düğmelerinin, bir kalemin, parmak dokunuşlarının, 3B faremin, bir oyun denetleyicisinin ya da bir MIDI denetleyicisinin ne yaptığını her uygulama için ya da yalnızca bu uygulama için ayarlayın. Bir şey değiştirene kadar her aygıt eskisi gibi çalışır. Bkz. [Dokunmatik yüzey, 3B fare veya denetleyici kullanma](common:input-devices).
+- **Araç çubuğu satırları.** {{ui:Ayarlar}} › {{ui:Genel}} › {{ui:Araç çubuğu satırları}} seçeneğinde {{ui:Sar}} (varsayılan), {{ui:2 satır}} ve {{ui:1 satır}} bulunur; böylece çizim daha fazla yer kazanır. Bkz. [Panelleri düzenleme](common:arrange-panels).
+- **Özellik tablosu.** Bir işaretlemenin Stil alanları ortak tabloyu kullanır; daraltılabilir kategoriler ve etiket ile değer sütunları vardır.
+- **Sorunlar paneli.** Uygulamadan gelen uyarılar, örneğin gecikmiş bir görev, tek bir Sorunlar panelinde toplanır.
+- **Canlı ve eklentiler.** Canlı oturumlar [Birlikte canlı çalışma](common:work-together-live) bölümünde anlatılır; hesabınızı izleyen eklenti listesi [Eklentiler ve hesap listeniz](common:addons-basics) bölümündedir.
+- **Yapay zekânızı bağlayın.** CadCraft Studio, kendi yapay zekâ asistanınız için merkezdir: bir kez bağlanın, sekiz uygulamanın tümü için geçerli olsun. Uygulamaların kendilerine ait bir yapay zekâsı yoktur.
+
+## 0.8.1'de düzeltilenler
+
+- **Studio çalışırken dil değiştirebilir.** Daha önce masaüstü uygulaması ve paketlenmiş sürümler İngilizce kalıyordu. Bu, her platformda henüz sınanmadı: dil değişmiyorsa bize bildirin.
+- Studio 0.8 kurulumlarına {{ui:Ayarlar}} › {{ui:Güncellemeler}} üzerinden 0.8.1 güncellemesi sunulur.
 
 ## Bu sürümde henüz yok
 
-- **0.7 kod imzalı değildir.** Sertifika doğrulaması henüz sonuçlanmadığı için imzalama ve Microsoft Store paketi 0.8'e kaydı. getcadcraft.com/download adresinde her dosyanın yanındaki SHA-256 değerini denetleyin. Windows'ta SmartScreen yükleyiciyi durdurursa {{ui:Ek bilgi}}, ardından {{ui:Yine de çalıştır}} seçeneğini seçin. Mac'te ilk seferde CadCraft Studio'ya sağ tıklayıp {{ui:Aç}} seçeneğini seçin. CadCraft Studio henüz bir uygulama mağazasında değildir ve iPad veya iPhone sürümü henüz yoktur.
-- {{ui:Birimler}} içindeki açı ve eğim listeleri kaydedilir, ama henüz hiçbir kutu onları okumaz.
-- Saha kayıtları bir CadCraft Studio canlı oturumunda paylaşılmaz (canlı oturumlar yalnızca işaretlemeleri taşır); kopyaları {{ui:Birleştir}} ile bir araya getirin.
-- Birleştir bir kaydı bir bütün olarak en son değişen kopyadan alır: iki kişi aynı kaydın farklı alanlarını değiştirdiyse sonraki kopyanın alanları geçerli olur. Diziler ve ek adları birleştirilir.
-- Ekler yalnızca addır; dosyalar bulundukları yerde kalır. Kayıtlar için ekip, bildirim veya bulut projesi yoktur ve asistanların henüz kayıtlar için araçları yoktur.
-- Saha kayıtları, ağ kesilmiş hâlde telefon ve tablet boyutlarındaki bir tarayıcıda test edildi, ama henüz gerçek bir tablette elle denenmedi.
-- 0.6'dan hâlâ: sayfa nesnelerini herhangi bir açıyla döndürme, doğrudan sayfaya yeni şekiller çizme, bir satırın yazı tipini veya boyutunu değiştirme ve birkaç satıra yayılan metin. Sayfa düzenlemeleri olan kaydedilmiş bir kopya henüz Acrobat'ta açılmadı.
-- 0.5'ten hâlâ: bir sayfa değişikliğini (boş sayfa eklemek gibi) geri alma, taranmış sayfalardan metin okuma ve kendi ağınızın ötesindeki canlı oturumlar.
+- **Kod imzalı değil.** Windows yükleyicileri ve macOS .dmg dosyaları henüz imza taşımıyor. Windows'ta SmartScreen yükleyiciyi durdurursa {{ui:Daha fazla bilgi}} seçeneğini seçin, ardından {{ui:Yine de çalıştır}} seçeneğini seçin. Bir Mac'te CadCraft Studio'ya sağ tıklayıp {{ui:Aç}} seçeneğini seçin. Mağaza sürümleri beklemede.
+- **Yapay zekânızı bağlamak bazı yerlerde tamamlanmadı.** Studio içinde tek tıkla bağlanma, tarayıcı asistanları için barındırılan bağlayıcı ve Studio içinde kendi API anahtarınız bu sürüm için vaat edilmiyor. Görev döngüsü test edildi, ancak henüz gerçek bir asistanla test edilmedi.
+- **Görev denetimleri aynı sayfa boyutunu gerektirir.** Başka bir boyuta yeniden çizdirilen bir sayfa eşleşmez, bu yüzden görevleri kapanmaz. Sayfalar sayfa numarasına göre, yoksa sayfadaki konuma göre eşleştirilir.
+- **Sesli notlar yalnızca kayıttır.** Döküm yoktur; bir asistan notun sesini değil, uzunluğunu, yazarını ve başlığını görür. Kayıt, başsız bir tarayıcıda sahte bir mikrofonla denendi; telefon, tablet veya dizüstü bilgisayarda gerçek bir mikrofon hâlâ sınanmadı.
+- **PDF içindeki hesap sayfaları ve gerekçeler** dosyanın özel bir girdisinde saklanır. Eski bir MarkupCraft bu girdiyi yok sayar ve dosyayı bir sonraki kaydedişinde siler; bu yüzden böyle bir dosyayı 0.8 veya daha yeni bir sürümle açıp kaydedin.
+- **Kırmızı kalemlerin çizimci tarafı.** CadCraft'ın kırmızı kalem dosyasını okuyup yanıtlaması henüz yapılmadı.
+- **Diğer diller.** Tamilce için uygulama çubuğu 528 px taşıyor.
 
-Geri kalan her şey [Henüz yapılmadı](topic:not-built-yet) konusunda.
+Diğer her şey için bkz. [Henüz yapılmayanlar](topic:not-built-yet). Bir önceki sürüm için bkz. [0.7 sürümündeki yenilikler](topic:whats-new-0-7).
