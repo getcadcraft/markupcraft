@@ -6,9 +6,9 @@ Red-pen the set without the red pen.
 
 **[Website](https://getcadcraft.com/apps/markupcraft) | [Use it in your browser](https://getcadcraft.com/use/markupcraft) | [Download CadCraft Studio](https://getcadcraft.com/download#studio) | [Help and tutorials](https://getcadcraft.com/tutorials/markupcraft) | [News](https://getcadcraft.com/news) | [Suggest a feature](https://getcadcraft.com/suggest)**
 
-[![MarkupCraft](screenshots/paper.png)](https://getcadcraft.com/use/markupcraft)
+[![MarkupCraft 0.9](screenshots/paper.png)](https://getcadcraft.com/use/markupcraft)
 
-<sub>Paper space above; [the same in model space](screenshots/model.png). Both are from the browser edition.</sub>
+<sub>MarkupCraft 0.9 in the browser, dark theme. [A second view](screenshots/model.png).</sub>
 
 MarkupCraft is the drawing review & markup app in the [CadCraft](https://getcadcraft.com) family: Open a PDF plan set, mark it up from a saved tool chest, compare revisions and run punch lists with the whole team.
 
@@ -18,11 +18,11 @@ Use it now at https://getcadcraft.com/use/markupcraft, or install CadCraft Studi
 
 | Platform | Status |
 |---|---|
-| [Browser](web/) | 0.7: `markupcraft-browser-edition-v0.7.0.zip` in [Releases](https://github.com/getcadcraft/markupcraft/releases), or build it from a clone ([BUILDING.md](BUILDING.md#the-browser-edition)) |
-| Desktop: [Windows](windows/), [Linux](linux/) | In [CadCraft Studio 0.7](https://github.com/getcadcraft/studio/releases/tag/studio-v0.7.0) (installer, `.deb`, AppImage); not code-signed yet |
-| [macOS](macos/) | In [CadCraft Studio 0.7](https://github.com/getcadcraft/studio/releases/tag/studio-v0.7.0) (universal disk image; not code-signed or notarized yet) |
+| [Browser](web/) | 0.9: `markupcraft-browser-edition-v0.9.0.zip` in [Releases](https://github.com/getcadcraft/markupcraft/releases), or build it from a clone ([BUILDING.md](BUILDING.md#the-browser-edition)) |
+| Desktop: [Windows](windows/), [Linux](linux/) | In [CadCraft Studio 0.9](https://github.com/getcadcraft/studio/releases/tag/studio-v0.9.0) (installer, `.deb`, AppImage); not code-signed yet |
+| [macOS](macos/) | In [CadCraft Studio 0.9](https://github.com/getcadcraft/studio/releases/tag/studio-v0.9.0) (universal disk image; not code-signed or notarized yet) |
 | [Android](android/) | The Studio APK, on the [download page](https://getcadcraft.com/download#studio) |
-| [iPad](ios/) | Planned, in 0.8 at the earliest |
+| [iPad](ios/) | Planned |
 
 ## Work on it
 
