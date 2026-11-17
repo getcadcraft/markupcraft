@@ -6,9 +6,9 @@ Red-pen the set without the red pen.
 
 **[Website](https://getcadcraft.com/apps/markupcraft) | [Use it in your browser](https://getcadcraft.com/use/markupcraft) | [Download CadCraft Studio](https://getcadcraft.com/download#studio) | [Help and tutorials](https://getcadcraft.com/tutorials/markupcraft) | [News](https://getcadcraft.com/news) | [Suggest a feature](https://getcadcraft.com/suggest)**
 
-[![MarkupCraft 0.9](screenshots/paper.png)](https://getcadcraft.com/use/markupcraft)
+[![MarkupCraft 0.10](screenshots/paper.png)](https://getcadcraft.com/use/markupcraft)
 
-<sub>MarkupCraft 0.9 in the browser, dark theme. [A second view](screenshots/model.png).</sub>
+<sub>MarkupCraft 0.10 in the browser, dark theme. [A second view](screenshots/model.png).</sub>
 
 MarkupCraft is the drawing review & markup app in the [CadCraft](https://getcadcraft.com) family: Open a PDF plan set, mark it up from a saved tool chest, compare revisions and run punch lists with the whole team.
 
