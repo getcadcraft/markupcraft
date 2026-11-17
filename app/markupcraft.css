@@ -124,6 +124,8 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 /* sheets list */
 .mc-sheets-sec .mc-input { margin-bottom: .5rem; }
 .mc-sheets { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; }
+.mc-sheets.is-windowed { display: block; }   /* windowed (sheetlist.js): rows not drawn are the list's padding; the grid gap is a margin */
+.mc-sheets.is-windowed > li { margin-bottom: .3rem; }
 .mc-sheet {
   display: grid;
   grid-template-columns: 4.25rem minmax(0, 1fr);
@@ -150,6 +152,12 @@ textarea.mc-input { resize: vertical; min-height: 3.5rem; line-height: 1.35; }
 .mc-sheet-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-sheet-meta { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mc-sheet-count { color: var(--layer); font-weight: 600; font-size: .75rem; }
+.mc-sheet-size { color: var(--ink-2); font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-sheet-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .5rem; margin-top: .4rem; padding: .15rem .25rem; border-bottom: var(--pen-1) solid var(--line); font-size: .75rem; color: var(--ink-2); list-style: none; }
+.mc-sheet-group-name { font-weight: 700; color: var(--ink); }
+.mc-sheet-group-odd { color: var(--layer); font-weight: 600; }
+.mc-sheet-group.is-odd { border-bottom-color: var(--layer); }
+.mc-sec-head [data-sheets-by-size][aria-pressed="true"] { border-color: var(--ink); background: var(--sheet); }
 
 /* ---- Stage ---- */
 .mc-stage { grid-area: stage; position: relative; min-width: 0; min-height: 0; overflow: hidden; background: var(--sheet); }
@@ -205,6 +213,7 @@ select.mc-ff { padding: 0; }
 .mc-hint ul { margin: 0 0 .75rem; padding-left: 1.1rem; }
 .mc-hint li + li { margin-top: .2rem; }
 .mc-hint-btns { display: flex; flex-wrap: wrap; gap: .5rem; }
+.mc-hint-btns + .mc-hint-btns { margin-top: .5rem; }
 /* File › New (blank pages): orientation and grid side by side */
 .mc-new-blank .mc-radios { grid-auto-flow: column; justify-content: start; gap: .35rem 1rem; }
 .mc kbd { font-family: inherit; font-size: .75rem; font-weight: 700; padding: 0 .3rem; color: var(--ink); background: var(--sheet); border: var(--pen-1) solid var(--line); border-radius: var(--radius); }
@@ -628,3 +637,22 @@ select.mc-ff { padding: 0; }
 .mc-pnotes .mc-radio { display: inline-flex; gap: .35rem; align-items: center; }
 .mc-pnotes .mc-actions { margin: .4rem 0; flex-wrap: wrap; }
 .mc-pnotes .mc-linkbtn { text-align: left; }
+
+/* A section's links sat on its title's line and both were cut short. Owner 2026-11-12 (CadCraft first, then "do the same for the other seven apps"): open, or a
+   layout whose sections do not fold, the title has its own line and the links a line under it with icon and label; closed, only the icons, on the title's line.
+   A count beside the title stays on the title's line. */
+.mc-sec-head { flex-wrap: wrap; }
+.mc-sec-head::before { content: ""; order: 4; flex: 0 0 100%; height: 0; margin-top: -.5rem; }   /* a full-width nothing: what comes after it starts a new line */
+.mc-sec-head:not(:has(> :is(.mc-linkbtn, .mc-links, .mc-sec-acts, .mc-check):not([hidden])))::before { display: none; }
+.mc-sec-head > :is(.mc-linkbtn, .mc-links, .mc-sec-acts, .mc-check):not([hidden]) { order: 5; flex: 0 1 auto; display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .9rem; text-align: left; }
+.mc-sec-head > .mc-linkbtn:not([hidden]) { gap: .3rem; }
+.mc-sec-head[data-af] { overflow: visible; }
+.mc-sec-head[data-af] > :is(.mc-linkbtn, .mc-links, .mc-sec-acts, .mc-check):not([hidden]) { overflow: visible; white-space: normal; }
+.mc-sec-head[data-af] > .mc-h { flex: 0 1 auto; }
+.mc-sec-head[data-af="closed"] { flex-wrap: nowrap; }
+.mc-sec-head[data-af="closed"]::before { display: none; }
+.mc-sec-head[data-af="closed"] > :is(.mc-linkbtn, .mc-links, .mc-sec-acts, .mc-check):not([hidden]) { order: 0; flex: 0 0 auto; flex-wrap: nowrap; gap: .1rem; }
+.mc-sec-head[data-af="closed"] > .mc-check { display: none; }   /* a filter for a list that is folded away */
+.mc-sec-head[data-af="closed"] .mc-linkbtn { font-size: 0; text-decoration: none; padding: .15rem .3rem; border-radius: var(--radius); line-height: 1; }
+.mc-sec-head[data-af="closed"] .mc-linkbtn .bi { font-size: 1rem; }
+.mc-sec-head[data-af="closed"] .mc-linkbtn:hover { background: var(--sheet); }

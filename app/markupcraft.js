@@ -35,6 +35,7 @@ import { createBaseUi } from './base-ui.js';   // 0.6 DF.14: the Page content to
 import { writeMarkedUp } from './pdf-write.js';
 import { matchSheets, carryMarkups, supersededStamp, sheetNoKey } from './slip.js';
 import { Autosave } from "./app-autosave.js";
+import { objectJournal, recoverState, recoverExtras } from "./history/index.js";   // 0.10 PERF.24: autosave that writes what changed
 import { getHost } from "./host.js";
 import { handoffParam, takeHandoff, sendHandoff } from "./handoff.js";
 import { textIndex, findHits, hitCloud, rangeBox } from './textsearch.js';
@@ -52,6 +53,9 @@ import { linkTarget } from './link.js';
 import { findCallouts, sheetViews, resolveCallout, planLinks, linkViewFor } from './batchlink.js';   // 0.9 SU.1085
 import { cleanImage, imageInfo, fitBox, placeRect, pictureKind, clearPaper, inkBox, cleanSignatures, MAX_SIGNATURES } from './imagestamp.js';
 import { summarySheets, summaryPdf } from './summary.js';
+import { pageSize, sizeText, groupBySize } from './pagesize.js';
+import { SheetWindow } from './sheetlist.js';
+import { mountClientReview } from './review-ui.js';
 import { readBcf, planImport } from './bcf-read.js';
 import { writeXlsx } from './xlsx.js';
 import { rotatePages, deletePages, movePages, insertPages, insertBlank, extractPages, parsePageList, orderDelete } from './pages.js';
@@ -72,6 +76,7 @@ import { buildRedline, redlineFileName, applyAnswers } from './redline.js';   //
 import { buildSidecar, sidecarText, readSidecar, applySidecar } from './sidecar.js';   // 0.8 H5 + EG.64: <name>.markups.json
 import { installActions } from './tasks-ui.js';   // 0.8 EG.64/65/66/19: the Tasks and Notes tabs
 import { startAddons, columnsNow } from './addons/markupcraft-api.js';
+import { mountMarkupIssues } from './issues-markup.js';   // 0.10 BK.48 (bk-r3-stages-10): the shared issue history, clouds and markups against an issue
 import { installField } from './field-ui.js';   // 0.7 LC.7: RFIs, submittals and daily logs
 import { installForms } from './form-ui.js';   // 0.8: fill in a PDF's form on the sheet
 import { fillForm } from './forms.js';
@@ -86,6 +91,10 @@ import { installNotes } from './notes-ui.js';   // 0.9 NOTES.1: notes, the paste
 import { installAreaCopy } from './areacopy-ui.js';   // 0.8 D8.15: Copy area (rectangle, ellipse, freeform), as a picture or an overlay
 import { AREA_KEY, cleanAreaClip, sameImage, fitTwoPoints, turnedSize } from './areaclip.js';   // 0.7.1 71.10: Select text
 import { panButton, wheelFactor } from './input-mouse.js';   // 0.5 IP.3: the menu style's wheel and pan buttons (input-markupcraft.js)
+import { mountCompare } from './compare-ui.js';
+import { mountFind } from './find-ui.js';
+import { mountListExport } from './list-export-ui.js';
+import { mountSave } from './save-ui.js';
 
 const DRAW_TOOLS = new Set(['pen', 'highlight', 'line', 'arrow', 'arc', 'angle', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text', 'note', 'stamp', 'measure', 'area', 'count']);
 const NEEDS_SCALE = new Set(['measure', 'area']);
@@ -203,12 +212,34 @@ function init(root) {
   // the menu styles (0.5 IP.3, input-markupcraft.js + the shell's app-input-ui.js): messages to the status bar; letters stay
   // the text box's while a markup's text is being typed
   window.ccInputHooks = { status: (text) => status(text || ''), busy: () => !!editing };
-  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t), status: (s) => status(s), get pointer() { return pointer; }, stage: ui.stage, boundsOfMarkup: (m) => boundsOf(m, envOf(m)), boundsOfId: (id) => { const m = store.get(id); return m ? boundsOf(m, envOf(m)) : null; }, refreshList: () => renderList() };
+  window.markupcraft = { store, view, files, get sheets() { return sheets; }, get cur() { return cur; }, get sel() { return sel; }, get tool() { return tool; }, setTool, goTo, openFiles, saveFiles, cmp, settings, get author() { return author; }, clip: () => currentClip(), styleFor: (t) => styleFor(t), status: (s) => status(s), get pointer() { return pointer; }, stage: ui.stage, boundsOfMarkup: (m) => boundsOf(m, envOf(m)), boundsOfId: (id) => { const m = store.get(id); return m ? boundsOf(m, envOf(m)) : null; }, refreshList: () => renderList(), get exportSet() { return exportSet; } };
+  /**
+   * The export set's entry (SuperCad Studio's Finalize and export, SC.7): the list's own exports and Save, run without the list panel being open (they never needed
+   * it: they read the store and the list's filters). The files leave through the same download. sheets() → the open pages; can(kind) → null | 'empty' | 'unknown';
+   * run(kind) → for the marked-up PDFs one entry per file with the sheets on its pages, else nothing.
+   */
+  const sheetRow = (s) => ({ id: s.page.key, number: s.page.sheetNo || '', title: s.page.title || '', scale: '', revision: '' });
+  const exportSet = {
+    kinds: ['pdf', 'bcf', 'xlsx'],
+    sheets: () => sheets.map(sheetRow),
+    can: (kind) => (!exportSet.kinds.includes(kind) ? 'unknown' : !files.length || (kind !== 'pdf' && !filteredMarkups().length) ? 'empty' : null),
+    async run(kind) {
+      if (kind === 'bcf') await exportBcf();
+      else if (kind === 'xlsx') await exportSummary('xlsx');
+      else if (kind === 'pdf') { await saveFiles('all'); return files.map((f) => ({ sheets: sheets.filter((x) => x.file === f).map(sheetRow) })); }
+      return [];
+    },
+  };
 
   // ---- helpers ----
   const curSheet = () => sheets[cur] || null;
   const curKey = () => curSheet()?.page.key || '';
-  const sheetByKey = (key) => sheets.find((s) => s.page.key === key) || null;
+  // a Map of the set's sheets by key, rebuilt when the set changes (the list was scanned for every lookup: O(sheets) per thumbnail and per markup)
+  let sheetMap = null, sheetMapOf = null, sheetMapN = -1;
+  const sheetByKey = (key) => {
+    if (sheetMapOf !== sheets || sheetMapN !== sheets.length || sheetMap.get(sheets[sheets.length - 1]?.page.key) !== sheets[sheets.length - 1]) { sheetMap = new Map(sheets.map((s) => [s.page.key, s])); sheetMapOf = sheets; sheetMapN = sheets.length; }
+    return sheetMap.get(key) || null;
+  };
   const badgeFor = (key) => { const s = sheetByKey(key); return s ? Math.max(7, Math.min(18, Math.hypot(s.page.width, s.page.height) / 160)) : 9; };
   const legendOf = (m) => legendRows(store.all(), { sheet: m.sheet, scope: m.legend?.scope, name: (x) => tname(x.type) });
   const envOf = (m) => { const e = { cal: store.calibrations.get(m.sheet) || null, badge: badgeFor(m.sheet) }; if (m.type === 'legend') { e.legend = legendOf(m); e.legendKey = rowsKey(e.legend); } return e; };
@@ -326,6 +357,17 @@ function init(root) {
   }
   host.onOpenFiles((list) => openHostFiles(list));
 
+  // 2026-11-12: the start card's "Try a sample file" opens a real sample through the normal open path; the same action is in the command palette (Ctrl+K) once the card is closed
+  async function openSample() {
+    try {
+      const r = await fetch(new URL('./samples/markupcraft-sample.pdf', import.meta.url));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      await openFiles([new File([await r.blob()], 'markupcraft-sample.pdf', { type: 'application/pdf' })]);   // i18n-ignore: a file name
+    } catch (err) { busy(''); status(t('hint.sample.noload', { why: err.message })); }
+  }
+  for (const b of root.querySelectorAll('[data-hint-sample]')) b.addEventListener('click', openSample);
+  { const regSample = () => window.ccPalette?.register?.([{ id: 'markupcraft-sample', label: t('hint.trysample'), group: 'file', keywords: 'sample example demo try', run: openSample }]); if (window.ccPalette) regSample(); else window.addEventListener('load', regSample); }
+
   // ---- files ----
   ui.file.addEventListener('change', () => { const list = [...ui.file.files]; ui.file.value = ''; if (list.length) openFiles(list); });
 
@@ -366,7 +408,7 @@ function init(root) {
         else store.load(rec.markups, rec.calibrations, rec.sheetNames, rec.layers, rec.columns);
         notesUi?.adopt(rec);   // 0.9 NOTES.1: this person's sealed notes, when unlocked
         fieldUi?.loadFrom(rec);
-        if (rec.shell && !shellData.calcs && !shellData.reasons && !shellData.docinfo) { shellData.calcs = rec.shell.calcs || null; shellData.reasons = rec.shell.reasons || null; shellData.docinfo = rec.shell.docinfo || null; shellOpened = true; }
+        if (rec.shell && !shellData.calcs && !shellData.reasons && !shellData.docinfo) { shellData.calcs = rec.shell.calcs || null; shellData.reasons = rec.shell.reasons || null; shellData.docinfo = rec.shell.docinfo || null; shellData.issues = rec.shell.issues || null; shellOpened = true; }
         fields += (await formUi?.prepare(rec)) || 0;
         read += rec.markups.length;
         opened++;
@@ -797,264 +839,21 @@ function init(root) {
     refreshAll();
   }
 
-  // ---- find text in the drawings (0.4 K14): every sheet's own text, hits listed, then clouded in one undo step ----
-  const findUi = { box: $('[data-find]'), form: $('[data-find-form]'), q: $('[data-find-q]'), scope: $('[data-find-scope]'), mcase: $('[data-find-case]'), word: $('[data-find-word]'), count: $('[data-find-count]'), list: $('[data-find-list]') };
-  const textCache = new Map();   // sheet key → textIndex (dropped with the file)
-  const found = { query: '', hits: [], at: -1 };   // hits: [{ key, rect, snippet, start, end }]
-  async function sheetText(s) {
-    if (textCache.has(s.page.key)) return textCache.get(s.page.key);
-    let idx = { text: '', spans: [] };
-    // a scan read by OCR (0.7.1 71.10): its words until the file is saved (then they are the PDF's own text)
-    const ocr = s.file.ocr?.get(s.page.index);
-    if (ocr) idx = textIndex(ocr.items);
-    else try { idx = textIndex((await (await s.file.doc.getPage(s.page.index + 1)).getTextContent()).items); } catch { /* closed meanwhile */ }
-    textCache.set(s.page.key, idx);
-    return idx;
-  }
-  /** A file's text and hits go when it closes or its pages change. */
-  function forgetText(prefix) {
-    for (const k of [...textCache.keys()]) if (k.startsWith(prefix)) textCache.delete(k);
-    const n = found.hits.length;
-    if (!prefix) found.query = '';
-    found.hits = found.hits.filter((h) => !h.key.startsWith(prefix));
-    if (found.hits.length !== n) { found.at = -1; renderFind(); }
-  }
+  const { findUi, textCache, found, sheetText, forgetText, runFind, showHit } = mountFind({
+    $, find, view, curSheet, sheetByKey, goTo,
+    get sheets() { return sheets; },
+    get cur() { return cur; },
+  });
   findUi.form?.addEventListener('submit', (e) => { e.preventDefault(); runFind(); });
-  async function runFind() {
-    const q = findUi.q.value.trim();
-    if (!q) { findUi.count.textContent = t('find.need'); return; }
-    if (!sheets.length) { findUi.count.textContent = t('need.pdf'); return; }
-    const list = findUi.scope.value === 'sheet' ? [curSheet()].filter(Boolean) : sheets.slice();
-    const hits = [];
-    let blank = 0;
-    for (let i = 0; i < list.length; i++) {
-      const s = list[i];
-      if (list.length > 3) findUi.count.textContent = t('find.searching', { sheet: s.page.title, i: i + 1, n: list.length });
-      const idx = await sheetText(s);
-      if (!idx.text.trim()) { blank++; continue; }
-      for (const h of findHits(idx, q, { matchCase: findUi.mcase.checked, wholeWord: findUi.word.checked, max: 2000 - hits.length })) hits.push({ key: s.page.key, ...h });
-      if (hits.length >= 2000) break;
-    }
-    Object.assign(found, { query: q, hits, at: -1 });
-    renderFind(blank);
-    view.invalidate();
-  }
-  function renderFind(blank = 0) {
-    if (!found.query) { findUi.count.textContent = ''; findUi.list.replaceChildren(); find('[data-act="find-cloud"]').disabled = true; return; }
-    const nSheets = new Set(found.hits.map((h) => h.key)).size;
-    const parts = [t('find.count', { n: found.hits.length, sheets: t('find.sheets', { n: nSheets }) })];
-    if (blank) parts.push(t('find.no_text', { n: blank }));
-    if (found.hits.length >= 2000) parts.push(t('find.capped', { n: found.hits.length }));
-    findUi.count.textContent = parts.join(' ');
-    // scans have no text: offer to read it (0.7.1 71.10)
-    if (blank) findUi.count.append(' ', el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { act: 'ocr' } }, t('find.ocr')));
-    findUi.list.replaceChildren(...found.hits.slice(0, 500).map((h, i) => {
-      const sh = sheetByKey(h.key);
-      return el('li', {}, el('button', { type: 'button', dataset: { hit: String(i) }, 'aria-current': i === found.at ? 'true' : 'false' },
-        el('strong', {}, sh ? sh.page.sheetNo || sh.page.title : ''), ' ', h.snippet));
-    }));
-    find('[data-act="find-cloud"]').disabled = !found.hits.length;
-  }
   findUi.list?.addEventListener('click', (e) => { const b = e.target.closest('button[data-hit]'); if (b) showHit(+b.dataset.hit); });
-  async function showHit(i) {
-    const h = found.hits[i];
-    if (!h) return;
-    found.at = i;
-    const si = sheets.findIndex((s) => s.page.key === h.key);
-    if (si !== cur) await goTo(si);
-    view.zoomTo(h.rect, 0.25);
-    for (const b of findUi.list.querySelectorAll('button[data-hit]')) b.setAttribute('aria-current', b.dataset.hit === String(i) ? 'true' : 'false');
-    view.invalidate();
-  }
-  /**
-   * Batch links (0.9 SU.1085; 0.4 K16 before it). Three steps, re-runnable: (1) the sheet numbers and names as the title
-   * blocks gave them, every one editable (one undo step); (2) every sheet's text read for callouts ("3/A-501", a bubble "3" over
-   * "A-501", "DETAIL 2 ON A-501", "A-501") and every sheet's view titles; (3) a list of what links, what is already linked and
-   * what did not link, with a hand fix per missing sheet number and per missing view. Links are rect markups with `link` (the
-   * sheet number) and `linkView` {id, box, ref}; saved as MarkupCraft markups and as PDF Link annotations (/FitR on the view).
-   * Run again after sheets are added or renamed: links still right are kept, moved or broken batch links are updated or listed.
-   */
-  async function batchLinks() {
-    if (!sheets.length) { status(t('need.pdf')); return null; }
-    commitEdit(); cancelOps();
-    // (1) sheet numbers and names, fixed by hand where the title block was wrong or empty
-    const fromLabel = (f) => t('blink.from.' + ({ manual: 'manual', label: 'label', 'title block': 'tb', file: 'file' }[f] || 'file'));
-    const rowsS = sheets.map((s, i) => el('tr', { dataset: { key: s.page.key } },
-      el('td', {}, el('input', { type: 'text', className: 'mc-input', maxlength: '40', id: 'mc-bl-no-' + i, dataset: { blNo: s.page.key }, value: s.page.sheetNo || '', 'aria-label': t('blink.sheets.no_for', { sheet: s.page.title }), placeholder: t('blink.sheets.no_ph') })),
-      el('td', {}, el('input', { type: 'text', className: 'mc-input', maxlength: '200', dataset: { blName: s.page.key }, value: s.page.name || '', 'aria-label': t('blink.sheets.name_for', { sheet: s.page.title }) })),
-      el('td', { className: 'mc-muted' }, fromLabel(s.page.from), s.page.sheetNo ? '' : el('strong', { className: 'mc-bl-need' }, ' ', t('blink.sheets.no_number')))));
-    const r1 = await dialog({ title: t('blink.h'), text: t('blink.sheets.text', { n: sheets.length }), wide: true,
-      body: [el('div', { className: 'mc-bl-scroll' }, el('table', { className: 'mc-bl-table mc-bl-sheets' },
-        el('thead', {}, el('tr', {}, el('th', {}, t('props.sheet_number')), el('th', {}, t('rename.title')), el('th', {}, t('blink.sheets.from')))), el('tbody', {}, ...rowsS)))],
-      buttons: [['cancel', t('dlg.cancel')], ['ok', t('blink.sheets.ok'), 'btn-plot']], submit: 'ok' });
-    if (r1.key !== 'ok') return null;
-    const edits = [];
-    for (const s of sheets) {
-      const no = r1.form.querySelector(`[data-bl-no="${CSS.escape(s.page.key)}"]`)?.value.trim().slice(0, 40) ?? s.page.sheetNo;
-      const name = r1.form.querySelector(`[data-bl-name="${CSS.escape(s.page.key)}"]`)?.value.trim().slice(0, 200) ?? s.page.name;
-      if (no === (s.page.sheetNo || '') && name === (s.page.name || '')) continue;
-      const now = store.sheetNames.get(s.page.key) || {};
-      edits.push([s.page.key, { number: no !== (s.page.sheetNo || '') ? no : (now.number || ''), title: name !== (s.page.name || '') ? name : (now.title || '') }]);
-    }
-    if (edits.length) { store.change(t('blink.undo.names', { n: edits.length }), (tx) => { for (const [k, v] of edits) tx.setSheetName(k, v.number || v.title ? v : null); }); applySheetNames(); }
-    const nos = sheets.map((s) => s.page.sheetNo).filter(Boolean);
-    if (!nos.length) { await ask(t('blink.h'), t('autolink.no_numbers'), [['cancel', t('dlg.ok'), 'btn-plot']]); return null; }
+  const { batchLinks, cloudFound, saveFlat, saveClean } = mountSave({
+    store, curSheet, curKey, sheetByKey, envOf, styleFor, status, busy, pdfLib, dialog, ask, askAuthor, dl, bake, sheetList, sheetText, found, cancelOps, commitEdit, applySheetNames, refreshAll,
+    get sheets() { return sheets; },
+    get sel() { return sel; }, set sel(v) { sel = v; },
+  });
 
-    // (2) callouts and views on every sheet
-    const list = sheetList();
-    const views = new Map();
-    const rows = [];
-    let blank = 0;
-    for (let i = 0; i < sheets.length; i++) {
-      const s = sheets[i];
-      status(t('find.searching', { sheet: s.page.title, i: i + 1, n: sheets.length }));
-      const idx = await sheetText(s);
-      if (!idx.text.trim()) { blank++; views.set(s.page.key, []); continue; }
-      // a sheet renumbered by hand still prints its old number (title block, view titles): both are its own
-      const own = [s.page.sheetNo, s.page.tb?.number, s.page.label].filter(Boolean);
-      views.set(s.page.key, sheetViews(idx, { sheetNo: own, view: s.page.view }));
-      for (const c of findCallouts(idx, { sheetNos: nos, ownNo: own })) rows.push({ ...c, sheet: s });
-    }
-    const viewsOf = (k) => views.get(k) || [];
-    const resolveAll = (fixes) => { for (const r of rows) Object.assign(r, resolveCallout(r, list, viewsOf, fixes)); };
-    resolveAll(new Map());
-    const bySheet = new Map();
-    for (const r of rows) {
-      if (!bySheet.has(r.sheet.page.key)) bySheet.set(r.sheet.page.key, store.onSheet(r.sheet.page.key).filter((m) => m.link).map((m) => ({ id: m.id, box: boundsOf(m, envOf(m)), link: m.link, linkView: m.linkView, resolves: !!linkTarget(m.link, list) })));
-      planLinks([r], bySheet.get(r.sheet.page.key));
-    }
-    status('');
-    if (!rows.length) { await ask(t('blink.h'), t('blink.none') + (blank ? ' ' + t('find.no_text', { n: blank }) : ''), [['cancel', t('dlg.ok'), 'btn-plot']]); return { found: 0 }; }
 
-    // (3) the list: what links, what is already linked, what did not (hand fixes)
-    const sheetOpts = (sel) => [el('option', { value: '' }, t('blink.fix.leave')), ...sheets.map((s) => el('option', { value: s.page.key, selected: s.page.key === sel }, s.page.title))];
-    const viewOpts = (key, want) => [el('option', { value: '' }, t('blink.view.whole')), ...viewsOf(key).map((v) => el('option', { value: v.id, selected: v.id === want }, t('blink.view.opt', { id: v.id, title: v.title || '' })))];
-    const where = (r) => el('strong', {}, r.sheet.page.sheetNo || r.sheet.page.title);
-    const goes = rows.map((r, i) => ({ r, i })).filter(({ r }) => r.action === 'new' || r.action === 'update');
-    const misses = rows.map((r, i) => ({ r, i })).filter(({ r }) => r.action === 'miss' || r.action === 'broken');
-    const kept = rows.filter((r) => r.action === 'keep' || r.action === 'hand');
-    const linkRow = ({ r, i }) => el('li', { className: 'mc-slip-row mc-bl-row', dataset: { action: r.action, i: String(i) } },
-      el('input', { type: 'checkbox', id: 'mc-bl-' + i, checked: true, dataset: { blI: String(i) } }), ' ',
-      el('label', { for: 'mc-bl-' + i }, where(r), ' ', t('autolink.row', { ref: r.ref, sheet: r.target.sheetNo || r.target.title }),
-        r.view ? ' ' + t('blink.row.view', { id: r.view.id, title: r.view.title || '' }) : r.detail ? ' ' + t('blink.row.no_view', { id: r.detail }) : ' ' + t('blink.row.sheet'),
-        r.action === 'update' ? el('span', { className: 'mc-muted' }, ' ', t('blink.row.update')) : ''),
-      r.status === 'no-view' ? el('select', { className: 'mc-select mc-bl-sel', dataset: { blView: String(i) }, 'aria-label': t('blink.view.pick', { ref: r.ref }) }, ...viewOpts(r.target.key, r.pickedView || '')) : '');
-    // one fix per sheet number that names no open sheet: every callout to that number follows it
-    const missNos = [...new Map(misses.map(({ r }) => [sheetNoKey(r.no), r.no])).entries()];
-    const missRow = ([k, no]) => { const n = misses.filter(({ r }) => sheetNoKey(r.no) === k); return el('li', { className: 'mc-slip-row mc-bl-row', dataset: { action: 'miss', no: k } },
-      el('label', { for: 'mc-bl-fix-' + k }, t('blink.miss.row', { no, n: n.length, where: [...new Set(n.map(({ r }) => r.sheet.page.sheetNo || r.sheet.page.title))].join(', ') }), n.some(({ r }) => r.action === 'broken') ? el('span', { className: 'mc-muted' }, ' ', t('blink.miss.broken')) : ''), ' ',
-      el('select', { className: 'mc-select mc-bl-sel', id: 'mc-bl-fix-' + k, dataset: { blFix: k } }, ...sheetOpts(''))); };
-    const sec = (h, items, note) => el('section', { className: 'mc-bl-sec' }, el('h3', { className: 'mc-h mc-bl-h' }, h), note ? el('p', { className: 'mc-muted' }, note) : '', items.length ? el('ol', { className: 'mc-slip-list' }, ...items) : el('p', { className: 'mc-muted' }, t('blink.sec.empty')));
-    const nSheets = new Set(rows.map((r) => r.sheet.page.key)).size;
-    const r2 = await dialog({ title: t('blink.h'), text: t('blink.text', { n: rows.length, sheets: t('find.sheets', { n: nSheets }) }) + (blank ? ' ' + t('find.no_text', { n: blank }) : ''), wide: true,
-      body: [el('div', { className: 'mc-bl-scroll' },
-        sec(t('blink.sec.link', { n: goes.length }), goes.slice(0, 400).map(linkRow), goes.length > 400 ? t('autolink.capped') : ''),
-        sec(t('blink.sec.miss', { n: misses.length }), missNos.map(missRow), misses.length ? t('blink.sec.miss.note') : ''),
-        el('p', { className: 'mc-muted', dataset: { blKept: String(kept.length) } }, t('blink.sec.kept', { n: kept.length })))],
-      buttons: [['cancel', t('dlg.cancel')], ['ok', t('blink.ok'), 'btn-plot']], submit: 'ok' });
-    if (r2.key !== 'ok') return { found: rows.length, made: 0 };
-    // the person's fixes: a sheet for each missing number, a view for callouts whose view was not found
-    const fixes = new Map();
-    for (const sel of r2.form.querySelectorAll('select[data-bl-fix]')) if (sel.value) fixes.set(sel.dataset.blFix, sel.value);
-    const pickView = new Map([...r2.form.querySelectorAll('select[data-bl-view]')].map((sel) => [+sel.dataset.blView, sel.value]));
-    const ticked = new Set([...r2.form.querySelectorAll('input[data-bl-i]:checked')].map((b) => +b.dataset.blI));
-    const todo = [];
-    for (const { r, i } of goes) if (ticked.has(i)) {
-      const v = pickView.get(i) ? viewsOf(r.target.key).find((x) => x.id === pickView.get(i)) : r.view;
-      todo.push({ r, view: v || null });
-    }
-    for (const { r } of misses) {
-      const k = fixes.get(sheetNoKey(r.no));
-      if (!k) continue;
-      const res = resolveCallout(r, list, viewsOf, fixes);
-      if (!res.target) continue;
-      const kept = res.status === 'no-view' && r.pickedView ? viewsOf(res.target.key).find((x) => x.id === r.pickedView) : null;   // the view picked by hand before
-      todo.push({ r: { ...r, ...res }, view: kept || res.view });
-    }
-    if (!todo.length) { status(t('blink.nothing')); return { found: rows.length, made: 0, updated: 0, missed: misses.length }; }
-    const who = await askAuthor();
-    let made = 0, updated = 0;
-    store.change(t('blink.undo', { n: todo.length }), (tx) => { for (const { r, view } of todo) {
-      const link = r.target.sheetNo || r.target.title;
-      const linkView = linkViewFor(r, view);
-      if (r.existing) { tx.update(r.existing, { link, linkView }); updated++; continue; }
-      const [x0, y0, x1, y1] = r.box;
-      tx.add(makeMarkup({ sheet: r.sheet.page.key, type: 'rect', rect: [x0 - 2, y0 - 2, x1 + 2, y1 + 2], rot: r.sheet.page.rotate, author: who, link, linkView,
-        subject: t('autolink.subject'), style: { color: '#1e48c8', width: 0.75, fill: null, fillOpacity: 0.25, opacity: 0.85, fontSize: 12 } }));
-      made++;
-    } });
-    const left = misses.filter(({ r }) => !fixes.get(sheetNoKey(r.no))).length;
-    status(t('blink.done', { n: made, u: updated, m: left }));
-    refreshAll();
-    return { found: rows.length, made, updated, missed: left };
-  }
 
-  async function cloudFound() {
-    if (!found.hits.length) { status(t('find.cloud.none')); return; }
-    const who = await askAuthor();
-    const keys = new Set(found.hits.map((h) => h.key));
-    const made = store.change(t('undo.find_cloud', { n: found.hits.length }), (tx) => found.hits.map((h) => tx.add(makeMarkup({
-      ...hitCloud(h, { pad: Math.max(2, (h.rect[3] - h.rect[1]) * 0.35), rot: sheetByKey(h.key)?.page.rotate || 0, sheet: h.key, author: who }),
-      style: styleFor('cloudrect'), comment: t('find.cloud.comment', { query: found.query }) }))));
-    if (Array.isArray(made)) sel = new Set(made.filter((m) => m.sheet === curKey()).map((m) => m.id));
-    status(t('find.clouded', { n: found.hits.length, sheets: t('find.sheets', { n: keys.size }) }));
-    refreshAll();
-  }
-
-  // ---- flatten (0.4 K15): a separate copy with every markup, or the chosen ones, drawn into the pages ----
-  async function saveFlat() {
-    const s = curSheet();
-    if (!s) { status(t('need.pdf')); return; }
-    commitEdit(); cancelOps();
-    const f = s.file;
-    const mine = (m) => m.type !== 'foreign' && !m.locked;
-    const inFile = f.pages.flatMap((pg) => store.onSheet(pg.key)).filter(mine);
-    const chosen = [...sel].map((id) => store.get(id)).filter((m) => m && mine(m) && m.sheet.startsWith(f.id + ':'));
-    if (!inFile.length) { status(t('flat.none', { name: f.name })); return; }
-    const radios = [['all', t('flat.all', { n: inFile.length })], ...(chosen.length ? [['sel', t('flat.sel', { n: chosen.length })]] : [])];
-    const box = el('div', { className: 'mc-radios', role: 'radiogroup', 'aria-label': t('flat.which') }, ...radios.map(([v, l], i) =>
-      el('label', { className: 'mc-radio' }, el('input', { type: 'radio', name: 'mc-flat', value: v, checked: chosen.length ? v === 'sel' : i === 0 }), ' ', l)));
-    const r = await dialog({ title: t('flat.title'), text: t('flat.text', { name: f.name }), body: [box],
-      buttons: [['cancel', t('dlg.cancel')], ['save', t('flat.ok'), 'btn-plot']], submit: 'save' });
-    if (r.key !== 'save') return;
-    const which = box.querySelector('input:checked')?.value === 'sel' ? new Set(chosen.map((m) => m.id)) : 'all';
-    busy(t('save.loading'));
-    await frame();
-    try {
-      const lib = await pdfLib();
-      busy(t('save.saving', { file: f.name }));
-      const { bytes, report } = await bake(f, lib, { flatten: which, burn: true });
-      const name = t('flat.file', { name: f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') }) + '.pdf';
-      dl(bytes, name, 'application/pdf');
-      status(t('flat.done', { file: name, n: report.flattened }) + (report.written ? ' ' + t('flat.kept', { n: report.written }) : ''));
-    } catch (e) {
-      busy('');
-      await ask(t('save.failed', { file: f.name }), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
-    }
-    busy('');
-  }
-
-  /** A copy to send: markups as they are, no notes, no private notes, nothing on the pasteboard (0.9 NOTES.1). */
-  async function saveClean() {
-    const s = curSheet();
-    if (!s) { status(t('need.pdf')); return; }
-    commitEdit(); cancelOps();
-    const f = s.file;
-    busy(t('save.loading'));
-    await frame();
-    try {
-      const lib = await pdfLib();
-      busy(t('save.saving', { file: f.name }));
-      const { bytes } = await bake(f, lib, { burn: true });
-      const name = t('pnotes.clean.file', { name: f.name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') }) + '.pdf';
-      dl(bytes, name, 'application/pdf');
-      status(t('pnotes.clean.done', { file: name }));
-    } catch (e) {
-      busy('');
-      await ask(t('save.failed', { file: f.name }), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
-    }
-    busy('');
-  }
 
   // ---- layers (0.4 K3): show, hide, lock; new markups go on the current layer ----
   const layerUi = { box: $('[data-layers]'), list: $('[data-layer-list]'), cur: $('[data-layer-current]') };
@@ -1513,12 +1312,14 @@ function init(root) {
     thumbBusy = true;
     while (thumbQueue.length) {
       const c = thumbQueue.shift();
-      const s = sheets.find((x) => x.page.key === c.dataset.key);
+      const s = sheetByKey(c.dataset.key);
       if (!s || !c.isConnected) continue;
       try {
-        await View.thumb(await s.file.doc.getPage(s.page.index + 1), c, 112, 80, Math.min(2, window.devicePixelRatio || 1));
+        const pg = await s.file.doc.getPage(s.page.index + 1);
+        await View.thumb(pg, c, 112, 80, Math.min(2, window.devicePixelRatio || 1));
         view.themeize(c);
         c.classList.add('is-ready');
+        if (s !== curSheet()) pg.cleanup();   // 0.10 PERF.35: the page's operator list and glyphs are let go; the open sheet keeps its own
       } catch { /* closed meanwhile */ }
     }
     thumbBusy = false;
@@ -1529,49 +1330,83 @@ function init(root) {
     const c = [...ui.sheets.querySelectorAll('canvas.mc-thumb')].find((x) => x.dataset.key === key);
     if (c) { thumbQueue.push(c); pumpThumbs(); }
   }
+  // Pages › Client review link… (0.10 BK.177): one link a client opens to see the published sheets and comment, at any stage
+  const clientReview = mountClientReview({ el, t, dialog, status, busy, files: () => files, curSheet, bake, pdfLib, extractPages, setName: () => setName(), store, getAuthor: () => author });
+  window.markupcraft.clientReview = clientReview;   // tests
+  // ---- page sizes (0.10 SU.1805): mm and inches with the nearest named paper size, once per page
+  const sizeCache = new WeakMap();
+  /** The size of a page as shown: { wMm, hMm, wIn, hIn, orient, name, custom, ... } (pagesize.js). A turned page swaps its sides. */
+  function sizeOf(pg) {
+    let z = sizeCache.get(pg);
+    if (!z) {
+      const turned = pg.rotate % 180;
+      z = pageSize({ width: turned ? pg.height : pg.width, height: turned ? pg.width : pg.height, userUnit: pg.userUnit || 1 });
+      sizeCache.set(pg, z);
+    }
+    return z;
+  }
+  /** "A1" or "custom" for a size. */
+  const sizeName = (z) => z.name || t('psize.custom');
+  /** "A1 landscape" or "custom, portrait". */
+  const sizeNameOrient = (z) => t('psize.named', { name: sizeName(z), orient: t('psize.orient.' + z.orient) });
+  let bySize = false;
+  /** The open set's pages grouped by size: [{ id, name, wMm, hMm, keys, odd }] (biggest group first). */
+  const sizeGroups = () => groupBySize(sheets.map((s) => ({ key: s.page.key, info: sizeOf(s.page) })));
+  // The sheet list is windowed (0.10 PERF.35): a 2,000-sheet set draws the rows near the view, not 2,000 rows and canvases.
+  const sheetWin = new SheetWindow({ list: ui.sheets, estimate: (e) => (e.group ? 30 : 78), renderRow: (e) => (e.group ? groupRow(e.group) : sheetListRow(e.i)), onDrop: (li) => { const c = li.querySelector('canvas'); if (c) thumbObserver.unobserve(c); } });
+  function groupRow(gz) {
+    return el('li', { className: 'mc-sheet-group' + (gz.odd ? ' is-odd' : ''), dataset: { sizeGroup: gz.id } },
+      el('span', { className: 'mc-sheet-group-name' }, gz.name || t('psize.custom')),
+      el('span', { className: 'mc-sheet-group-mm' }, sizeText({ wMm: gz.wMm, hMm: gz.hMm, wIn: gz.wMm / 25.4, hIn: gz.hMm / 25.4 })),
+      el('span', { className: 'mc-sheet-group-n' }, t('psize.group.n', { n: gz.keys.length })),
+      gz.odd ? el('span', { className: 'mc-sheet-group-odd' }, t('psize.odd')) : null);
+  }
+  function sheetListRow(i) {
+    const s = sheets[i];
+    const count = store.onSheet(s.page.key).length;
+    const canvas = el('canvas', { className: 'mc-thumb', dataset: { key: s.page.key }, 'aria-hidden': 'true' });
+    const btn = el('button', { type: 'button', className: 'mc-sheet', dataset: { i: String(i) }, 'aria-current': i === cur ? 'true' : 'false' },
+      el('span', { className: 'mc-thumb-box' }, canvas),
+      el('span', { className: 'mc-sheet-text' },
+        el('span', { className: 'mc-sheet-title' }, s.page.title),
+        el('span', { className: 'mc-sheet-meta' }, s.page.sheetNo && s.page.sheetNo !== s.page.title ? t('sheet.number', { n: s.page.sheetNo }) : t('sheet.file_page', { file: s.file.name, page: s.page.index + 1 })),
+        el('span', { className: 'mc-sheet-size', title: sizeText(sizeOf(s.page)) }, sizeName(sizeOf(s.page)) + ' · ' + sizeText(sizeOf(s.page)).replace(/ \(.*/, '')),
+        count ? el('span', { className: 'mc-sheet-count' }, t('save.markups', { n: count })) : null));
+    btn.addEventListener('click', () => goTo(i));
+    thumbObserver.observe(canvas);
+    return el('li', { dataset: { i: String(i) } }, btn);
+  }
+  let rowOf = new Map();   // sheet index → its place in the list (a row number), for reveal
   function renderSheets() {
     const q = ui.sheetSearch.value.trim().toLowerCase();
-    ui.sheets.replaceChildren();
     let shown = 0;
-    sheets.forEach((s, i) => {
-      const hay = (s.page.title + ' ' + s.page.sheetNo + ' ' + s.file.name).toLowerCase();
-      if (q && !hay.includes(q)) return;
+    // by size: the pages listed under one heading per size, the biggest group first; the other groups are marked as the odd ones out
+    const groups = bySize ? sizeGroups() : null;
+    const groupOf = groups ? new Map(groups.flatMap((g) => g.keys.map((k) => [k, g]))) : null;
+    const order = groups ? sheets.map((s, i) => i).sort((a, b) => groups.indexOf(groupOf.get(sheets[a].page.key)) - groups.indexOf(groupOf.get(sheets[b].page.key)) || a - b) : sheets.map((s, i) => i);
+    let lastGroup = null;
+    const entries = [];
+    rowOf = new Map();
+    for (const i of order) {
+      const s = sheets[i];
+      if (q && !(s.page.title + ' ' + s.page.sheetNo + ' ' + s.file.name).toLowerCase().includes(q)) continue;
       shown++;
-      const count = store.onSheet(s.page.key).length;
-      const canvas = el('canvas', { className: 'mc-thumb', dataset: { key: s.page.key }, 'aria-hidden': 'true' });
-      const btn = el('button', { type: 'button', className: 'mc-sheet', dataset: { i: String(i) }, 'aria-current': i === cur ? 'true' : 'false' },
-        el('span', { className: 'mc-thumb-box' }, canvas),
-        el('span', { className: 'mc-sheet-text' },
-          el('span', { className: 'mc-sheet-title' }, s.page.title),
-          el('span', { className: 'mc-sheet-meta' }, s.page.sheetNo && s.page.sheetNo !== s.page.title ? t('sheet.number', { n: s.page.sheetNo }) : t('sheet.file_page', { file: s.file.name, page: s.page.index + 1 })),
-          count ? el('span', { className: 'mc-sheet-count' }, t('save.markups', { n: count })) : null));
-      btn.addEventListener('click', () => goTo(i));
-      ui.sheets.append(el('li', {}, btn));
-      thumbObserver.observe(canvas);
-    });
+      if (groups && groupOf.get(s.page.key) !== lastGroup) { lastGroup = groupOf.get(s.page.key); entries.push({ id: 'g:' + lastGroup.id, group: lastGroup }); }
+      rowOf.set(i, entries.length);
+      entries.push({ id: s.page.key, i });
+    }
+    thumbQueue.length = 0;
+    sheetWin.set(entries);
     ui.sheetsEmpty.hidden = sheets.length > 0;
     ui.sheetsEmpty.textContent = sheets.length ? '' : t('sheets.empty');
     ui.sheetCount.textContent = sheets.length ? (q ? t('sheets.shown', { shown, n: sheets.length }) : String(sheets.length)) : '';
     if (q && !shown && sheets.length) { ui.sheetsEmpty.hidden = false; ui.sheetsEmpty.textContent = t('sheets.no_match', { q: ui.sheetSearch.value.trim() }); }
   }
+  /** The open sheet's row marked (two buttons change, not the list), and scrolled into the panel's view. */
   function markCurrentSheet() {
-    for (const b of ui.sheets.querySelectorAll('.mc-sheet')) {
-      const on = +b.dataset.i === cur;
-      b.setAttribute('aria-current', on ? 'true' : 'false');
-      if (on) revealInPanel(b);
-    }
-  }
-  /** Scroll the panel's own list so `b` shows — never the page (on a phone the panels stack under the sheet and the
-   *  page scrolls; scrollIntoView would jump away from the sheet that just opened). */
-  function revealInPanel(b) {
-    for (let q = b.parentElement; q && q !== document.body; q = q.parentElement) {
-      if (/(auto|scroll)/.test(getComputedStyle(q).overflowY) && q.scrollHeight > q.clientHeight) {
-        const r = b.getBoundingClientRect(), qr = q.getBoundingClientRect();
-        if (r.top < qr.top) q.scrollTop -= qr.top - r.top; else if (r.bottom > qr.bottom) q.scrollTop += r.bottom - qr.bottom;
-        return;
-      }
-      if (q.tagName === 'ASIDE') return;
-    }
+    for (const b of ui.sheets.querySelectorAll('.mc-sheet[aria-current="true"]')) if (+b.dataset.i !== cur) b.setAttribute('aria-current', 'false');
+    if (rowOf.has(cur)) sheetWin.reveal(rowOf.get(cur));
+    ui.sheets.querySelector('.mc-sheet[data-i="' + cur + '"]')?.setAttribute('aria-current', 'true');
   }
   function refreshSheetCounts() {
     for (const b of ui.sheets.querySelectorAll('.mc-sheet')) {
@@ -1585,6 +1420,13 @@ function init(root) {
     }
   }
   ui.sheetSearch.addEventListener('input', renderSheets);
+  const bySizeBtn = root.querySelector('[data-sheets-by-size]');
+  bySizeBtn?.addEventListener('click', () => {
+    bySize = !bySize;
+    bySizeBtn.setAttribute('aria-pressed', String(bySize));
+    renderSheets();
+    status(bySize ? t('psize.by.on', { n: sizeGroups().length }) : t('psize.by.off'));
+  });
   ui.sheetSearch.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { const first = ui.sheets.querySelector('.mc-sheet'); if (first) { e.preventDefault(); goTo(+first.dataset.i); } }
   });
@@ -1686,6 +1528,7 @@ function init(root) {
       case 'close': closeSet(); break;
       case 'print': printSheets(); break;
       case 'print-pages': printSheets(true); break;
+      case 'client-review': clientReview.open(); break;
       case 'ocr': ocrUi?.run(); break;
       case 'find-cloud': cloudFound(); break;
       case 'auto-link': case 'batch-links': batchLinks(); break;
@@ -3418,8 +3261,10 @@ function init(root) {
     row(t('props.read_from'), { manual: t('props.from.manual'), label: t('props.from.label'), 'title block': t('props.from.title_block'), file: t('props.from.file') }[s.page.from] || '');
     row(t('props.file'), s.file.name);
     row(t('props.page'), t('props.page.of', { i: s.page.index + 1, n: s.file.pages.length }));
-    const vw = s.page.rotate % 180 ? s.page.height : s.page.width, vh = s.page.rotate % 180 ? s.page.width : s.page.height;
-    row(t('props.paper'), t('props.paper.in', { w: (vw / 72).toFixed(2), h: (vh / 72).toFixed(2) }));
+    const z = sizeOf(s.page);
+    row(t('props.paper'), sizeNameOrient(z));
+    row(t('props.paper.mm'), sizeText(z));
+    if (z.custom && z.near) row(t('props.paper.near'), t('psize.near', { name: z.near.name, mm: z.near.deltaMm }));
     if (s.page.rotate) row(t('props.rotation'), t('props.rotation.deg', { n: s.page.rotate }));
     row(t('props.scale'), cal ? cal.label : t('status.scale.none'));
     row(t('tab.list'), store.onSheet(s.page.key).length);
@@ -3858,123 +3703,21 @@ function init(root) {
     refreshSelection();
   }
 
-  function exportListCsv() {
-    const list = filteredMarkups().sort((a, b) => sheetOrder(a) - sheetOrder(b));
-    if (!list.length) { status(t('export.none')); return; }
-    const rows = markupRows(list, (m) => { const s = sheetByKey(m.sheet); return s ? { title: s.page.title, file: s.file.name, page: s.page.index + 1 } : null; },
-      (m) => valueOf(m), hasSpaces() ? markupSpace : null, [...store.columns, ...columnsNow()]);
-    dl(toCsv(rows), t('export.list.file', { set: setName() }) + '.csv', 'text/csv');
-    status(t('export.csv.done', { n: list.length }));
-  }
+  const { exportListCsv, importBcf, exportSummary, exportBcf, setName, addToPunch, exportRedline, exportSidecar, openSidecar } = mountListExport({
+    ui, store, view, files, filters, curKey, sheetByKey, envOf, styleFor, status, busy, pdfLib, ask, dl, sizeOf, sizeName, sizeGroups, hasSpaces, markupSpace, cancelOps, commitEdit, valueOf, filteredMarkups, sheetOrder, refreshAll,
+    get sheets() { return sheets; },
+    get author() { return author; },
+    get sel() { return sel; }, set sel(v) { sel = v; },
+    get autoCloseOn() { return autoCloseOn; },
+    get setAutoClose() { return setAutoClose; },
+  });
 
   /** BCF import (0.4 K7): comments and statuses back onto the markups exported from here; other topics as notes. */
   ui.bcfFile = $('[data-bcf-file]');
   ui.bcfFile?.addEventListener('change', () => { const f = ui.bcfFile.files[0]; ui.bcfFile.value = ''; if (f) importBcf(f); });
-  async function importBcf(file) {
-    if (!sheets.length) { status(t('need.pdf')); return; }
-    commitEdit(); cancelOps();
-    busy(t('bcfin.busy')); await frame();
-    try {
-      let bcf;
-      try { bcf = await readBcf(new Uint8Array(await file.arrayBuffer())); } catch { throw new Error(t('bcfin.bad', { file: file.name })); }
-      if (!bcf.topics.length) throw new Error(t('bcfin.empty', { file: file.name }));
-      const all = store.all();
-      const guidOf = new Map(), replyGuids = new Set();
-      for (const m of all) {
-        guidOf.set(await guidFor('topic:' + m.id), m.id);
-        for (const r of m.replies || []) { replyGuids.add(await guidFor('comment:' + m.id + ':' + r.id)); if (/^bcf-/.test(r.id)) replyGuids.add(r.id.slice(4)); }
-      }
-      const plan = planImport(bcf, { markups: all, guidOf, replyGuids, current: curKey(), author,
-        sheets: sheets.map((s) => ({ key: s.page.key, title: s.page.title, sheetNo: s.page.sheetNo, file: s.file.name, view: s.page.view })) });
-      if (!plan.updates.length && !plan.adds.length) { status(t('bcfin.nothing', { n: bcf.topics.length })); return; }
-      const made = store.change(t('undo.bcfin'), (tx) => {
-        for (const u of plan.updates) tx.update(u.id, u.patch);
-        return plan.adds.map((a) => tx.add(makeMarkup({ ...a, style: styleFor('note') })));
-      });
-      sel = new Set(made.filter((m) => m.sheet === curKey()).map((m) => m.id));
-      const parts = [t('bcfin.done', { file: file.name, n: bcf.topics.length })];
-      if (plan.matched) parts.push(t('bcfin.matched', { n: plan.matched }));
-      if (plan.added) parts.push(t('bcfin.added', { n: plan.added }));
-      if (plan.replies) parts.push(t('bcfin.replies', { n: plan.replies }));
-      if (plan.unplaced) parts.push(t('bcfin.unplaced', { n: plan.unplaced }));
-      if (bcf.skipped) parts.push(t('bcfin.skipped', { n: bcf.skipped }));
-      status(parts.join(' '));
-      refreshAll();
-    } catch (e) {
-      busy('');
-      await ask(t('bcfin.failed'), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
-    } finally { busy(''); }
-  }
 
-  /** The markup summary (0.4 K6): the listed markups as a workbook (every markup, per sheet, punch list) or a PDF report. */
-  const listSheetOf = (m) => { const s = sheetByKey(m.sheet); return s ? { title: s.page.title, file: s.file.name, page: s.page.index + 1 } : null; };
-  async function exportSummary(kind) {
-    const list = filteredMarkups().sort((a, b) => sheetOrder(a) - sheetOrder(b));
-    if (!list.length) { status(t('export.none')); return; }
-    const name = t('sum.file', { set: setName() });
-    try {
-      if (kind === 'xlsx') {
-        const bytes = await writeXlsx(summarySheets(list, { sheetOf: listSheetOf, measureOf: valueOf, spaceOf: hasSpaces() ? markupSpace : null, columns: [...store.columns, ...columnsNow()] }), { title: name });
-        dl(bytes, name + '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        status(t('sum.saved.xlsx', { n: list.length, file: name + '.xlsx' }));
-      } else {
-        busy(t('save.loading')); await frame();
-        const { bytes, missing, pages } = await summaryPdf(await pdfLib(), list, { sheetOf: listSheetOf, measureOf: valueOf, title: t('sum.title') + ': ' + setName() });
-        dl(bytes, name + '.pdf', 'application/pdf');
-        status(t('sum.saved.pdf', { n: list.length, file: name + '.pdf', pages }) + (missing ? t('sum.missing', { n: missing }) : ''));
-      }
-    } catch (e) {
-      await ask(t('sum.failed'), e.message || String(e), [['cancel', t('dlg.ok'), 'btn-plot']]);
-    } finally { busy(''); }
-  }
 
-  /** BCF 2.1: one topic per markup in the list (as filtered), each with a snapshot of its part of the sheet. */
-  async function exportBcf() {
-    const list = filteredMarkups().sort((a, b) => sheetOrder(a) - sheetOrder(b));
-    if (!list.length) { status(t('export.none')); return; }
-    const filtered = Object.values(filters).some(Boolean);
-    busy(t('bcf.busy'));
-    await frame();
-    try {
-      const topics = [];
-      let i = 0;
-      for (const m of list) {
-        const s = sheetByKey(m.sheet);
-        ui.busyText.textContent = t('bcf.busy.progress', { i: ++i, n: list.length });
-        let png = null;
-        const box = boundsOf(m, envOf(m)) || m.rect;
-        if (s && box) {
-          try {
-            const proxy = await s.file.doc.getPage(s.page.index + 1);
-            const c = await view.snapshot(proxy, s.page, box, m.type === 'foreign' ? [] : [displayOf(m, envOf(m)).list], 900);
-            const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
-            png = blob ? new Uint8Array(await blob.arrayBuffer()) : null;
-          } catch { png = null; }
-        }
-        topics.push({ markup: m, sheetTitle: s?.page.title || '', fileName: s?.file.name || '', value: valueOf(m), box, png });
-      }
-      const { bytes, count } = await buildBcf(topics, { project: setName() });
-      dl(bytes, t('export.list.file', { set: setName() }) + '.bcfzip', 'application/octet-stream');
-      status(t(filtered ? 'bcf.done.listed' : 'bcf.done', { n: count, size: fmtBytes(bytes.length) }));
-    } catch (e) {
-      status(t('bcf.failed', { error: e.message || e }));
-    } finally { busy(''); }
-  }
-  const setName = () => (files[0] ? files[0].name.replace(/\.pdf$/i, '').replace(/ \(marked up\)$/i, '') : 'MarkupCraft');
 
-  // ---- punch list ----
-  function addToPunch(ids = [...sel]) {
-    const list = ids.map((id) => store.get(id)).filter((m) => m && !m.locked && !m.punch)
-      .sort((a, b) => sheetOrder(a) - sheetOrder(b) || String(a.created).localeCompare(String(b.created)));
-    if (!list.length) { status(ids.length ? t('punch.add.already') : t('punch.add.need')); return; }
-    store.change(t('punch.add.one'), (tx) => {
-      let n = store.punchNext;
-      for (const m of list) tx.update(m.id, { punch: { n: n++, assignee: '', due: '', status: 'Open' } });
-      tx.setPunchNext(n);
-    });
-    status(t('punch.added', { n: list.length }));
-    refreshAll();
-  }
 
   function renderPunch() {
     if (activeTab() !== 'punch') return;
@@ -4188,115 +3931,15 @@ function init(root) {
     find('[data-act="compare-stop"]').hidden = false;
     ui.cmpStatus.textContent = t('compare.on', { old: so.page.title, new: curSheet().page.title });
   }
-  // ---- compare by vector paths (0.4 K12): the lines that differ, drawn over the new sheet; cloud them in one step ----
-  const segCache = new Map();   // sheet key → segments (dropped with the file)
-  async function segsOf(key) {
-    if (segCache.has(key)) return segCache.get(key);
-    const s = sheetByKey(key);
-    const segs = pageSegments(await (await s.file.doc.getPage(s.page.index + 1)).getOperatorList(), libs.pdfjs.OPS);
-    segCache.set(key, segs);
-    return segs;
-  }
-  let vecToken = 0;
-  async function vectorCompare() {
-    const token = ++vecToken;
-    ui.cmpStatus.textContent = t('compare.lines.busy');
-    await frame();
-    const [a, b] = await Promise.all([segsOf(cmp.oldKey), segsOf(cmp.newKey)]);
-    if (token !== vecToken || !cmp.on) return;
-    if (!a.length && !b.length) { cmp.vec = null; ui.cmpStatus.textContent = t('compare.lines.none'); view.invalidate(); return; }
-    cmp.vec = diffSegments(a, b, { tol: 1.5, T: alignment(cmp), step: 2 });
-    const len = (l) => Math.round(l.reduce((s, q) => s + Math.hypot(q[2] - q[0], q[3] - q[1]), 0));
-    ui.cmpStatus.textContent = t('compare.lines.done', { removed: len(cmp.vec.removed), added: len(cmp.vec.added) });
-    view.invalidate();
-  }
-  // ---- compare a whole set (0.4 K23): pair sheets by number, rank them by how much changed, cloud them all ----
-  const setUi = { old: $('[data-set-old]'), neu: $('[data-set-new]'), status: $('[data-set-status]'), list: $('[data-set-results]'), cloud: $('[data-act="set-cloud"]') };
-  let setResult = [];
-  function renderSetSelects() {
-    for (const [sel0, pick] of [[setUi.old, 0], [setUi.neu, files.length - 1]]) {
-      if (!sel0) continue;
-      const v = sel0.value;
-      sel0.replaceChildren(...files.map((f, i) => el('option', { value: f.id, selected: v ? f.id === v : i === pick }, f.name)));
-    }
-  }
-  async function compareSets() {
-    const fo = files.find((f) => f.id === setUi.old.value), fn = files.find((f) => f.id === setUi.neu.value);
-    if (!fo || !fn || fo === fn) { setUi.status.textContent = t('setcmp.need'); return; }
-    const facts = (f) => sheets.filter((s) => s.file === f).map(sheetFacts);
-    const pairs = matchSheets(facts(fo), facts(fn)).filter((p) => p.oldKey);
-    if (!pairs.length) { setUi.status.textContent = t('setcmp.none'); return; }
-    setResult = [];
-    for (let i = 0; i < pairs.length; i++) {
-      const p = pairs[i];
-      setUi.status.textContent = t('setcmp.busy', { i: i + 1, n: pairs.length });
-      await frame();
-      const d = diffSegments(await segsOf(p.oldKey), await segsOf(p.newKey), { tol: 1.5, step: 2 });
-      const len = [...d.removed, ...d.added].reduce((a, q) => a + Math.hypot(q[2] - q[0], q[3] - q[1]), 0);
-      setResult.push({ ...p, d, len: Math.round(len) });
-    }
-    setResult.sort((a, b) => b.len - a.len);
-    const changed = setResult.filter((r) => r.len >= 6);
-    setUi.status.textContent = t('setcmp.done', { n: pairs.length, changed: changed.length });
-    setUi.list.replaceChildren(...setResult.map((r) => el('li', {}, el('button', { type: 'button', onclick: () => openPair(r) },
-      el('strong', {}, sheetByKey(r.newKey)?.page.title || ''), ' ', r.len >= 6 ? t('setcmp.row', { n: r.len }) : t('setcmp.same')))));
-    setUi.cloud.hidden = !changed.length;
-  }
-  async function openPair(r) {
-    ui.cmpOld.value = r.oldKey; ui.cmpNew.value = r.newKey;
-    cmp.mode = 'lines';
-    for (const x of findAll('[data-cmp-mode]')) x.checked = x.value === 'lines';
-    await startCompare();
-  }
-  async function cloudSet() {
-    const changed = setResult.filter((r) => r.len >= 6);
-    if (!changed.length) return;
-    const who = await askAuthor();
-    let n = 0;
-    store.change(t('undo.setcmp.cloud'), (tx) => { for (const r of changed) {
-      const sh = sheetByKey(r.newKey);
-      for (const b of clusters([...r.d.removed, ...r.d.added], { gap: 18, minLen: 6 })) {
-        tx.add(makeMarkup({ sheet: r.newKey, type: 'cloudrect', rot: sh?.page.rotate || 0, rect: [b[0] - 8, b[1] - 8, b[2] + 8, b[3] + 8], author: who, style: styleFor('cloudrect'), comment: t('compare.cloud.comment', { old: sheetByKey(r.oldKey)?.page.title || '' }) }));
-        n++;
-      }
-    } });
-    setUi.status.textContent = t('setcmp.clouded', { n, sheets: t('find.sheets', { n: changed.length }) });
-    status(setUi.status.textContent);
-    refreshAll();
-  }
+  const { segCache, segsOf, renderSetSelects, compareSets, cloudSet, cloudChanges, applyCompare, stopCompare, startAlign, alignClick, changesBetween } = mountCompare({
+    $, findAll, find, ui, store, view, files, cmp, sheetByKey, styleFor, status, askAuthor, sheetFacts, applyStrip, updateCursor, newMarkup, cancelOps, startCompare, refreshAll,
+    get libs() { return libs; },
+    get sheets() { return sheets; },
+    get sel() { return sel; }, set sel(v) { sel = v; },
+    get sheetLabel() { return sheetLabel; },
+  });
 
-  async function cloudChanges() {
-    if (!cmp.on) return;
-    if (!cmp.vec) await vectorCompare();
-    if (!cmp.vec) return;
-    const boxes = clusters([...cmp.vec.removed, ...cmp.vec.added], { gap: 18, minLen: 6 });
-    if (!boxes.length) { status(t('compare.cloud.none')); return; }
-    const who = await askAuthor();
-    const made = store.change(t('undo.compare.cloud', { n: boxes.length }), (tx) => boxes.map((b) => tx.add(newMarkup('cloudrect', { rect: [b[0] - 8, b[1] - 8, b[2] + 8, b[3] + 8], author: who, comment: t('compare.cloud.comment', { old: sheetByKey(cmp.oldKey)?.page.title || '' }) }))));
-    sel = new Set(made.map((m) => m.id));
-    status(t('compare.cloud.done', { n: boxes.length }));
-    refreshAll();
-  }
   for (const r of findAll('[data-cmp-mode]')) r.addEventListener('change', () => { cmp.mode = r.value; applyCompare(); });
-  function applyCompare() {
-    if (!cmp.on || !cmp.oldProxy) return;
-    if (cmp.mode === 'lines') { view.setCompare(null); ui.legend.hidden = false; vectorCompare(); return; }
-    cmp.vec = null;
-    const colors = (v) => ({ bg: hexRgb(v.colors.sheet), same: hexRgb(mix(v.colors.ink, v.colors.sheet, 0.55)), old: hexRgb(v.colors.red), new: hexRgb(v.colors.blue) });
-    view.setCompare({ oldProxy: cmp.oldProxy, T: alignment(cmp), balance: cmp.balance, colors });
-  }
-  function stopCompare() {
-    if (!cmp.on) return;
-    cmp.on = false; cmp.aligning = null;
-    view.setCompare(null);
-    applyStrip();
-    ui.cmpTools.hidden = true;
-    ui.legend.hidden = true;
-    find('[data-act="compare"]').setAttribute('aria-pressed', 'false');
-    find('[data-act="compare-stop"]').hidden = true;
-    ui.cmpStatus.textContent = '';
-    updateCursor();
-  }
   let balanceTimer = 0;
   ui.cmpBalance.addEventListener('input', () => {
     cmp.balance = +ui.cmpBalance.value / 100;
@@ -4312,40 +3955,6 @@ function init(root) {
       applyCompare();
       ui.cmpStatus.textContent = t('compare.moved', { dx: cmp.dx.toFixed(2), dy: cmp.dy.toFixed(2) });
     });
-  }
-  function startAlign() {
-    if (!cmp.on) { ui.cmpStatus.textContent = t('compare.align.need'); return; }
-    cancelOps();
-    cmp.aligning = { pts: [] };
-    cmp.balance = 0;
-    applyCompare();
-    updateCursor();
-    ui.cmpStatus.textContent = t('compare.align.1');
-    status(t('compare.align.status'));
-  }
-  function alignClick(p) {
-    const a = cmp.aligning;
-    a.pts.push({ screenUser: p });
-    const n = a.pts.length;
-    if (n === 1) ui.cmpStatus.textContent = t('compare.align.2');
-    if (n === 2) { cmp.balance = 1; applyCompare(); ui.cmpStatus.textContent = t('compare.align.3'); }
-    if (n === 3) ui.cmpStatus.textContent = t('compare.align.4');
-    if (n === 4) {
-      // the old sheet was shown moved by T: undo that to get points in the old sheet's own space
-      const T = alignment(cmp), Ti = inv(T);
-      const o1 = applyT(Ti, a.pts[0].screenUser), o2 = applyT(Ti, a.pts[1].screenUser);
-      const fit = similarity(o1, o2, a.pts[2].screenUser, a.pts[3].screenUser);
-      cmp.aligning = null;
-      cmp.balance = +ui.cmpBalance.value / 100;
-      if (!fit) { ui.cmpStatus.textContent = t('compare.align.same'); applyCompare(); return; }
-      cmp.fit = fit; cmp.dx = 0; cmp.dy = 0;
-      const sc = Math.hypot(fit[0], fit[1]), ang = Math.atan2(fit[1], fit[0]) * 180 / Math.PI;
-      ui.cmpStatus.textContent = t('compare.align.done', { scale: (sc * 100).toFixed(2), angle: ang.toFixed(2) });
-      status(t('compare.aligned'));
-      applyCompare();
-      updateCursor();
-    }
-    view.invalidate();
   }
 
   // ---- refresh ----
@@ -4421,11 +4030,14 @@ function init(root) {
     lastPick = key;
     try { window.dispatchEvent(new CustomEvent('cc-pick', { detail: { app: 'markupcraft', ids } })); } catch { /* no window */ }
   }
-  window.ccPickApply = (refs) => {
+  const pickApply = (refs) => {
     const ids = (refs || []).map((r) => (r ? String(r.id) : '')).filter((id) => { const m = store.get(id); return m && m.sheet === curKey() && store.open(m); });
     if (!ids.length) return false;
     sel = new Set(ids); lastPick = ids.join(','); refreshSelection(); return true;
   };
+  window.ccPickApply = pickApply;
+  // SC.5 (sc-r5-select): the same adapter by app name (several apps share one page in Super), with a clear
+  (window.ccPickers = window.ccPickers || {}).markupcraft = { apply: pickApply, get: () => ({ ids: [...sel].map(String) }), clear: () => { if (sel.size) { sel = new Set(); lastPick = ''; refreshSelection(); } return true; } };
   function refreshSelection() { announcePick(); for (const fn of selListeners) { try { fn(); } catch { /* a listener must not stop the page */ } } view.invalidate(true); renderProps(); renderList(); renderPunch(); refreshToolbar(); wsSoon(); }
   function refreshToolbar() {
     const q = (a) => find('[data-act="' + a + '"]');
@@ -4442,7 +4054,7 @@ function init(root) {
     q('close').disabled = !files.length;
     all('print', !files.length);
     all('slip-sheet', !files.length);
-    for (const a of ['print-pages', 'save-flat', 'save-clean', 'page-rotate-cw', 'page-rotate-ccw', 'page-insert-pdf', 'page-insert-blank', 'page-delete', 'page-extract']) all(a, !curSheet());
+    for (const a of ['client-review', 'print-pages', 'save-flat', 'save-clean', 'page-rotate-cw', 'page-rotate-ccw', 'page-insert-pdf', 'page-insert-blank', 'page-delete', 'page-extract']) all(a, !curSheet());
     all('page-move-up', !curSheet() || curSheet().page.index === 0);
     const blankFile = curSheet()?.file.blank ? curSheet().file : null;   // "Add a blank page" under the sheets: blank sets only
     for (const b of findAll('[data-add-blank]')) { b.hidden = !blankFile; b.disabled = !blankFile; }
@@ -4480,52 +4092,6 @@ function init(root) {
     refreshAll();
     return { closed, missing, checked: results.length };
   }
-  async function changesBetween({ old: oldName = '', new: newName = '', sheet = '' } = {}) {
-    if (files.length < 2) throw new Error('Open two plan sets (two PDF files) to compare them.');   // i18n-ignore (read by the assistant)
-    const pick = (q, dflt) => (q ? files.find((f) => f.name.toLowerCase().includes(String(q).toLowerCase())) : dflt);
-    const fo = pick(oldName, files[0]), fn = pick(newName, files[files.length - 1]);
-    if (!fo || !fn || fo === fn) throw new Error('Name two different open files (the earlier and the later revision).');   // i18n-ignore (read by the assistant)
-    const facts = (f) => sheets.filter((x) => x.file === f).map(sheetFacts);
-    const paired = matchSheets(facts(fo), facts(fn));
-    const words = async (key) => { const x = sheetByKey(key); if (!x) return []; const c = await (await x.file.doc.getPage(x.page.index + 1)).getTextContent(); return c.items.filter((i) => i.str && i.str.trim()).map((i) => ({ str: i.str, x: i.transform[4], y: i.transform[5] })); };
-    const pairs = [];
-    for (const p of paired) {
-      const nw = sheetByKey(p.newKey), od = sheetByKey(p.oldKey);
-      const ref = nw || od;
-      if (sheet && !String(sheetLabel(ref) + ' ' + ref.page.title).toLowerCase().includes(String(sheet).toLowerCase())) continue;
-      const cal = store.calibrations.get(p.newKey);
-      const base = { sheetNo: sheetLabel(ref), title: ref.page.title, oldKey: p.oldKey, newKey: p.newKey, view: ref.page.view, mmPerPt: cal?.mmPerPt || 0 };
-      if (!od) { pairs.push({ ...base, state: 'added' }); continue; }
-      if (!nw) { pairs.push({ ...base, state: 'removed' }); continue; }
-      pairs.push({ ...base, d: diffSegments(await segsOf(p.oldKey), await segsOf(p.newKey), { tol: 1.5, step: 2 }), oldText: await words(p.oldKey), newText: await words(p.newKey) });
-    }
-    const res = describeChanges(pairs, { markups: store.all() });
-    return { old: fo.name, new: fn.name, ...res, text: changesText(res) };
-  }
-  async function exportRedline({ revision = '', all = false, ids = null } = {}) {
-    const list = sheets.map((x) => ({ key: x.page.key, sheetNo: x.page.sheetNo || '', title: x.page.title, view: x.page.view, file: x.file.name, mmPerPt: store.calibrations.get(x.page.key)?.mmPerPt || 0 }));
-    const pkg = buildRedline(store.all(), list, { project: setName(), revision, by: author, only: all ? 'all' : 'open', ids });
-    if (!pkg.items.length) { status(t('redline.none')); return { items: 0 }; }
-    dl(JSON.stringify(pkg, null, 1), redlineFileName(pkg), 'application/json');
-    status(t('redline.exported', { n: pkg.items.length }));
-    return { items: pkg.items.length };
-  }
-  // 0.8 H5 / EG.64: the tasks in the JSON file that rides with the drawing, <name>.markups.json
-  function exportSidecar() {
-    const obj = buildSidecar(store.all(), { pdf: files[0] ? files[0].name : '', autoClose: autoCloseOn() });
-    if (!obj.tasks.length) { status(t('tasks.file.none')); return { tasks: 0 }; }
-    dl(sidecarText(obj), setName() + '.markups.json', 'application/json');
-    status(t('tasks.file.saved', { n: obj.tasks.length }));
-    return { tasks: obj.tasks.length };
-  }
-  function openSidecar(text) {
-    const r = readSidecar(text);
-    if (!r.ok) return r;
-    const res = applySidecar(store, r.sidecar, { who: author });
-    if (r.sidecar.autoClose) setAutoClose(true);
-    refreshAll();
-    return { ok: true, ...res };
-  }
   function applyRedlineAnswers(json) { const r = applyAnswers(store, json, 'CadCraft'); refreshAll(); return r; }
 
   // ---- AI assistants and scripts (0.4 part 2 X.7, session agents; agents.js on host.js's control channel): off until Settings › Assistants ----
@@ -4541,9 +4107,9 @@ function init(root) {
 
   // ---- the shell's seven modules (0.8 round 3, markup_PART_3; docs/apps/shell-modules.md § Mounting) ----
   // Calc sheets and design reasons live in the PDF's Info entry /MarkupCraftShell; a change marks the open file as unsaved.
-  const shellData = { calcs: null, reasons: null, docinfo: null };
+  const shellData = { calcs: null, reasons: null, docinfo: null, issues: null };   // issues: 0.10 BK.48, the shared issue history (issues-markup.js)
   let shellOpened = false;
-  const shellPack = () => { shellMount?.beforeSave(); return shellData.calcs || shellData.reasons || shellData.docinfo ? { calcs: shellData.calcs, reasons: shellData.reasons, docinfo: shellData.docinfo } : null; };
+  const shellPack = () => { shellMount?.beforeSave(); return shellData.calcs || shellData.reasons || shellData.docinfo || shellData.issues ? { calcs: shellData.calcs, reasons: shellData.reasons, docinfo: shellData.docinfo, ...(shellData.issues ? { issues: shellData.issues } : {}) } : null; };
   const shellMount = mountMarkupShell({
     store, control: getHost({ app: 'markupcraft' }).control,
     sel: () => sel, select: (id) => jumpTo(id), onSelection: (fn) => { selListeners.add(fn); return () => selListeners.delete(fn); },
@@ -4552,7 +4118,7 @@ function init(root) {
     counts: () => ({ sheets: sheets.length, layers: store.layerNames().length, files: files.length }),   // 0.9 DI.1
     shell: () => shellData,
     setShell: (key, json, quiet) => {
-      if (key !== 'calcs' && key !== 'reasons' && key !== 'docinfo') return;
+      if (key !== 'calcs' && key !== 'reasons' && key !== 'docinfo' && key !== 'issues') return;
       const same = JSON.stringify(shellData[key] ?? null) === JSON.stringify(json ?? null);
       if (same) return;
       shellData[key] = json ?? null;
@@ -4712,7 +4278,14 @@ function init(root) {
   }
   function track(f) {
     if (f.auto) return;
-    f.auto = autosave.doc({ name: f.name, snapshot: async () => ({ data: { pdf: f.blob ||= new Blob([f.bytes], { type: 'application/pdf' }), state: { ...fileState(f), ...(await notesUi.stateFor(f)) } }, meta: { name: f.name, pages: f.pages.length } }) });
+    // 0.10 PERF.24: the PDF goes in the first copy once (as an extra chunk, written again only when its bytes are replaced), then only the markups, scales and names that changed
+    const pdfBlob = () => { if (!f.blob || f.blobOf !== f.bytes) { f.blob = new Blob([f.bytes], { type: 'application/pdf' }); f.blobOf = f.bytes; } return f.blob; };
+    f.auto = autosave.doc({ name: f.name, journal: objectJournal({
+      spec: { autoArrays: 'id' }, identity: () => f,
+      get: async () => ({ ...fileState(f), ...(await notesUi.stateFor(f)) }),
+      extras: (h) => { h.setExtra('x:pdf', pdfBlob()); },
+      meta: () => ({ name: f.name, pages: f.pages.length }),
+    }) });
   }
   /** After any change: copies for files with unsaved work, none for the rest (saved, or undone back to the file). */
   function syncAutosave() {
@@ -4722,11 +4295,13 @@ function init(root) {
   window.markupcraft.syncAutosave = syncAutosave;
   /** A recovered copy: the PDF opened as it was, then its markups, scales and sheet names put back as unsaved work. */
   async function recover(rec) {
-    const st = rec.data?.state;
-    if (!rec.data?.pdf || !st || st.v !== 1) throw new Error(t('recover.bad'));
+    const chunks = rec.data && rec.data.kind === 'chunks';   // 0.10: a base and its changes, or the old {pdf, state}
+    const st = chunks ? recoverState(rec, { autoArrays: 'id' }) : rec.data?.state;
+    const pdf = chunks ? recoverExtras(rec).get('x:pdf') : rec.data?.pdf;
+    if (!pdf || !st || st.v !== 1) throw new Error(t('recover.bad'));
     const name = rec.meta?.name || 'recovered.pdf';   // i18n-ignore (fallback file name)
     const n0 = files.length;
-    await openFiles([new File([rec.data.pdf], name, { type: 'application/pdf' })]);
+    await openFiles([new File([pdf], name, { type: 'application/pdf' })]);
     const f = files[n0];
     if (!f) throw new Error(t('recover.bad'));
     const key = (i) => f.pages[i]?.key;
@@ -4773,6 +4348,12 @@ function init(root) {
       (err) => status(err.code === 'blocked' ? t('handoff.blocked') : err.code === 'storage' ? t('handoff.storage') : t('handoff.failed', { reason: err.message })));
   });
 
+  // 0.10 BK.48 (issues-markup.js): the shared issue history; kept with the file's shell data, so it travels in the marked-up PDF
+  const issuesUi = mountMarkupIssues({ root, t, store, sheets: () => sheetList(), selection: () => [...sel], jumpTo: (id) => jumpTo(id), typeName: tname, sheetLabel: (key) => { const sh = sheetByKey(key); return sh ? sh.page.sheetNo || sh.page.title : ''; },
+    goToKey: async (key) => { const i = sheets.findIndex((x) => x.page.key === key); if (i >= 0 && i !== cur) await goTo(i); },
+    get: () => shellData.issues, set: (history) => { shellData.issues = history; if (files[0]) store.dirtySheets.add(files[0].id + ':0'); refreshAll(); },
+    download: dl, who: () => author || '', fileBase: () => String(files[0]?.name || 'markups').replace(/\.pdf$/i, '') });
+  window.markupcraftIssues = issuesUi;   // tests
   fieldUi = installField({
     root, store, view, find, status, busy, ask, setTool, tabTo, download: dl, setName, curSheet,
     curKey, sheetByKey, libs: loadLibs, askAuthor, getAuthor: () => author, refresh: () => refreshAll(), repaint: () => view.invalidate(true),

@@ -1,0 +1,43 @@
+---
+title: Neuerungen in 0.7 (früher)
+summary: RFIs, Einreichungen und Bautagebücher in einer neuen Registerkarte Baustelle, mit Fälligkeitsdaten, überfällig in Rot, CSV und BCF, Offline-Arbeit und Zusammenführen; Assistenten, die Status setzen, antworten und die Liste exportieren; Einheitenlisten, die den Einstellungen folgen; Bereiche, die sich ausblenden lassen, und Dialoge, die sich verschieben lassen.
+keywords: Neuerungen 0.7, frühere Version, Versionshinweise, Änderungsprotokoll, Änderungen, 0.7, Version, neue Funktionen, Baustelle, Felddatensätze, RFI, Bauherrenanfrage, Request for Information, Einreichung, Bautagebuch, Baustellentagebuch, überfällig, Fälligkeitsdatum, mir zugewiesen, Pin, zusammenführen, offline, Tablet, BCF, CSV, Assistent, MCP, Markierungsstatus, Antwort, exportieren, Einheiten, Einheitenlisten, Stern, kalibrieren, kompakt, Bereiche, Dialoge, Portugiesisch
+from: f8578677
+---
+
+Das hat sich in MarkupCraft 0.7 gegenüber 0.6 geändert. Das große Neue sind Felddatensätze: RFIs, Einreichungen und Bautagebücher, die neben Ihren Markierungen in der PDF gespeichert werden.
+
+## Neu
+
+### RFIs, Einreichungen und Bautagebücher
+
+- **Die Registerkarte Baustelle.** Öffnen Sie die Registerkarte {{ui:Baustelle}} und wählen Sie {{ui:Rückfrage}}, {{ui:Einreichung}} oder {{ui:Bautagebuch}}. Tippen oder klicken Sie auf die Stelle des Blatts, an der eine Rückfrage oder eine Einreichung hingehört, und eine Nadel markiert den Ort; ein Bautagebuch kommt ohne Nadel auf das offene Blatt ({{ui:Pin platzieren}} fügt später eine hinzu, {{ui:Pin verschieben}} verschiebt jede Nadel). Jeder Datensatz hat eine eigene Nummer (RFI-0001, SUB-0001, LOG-0001), einen Titel, Text, einen Status, eine zuständige Person, ein Fälligkeitsdatum, einen Antwortverlauf und eine Liste der Anhangsnamen. Siehe [RFIs, Einreichungen und Bautagebücher verfolgen](topic:field-records).
+- **Sehen, was im Rückstand ist.** Filtern Sie die Liste nach Typ, Status, Fälligkeitsdatum (überfällig, fällig in 7 Tagen, mit oder ohne Fälligkeitsdatum), diesem Blatt oder allen Blättern, einer Textsuche oder {{ui:Mir zugewiesen}}. Ein Datensatz, der nach seinem Fälligkeitsdatum noch offen ist, wird in der Liste und auf seiner Nadel in Rot als **Überfällig** markiert. Siehe [Das Wichtige finden](topic:field-records#find-what-matters).
+- **CSV und BCF.** {{ui:CSV}} schreibt die aufgelisteten Datensätze als Tabelle; {{ui:BCF}} schreibt sie als BCF-Themen, jeweils mit einer Momentaufnahme ihrer Stelle auf dem Blatt. Beide folgen den Filtern. Siehe [Exportieren](topic:field-records#export).
+- **Offline, und zwei Kopien werden eine.** Datensätze werden in der PDF gespeichert und brauchen kein Netz, sodass ein Tablet auf der Baustelle sie hinzufügen, beantworten und speichern kann. Zurück im Büro verbindet {{ui:Zusammenführen}} die Datensätze einer anderen Kopie derselben PDF anhand ihrer IDs, als ein einziger Rückgängig-Schritt. Siehe [Speichern, Offline-Arbeit und Zusammenführen von Kopien](topic:field-records#save-offline-and-merging-copies).
+
+### KI-Assistenten
+
+- **Mehr, was ein Assistent tun kann.** Ihr eigener Assistent, verbunden über CadCraft Studio, kann jetzt den Status einer Markierung setzen (`markup_status`, im Verlauf protokolliert), in einem Verlauf antworten (`markup_reply`) und die Liste {{ui:Markierungen}} als CSV oder BCF exportieren (`markups_export`, also was die Liste mit ihren Filtern zeigt). Jede Änderung ist ein Rückgängig-Schritt und trägt den Namen des Assistenten. Siehe [Was ein Assistent anfordern kann](topic:use-with-ai-assistants#what-an-assistant-can-ask-for).
+
+## In jeder App
+
+- **Einheiten.** {{ui:Einstellungen}} › {{ui:Allgemein}} › {{ui:Einheiten}} hat je eine Liste für Länge, Fläche, Volumen, Winkel und Neigung, mit den genauen Größen aus den Definitionen der Einheiten (der US-Vermessungsfuß ist eine eigene Einheit). Schalten Sie die Einheiten aus, die Sie nie verwenden, und sie verschwinden aus den Einheitenlisten; markieren Sie eine mit dem Stern, und neue Arbeit beginnt darin. Eine Datei behält immer ihre eigene Einheit. In MarkupCraft folgen die Mess- und Positionseinheiten in {{ui:Einstellungen}} › {{ui:MarkupCraft}} und die Einheit im Kalibrierdialog den Schaltern; der Stern legt die Messeinheit fest, bis Sie die eigenen Einstellungen von MarkupCraft speichern. Die echte Strecke, die Sie beim Kalibrieren eintippen, darf jede Einheitenkennzeichnung tragen, etwa `3 yd` oder `1.5 km`. Siehe [Einheiten, eingetippte Werte und die Einheitenlisten](common:unit-lists).
+- **Dichteres Layout und Bereiche, die sich aufräumen lassen.** {{ui:Einstellungen}} › {{ui:Allgemein}} › {{ui:Layoutdichte}} › {{ui:Kompakt}} passt mehr auf den Bildschirm (Touchscreens und Telefone behalten ihre großen Schaltflächen). Jeder Seitenbereich hat eine schmale Titelleiste: Ziehen Sie sie, um den Bereich anzudocken oder zu lösen; legen Sie ihn auf die Leiste eines anderen Bereichs, um einen Rahmen mit Registerkarten zu teilen; heften Sie ihn an, damit er zum Rand gleitet, oder blenden Sie ihn aus und holen Sie ihn vom Rand zurück. Siehe [Bereiche anordnen](common:arrange-panels#make-the-layout-denser).
+- **Dialoge verschieben sich.** Ziehen Sie einen Dialog an seiner Titelleiste aus dem Weg der Zeichnung; er kehrt dorthin zurück, wo Sie ihn gelassen haben. Doppelklicken Sie auf die Titelleiste, um ihn wieder zu zentrieren. Siehe [Einen Dialog verschieben](common:arrange-panels#move-a-dialog).
+- **Rezepte für KI-Assistenten.** Zehn ausgearbeitete Anfragen an Ihren eigenen Assistenten (eine Zeichnung aufräumen, einen Satz plotten, Zeichnungen prüfen, einem Modell Fragen stellen, eine Mengenermittlung summieren, eine Bauteilvariante testen …), jeweils mit den Werkzeugen, die sie aufruft, und den nötigen Berechtigungen. Jede wird durch unsere Tests nachgespielt. Die Apps enthalten keine KI. Siehe [Rezepte für KI-Assistenten](common:assistants-recipes).
+- **Sprachen.** **Português (Portugal)** ist neu in {{ui:Einstellungen}} › {{ui:Allgemein}} › {{ui:Sprache}}. Dazu kommen **Português (Brasil)**, **Español (México)** und **Bahasa Indonesia**, die jetzt jedes Wort der Apps haben, als Entwürfe, die noch kein Muttersprachler geprüft hat. Die Hilfethemen sind auf Englisch.
+- **CadCraft Studio** zeigt an, warum eine Update-Prüfung fehlgeschlagen ist (noch keine Datei für Ihr System, kein Netz, eine ungültige Signatur), statt nur „Fertig“ zu melden. Außerdem bringt es eine Karte „Neuerungen“, die Sie geschlossen haben, nicht mehr zurück, bis es eine neuere Version gibt.
+
+## In dieser Version noch nicht enthalten
+
+- **0.7 ist nicht mit einer Code-Signatur versehen.** Signierung und das Microsoft-Store-Paket wurden auf 0.8 verschoben, weil die Zertifikatsprüfung noch nicht durch ist. Prüfen Sie die SHA-256-Prüfsumme neben jeder Datei auf getcadcraft.com/download. Unter Windows wählen Sie, wenn SmartScreen das Installationsprogramm stoppt, {{ui:Weitere Informationen}}, dann {{ui:Trotzdem ausführen}}. Auf einem Mac klicken Sie beim ersten Mal mit der rechten Maustaste auf CadCraft Studio und wählen {{ui:Öffnen}}. CadCraft Studio ist noch nicht in einem App-Store, und es gibt noch keine iPad- oder iPhone-Version.
+- Die Winkel- und Neigungslisten in {{ui:Einheiten}} werden gespeichert, aber noch liest sie keine Stelle aus.
+- Felddatensätze werden in einer Live-Sitzung von CadCraft Studio nicht geteilt (Live-Sitzungen übertragen nur Markierungen); bringen Sie Kopien mit {{ui:Zusammenführen}} zusammen.
+- {{ui:Zusammenführen}} übernimmt einen Datensatz als Ganzes aus der zuletzt geänderten Kopie: Haben zwei Personen verschiedene Felder eines Datensatzes geändert, gewinnen die Felder der späteren Kopie. Antwortverläufe und Anhangsnamen werden zusammengeführt.
+- Anhänge sind nur Namen; die Dateien bleiben, wo sie sind. Für Datensätze gibt es keine Teams, Benachrichtigungen oder Cloud-Projekte, und Assistenten haben noch keine Werkzeuge für Datensätze.
+- Felddatensätze wurden in einem Browser in Telefon- und Tablet-Größe mit abgeschaltetem Netz getestet, aber noch nicht von Hand auf einem echten Tablet.
+- Noch aus 0.6: Seitenobjekte in beliebigen Winkel drehen, neue Formen direkt in die Seite zeichnen, Schrift oder Größe einer Linie ändern und Text, der über mehrere Zeilen fließt. Eine gespeicherte Kopie mit Seitenänderungen wurde noch nicht in Acrobat geöffnet.
+- Noch aus 0.5: Rückgängig bei einer Seitenänderung (etwa das Hinzufügen einer leeren Seite), Text von gescannten Blättern lesen und Live-Sitzungen über das eigene Netz hinaus.
+
+Alles Übrige steht unter [Was noch nicht umgesetzt ist](topic:not-built-yet).

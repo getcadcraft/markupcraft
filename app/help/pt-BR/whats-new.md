@@ -1,60 +1,104 @@
 ---
-title: Novidades na 0.8 e na 0.8.1
-summary: Marcações que viram tarefas e se fecham sozinhas, uma lista simples do que mudou entre revisões, notas de voz e decisões no plano, arquivos redline para o desenhista e as mudanças compartilhadas da 0.8: dispositivos de entrada, linhas da barra de ferramentas, Problemas, mais idiomas.
-keywords: novidades, o que há de novo, notas de versão, registro de alterações, alterações, 0.8, 0.8.1, versão, novos recursos, tarefa, tarefas, responsável, dia de vencimento, atrasados, verificar agora, o que mudou, revisões, comparar, nota de voz, decisão, redline, arquivo de respostas, desenhista, assistente, mcp, problemas, idiomas, dispositivos de entrada, trackpad, linhas da barra de ferramentas, grade de propriedades, atualização
-from: 40368796
+title: Novidades na 0.9
+summary: Notas e uma mesa de apoio que nunca são impressas, notas privadas criptografadas e uma cópia limpa para o cliente, links em lote para um conjunto inteiro de desenhos, uma ferramenta Arco com dez métodos, acompanhar outro revisor no Live e uma correção para marcações excluídas que continuavam no PDF salvo.
+keywords: novidades, o que há de novo, 0.9, notas de versão, registro de alterações, notas, mesa de apoio, notas privadas, frase-senha, criptografado, ocultar notas, mostrar notas, cópia limpa, captura, links em lote, chamadas de folha, vincular folhas, legenda, número da folha, aditivo, renumerar, link de pdf, arco, métodos de arco, arco de três pontos, raio, seguir, seguir-me, live, visão de turma, lista de pessoas, marcação excluída, dicas de ferramenta, títulos de guia, changelog, alterações, 0.8, 0.8.1, versão, novos recursos, tarefa, tarefas, responsável, dia de vencimento, atrasado, verificar agora, o que mudou, revisões, comparar, nota de voz, decisão, redline, arquivo de respostas, desenhista, assistente, mcp, problemas, idiomas, dispositivos de entrada, trackpad, linhas da barra de ferramentas, grade de propriedades, atualização
+from: dbdd7ed4
 ---
 
-Isto é o que mudou na MarkupCraft 0.8 e 0.8.1, em comparação com a 0.7. A grande novidade é que uma marcação pode ser uma tarefa que alguém, ou o seu próprio assistente, executa, e que se fecha sozinha quando o desenho realmente muda.
+Estas são as mudanças do MarkupCraft 0.9, em comparação com a 0.8.1. A ideia principal é que suas notas de trabalho ficam fora da página que o cliente recebe, e um conjunto inteiro de desenhos pode ser vinculado em uma única passagem.
 
-## Novo
+## Novidades
 
-### Marcações que agem
+### Notas, a mesa de apoio e notas privadas
 
-- **Transformar uma marcação em tarefa.** Selecione uma ou mais marcações, abra a guia {{ui:Tarefas}} e escolha {{ui:Transformar selecionada em tarefa}}. Uma tarefa tem um título, uma pessoa ou o seu assistente conectado para executá-la, um dia de vencimento opcional e um estado, e mantém o seu lugar na folha e a sua conversa. Veja [Transformar uma marcação em tarefa](topic:markups-that-act).
-- **Tarefas que se fecham sozinhas.** Uma tarefa pode observar o desenho dentro da sua marcação. Abra uma revisão mais recente da folha e escolha {{ui:Verificar agora}}: se as linhas daquela área mudaram mais do que um fio de cabelo, a tarefa fica marcada como Concluída, a sua marcação passa a Concluída e uma nota na conversa diz o que mudou. Um novo carimbo de data, ou linhas que se moveram menos de 1,5 ponto, não contam. Em vez disso, a tarefa pode observar um elemento do modelo: o seu assistente informa o elemento com `tasks_check`, e um relatório posterior que seja diferente, ou um elemento excluído, fecha a tarefa. Um passo de desfazer a reabre.
-- **Encontrar o trabalho.** Filtre a lista de {{ui:Tarefas}} por estado e por quem é o responsável, incluindo {{ui:Atrasados}}; escolha {{ui:Atribuída a}} e depois {{ui:Assistente}} para ver o que espera pelo seu assistente. Uma tarefa que passou do dia de vencimento aparece como aviso no painel Problemas. {{ui:CSV}} exporta a lista. As tarefas são salvas no PDF junto com a marcação e viajam pela Live como outras propriedades de marcação.
+- **A mesa de apoio.** A área ao redor de cada folha é uma mesa: tudo o que for desenhado, digitado ou colado ao lado da folha é uma nota e nunca é impresso. Escolha {{ui:Mostrar a mesa de apoio}} para afastar o zoom e ganhar espaço, ou {{ui:Capturar para a mesa de apoio}}, arraste uma caixa e depois {{ui:Para a mesa de apoio}} para colocar uma imagem de parte do desenho ao lado da folha. Uma captura é uma imagem e não muda quando a folha muda. Veja [Notas, a mesa de apoio e notas privadas](topic:notes-and-pasteboard).
+- **Mostrar e ocultar notas.** Qualquer marcação pode ser uma nota: defina {{ui:Novas marcações serão}} na guia {{ui:Notas}}, ou {{ui:Esta marcação é}} em {{ui:Propriedades}}. {{key:Shift+H}} ou o interruptor {{ui:Notas}} sob a folha oculta e mostra todas as notas de uma vez. As notas ficam de fora da impressão, das cópias achatadas, das listas e das exportações, e outros leitores de PDF não as mostram. O PDF salvo as mantém para a próxima vez que você o abrir no MarkupCraft.
+- **Notas privadas.** Escolha {{ui:Definir uma frase-senha}}, depois transforme uma marcação em {{ui:Uma nota privada}}. Ela é criptografada no arquivo com uma frase-senha de pelo menos 10 caracteres, e não há recuperação: ninguém, nem nós, pode abri-la sem a frase-senha. {{ui:Bloquear}} recolhe as notas privadas; {{ui:Manter desbloqueado neste dispositivo}} vem desativado por padrão.
+- **Salvar uma cópia limpa.** {{ui:Salvar uma cópia limpa}} remove todas as notas, notas privadas e tudo o que estiver na mesa de apoio. Use-a para o arquivo que vai ao cliente.
 
-### O que mudou, em lista simples
+### Vincular um conjunto inteiro
 
-- **Listar as alterações.** Abra a guia {{ui:Comparar}}, depois {{ui:Comparar um conjunto inteiro}}, escolha o arquivo anterior e o posterior e clique em {{ui:Listar as alterações}}. A lista começa com uma contagem e depois cobre cada folha alterada, da maior mudança para a menor: onde está na folha, qual o tamanho (em unidades reais e também em polegadas no papel, numa folha calibrada), se linhas foram acrescentadas ou removidas, quantas marcações há ali e quais palavras apareceram ou desapareceram. {{ui:Copiar a lista}} coloca a lista na área de transferência, e {{ui:CSV}} grava uma linha por alteração. Veja [Listar o que mudou entre revisões](topic:what-changed-in-words).
+- **Links em lote.** Escolha {{ui:Páginas}} › {{ui:Links em lote…}}, ou {{ui:Vincular chamadas de folha…}} em {{ui:Buscar texto}} no painel {{ui:Folhas}}. O passo 1 lista o número e o nome de cada folha, conforme lidos da legenda; corrija os que estiverem errados. O passo 2 lista as chamadas encontradas, como `3/A-501` ou `DETAIL 2 ON A-501`. {{ui:Será vinculado}} mostra a folha e a vista de cada uma, {{ui:Não vinculado}} mostra números que nenhuma folha aberta tem, e {{ui:Criar os vínculos}} cria todos em uma única etapa de desfazer. Execute de novo depois de um aditivo ou de uma renumeração; vínculos feitos manualmente nunca são alterados. Um vínculo com uma vista é salvo como link de PDF, então outros leitores também abrem o detalhe. Veja [Vínculos de folha](topic:sheet-links).
 
-### Notas de voz e decisões
+### Desenho
 
-- **Notas de voz.** Na guia {{ui:Notas}}, escolha {{ui:Gravar uma nota de voz}} e depois {{ui:Parar gravação}}; as gravações param sozinhas após dois minutos. A nota é fixada no centro da folha, você a arrasta para onde ela deve ficar e digita uma legenda em {{ui:Propriedades}}, e {{ui:Reproduzir}} na lista toca a nota. A gravação é salva dentro do PDF.
-- **Decisões.** {{ui:Fixar uma decisão}} escreve uma ou duas frases na folha. Se ela substitui uma decisão anterior, escolha essa em {{ui:Ela substitui}}: a antiga continua ali, marcada como Substituída, e aponta para a nova. Um passo de desfazer a remove. Veja [Fixar notas de voz e decisões em uma folha](topic:voice-notes-and-decisions).
+- **Arco, dez métodos.** A ferramenta {{ui:Arco}} ({{key:O}}) agora tem uma caixa {{ui:Método do arco}} sobre a página, com dez formas de desenhar um arco, e o ângulo, o comprimento, o raio e a direção podem ser clicados ou digitados. Veja [Desenhar um arco de dez formas](topic:draw-an-arc).
 
-### Redline para revisão
+### Trabalhar em conjunto
 
-- **Enviar e responder.** Na guia {{ui:Tarefas}}, abra {{ui:Redline para revisão}}, digite a revisão em que as marcações se baseiam e escolha {{ui:Exportar arquivo redline}}. Você recebe um arquivo `.redline.json` com um item por marcação aberta: folha, posição (como frações da folha, para que uma nova plotagem em outro tamanho ainda fique alinhada), palavras, autor, conversa e a sua tarefa. Quem desenha as alterações responde Aceito, Rejeitado ou Concluído em um arquivo `.redline-answers.json`; {{ui:Carregar arquivo de respostas…}} atribui a cada marcação esse status e a nota do desenhista, como um único passo de desfazer. Veja [Enviar marcações ao desenhista como redline](topic:redline-to-revision).
-
-### Assistentes de IA
-
-- **Mais ferramentas.** Um assistente que você conectou pelo CadCraft Studio pode listar tarefas (`tasks_list`), criar ou alterar uma (`task_set`), tirar a tarefa (`task_clear`), verificar uma em relação a uma revisão mais nova ou a um elemento (`tasks_check`) e ler a lista simples de alterações entre dois conjuntos de plantas abertos (`revisions_changes`). Ele recebe apenas as ferramentas que você marcou em Assistentes, na chave de Assistentes, e cada alteração é um passo de desfazer. Veja [Usar a MarkupCraft com um assistente de IA](topic:use-with-ai-assistants).
+- **Seguir um revisor.** Em uma sessão Live, escolha {{ui:Seguir}} ao lado do nome de uma pessoa, e sua vista acompanha a dela; deslocar ou ampliar a sua própria vista interrompe o acompanhamento. O anfitrião pode escolher {{ui:Pedir a todos que me sigam}}. A lista de pessoas mostra a cor e o nome de cada uma, a folha em que está e quando foi sua última edição. Veja [Seguir outro revisor em uma sessão Live](topic:follow-in-live).
 
 ## Em todos os aplicativos
 
-- **Idiomas.** O CadCraft Studio agora tem 54 idiomas. Dez são novos: lituano, letão, bósnio, marata, telugu, albanês, africâner, filipino, suaíli e uzbeque. Todos os idiomas que não são o inglês são rascunhos de máquina até que um falante nativo os revise.
-- **Dispositivos de entrada.** {{ui:Configurações}} › {{ui:Global}} › {{ui:Dispositivos de entrada}} define o que fazem um trackpad, os botões laterais do seu mouse, uma caneta, toques com os dedos, um mouse 3D, um controle de jogo ou um controlador MIDI, para todos os aplicativos ou apenas para este. Até que você altere algo, cada dispositivo funciona como antes. Veja [Usar um trackpad, mouse 3D ou controle](common:input-devices).
-- **Linhas da barra de ferramentas.** {{ui:Configurações}} › {{ui:Geral}} › {{ui:Linhas da barra de ferramentas}} tem {{ui:Quebrar}} (o padrão), {{ui:2 linhas}} e {{ui:1 linha}}, para que o desenho tenha mais espaço. Veja [Organizar os painéis](common:arrange-panels).
+- As dicas de ferramenta são as do Bootstrap, a dica inicial pode ser fechada, as barras de guias rolam quando transbordam, e os títulos das guias do navegador seguem `<document> — MarkupCraft | CadCraft`.
+- Um painel com várias seções abre uma e fecha as outras (um cadeado ao lado da seta mantém uma aberta); um interruptor de Configurações desliga isso.
+- Cada aplicativo começa com uma coleção padrão de objetos da biblioteca.
+- Unidades de massa e de temperatura estão disponíveis nas configurações de unidades.
+
+## Corrigido
+
+- **Marcações removidas não ficam mais legíveis dentro do PDF salvo.** Antes, ao salvar, uma anotação excluída ou reescrita era tirada da página, mas o objeto, com seu texto, permanecia no arquivo. Agora o salvamento exclui esses objetos. Arquivos salvos por versões anteriores ainda os contêm até que você os salve de novo.
+
+## Limites atuais
+
+- Os links em lote foram testados em nossos próprios conjuntos de teste. Conjuntos reais desenham balões de muitas formas, então, em um conjunto de cliente, algumas vistas podem ser perdidas. Folhas digitalizadas precisam primeiro de {{ui:Ler texto (OCR)…}}.
+- Notas, notas privadas e a mesa de apoio foram testadas em um navegador sem interface e em nossos próprios arquivos, não com um conjunto vetorial grande e real, nem em uma sessão Live real com duas pessoas. Alterar a frase-senha ainda não foi implementado. Versões anteriores à 0.9 não mostram notas.
+- A visão de turma é a lista de pessoas; ela ainda não foi testada com um professor e alunos reais.
+- Os idiomas diferentes do inglês são rascunhos de máquina até que um falante nativo os leia.
+- Os instaladores do Windows não têm assinatura de código (Mais informações, depois Executar mesmo assim); a imagem de disco do macOS não é notarizada (clique com o botão direito e depois em Abrir).
+
+## Anteriores: 0.8 e 0.8.1
+
+Estas são as mudanças do MarkupCraft 0.8 e 0.8.1, em comparação com a 0.7. A grande novidade é que uma marcação pode ser uma tarefa que alguém, ou seu próprio assistente, executa, e que se fecha sozinha quando o desenho realmente muda.
+
+### Novidades
+
+**Marcações que agem**
+
+- **Transforme uma marcação em tarefa.** Selecione uma ou mais marcações, abra a guia {{ui:Tarefas}} e escolha {{ui:Transformar selecionada em tarefa}}. Uma tarefa tem um título, uma pessoa ou o seu assistente conectado para executá-la, um dia de vencimento opcional e um estado, e mantém seu lugar na folha e sua conversa. Veja [Transformar uma marcação em tarefa](topic:markups-that-act).
+- **Tarefas que se fecham sozinhas.** Uma tarefa pode acompanhar o desenho dentro da sua marcação. Abra uma revisão mais nova da folha e escolha {{ui:Verificar agora}}: se as linhas nessa área mudaram mais do que um fio de cabelo, a tarefa é marcada como Concluído, sua marcação passa a Concluída e uma nota na conversa diz o que mudou. Um novo carimbo de data, ou linhas que se moveram menos de 1.5 pontos, não contam. Em vez disso, uma tarefa pode acompanhar um elemento do modelo: seu assistente informa o elemento com `tasks_check`, e um relatório posterior que seja diferente, ou um elemento excluído, fecha a tarefa. Uma etapa de desfazer a reabre.
+- **Encontre o trabalho.** Filtre a lista {{ui:Tarefas}} por estado e por quem ela é destinada, incluindo {{ui:Atrasados}}; escolha {{ui:Atribuída a}} e depois {{ui:Assistente}} para ver o que aguarda o seu assistente. Uma tarefa além do dia de vencimento aparece como aviso no painel Problemas. {{ui:CSV}} exporta a lista. As tarefas são salvas no PDF com a marcação e circulam pelo Live como outras propriedades de marcação.
+
+**O que mudou, como lista simples**
+
+- **Listar as alterações.** Abra a guia {{ui:Comparar}}, depois {{ui:Comparar um conjunto inteiro}}, escolha o arquivo anterior e o posterior e escolha {{ui:Listar as alterações}}. A lista começa com uma contagem e depois cobre cada folha alterada, da maior mudança para a menor: onde está na folha, o tamanho (em unidades reais, além de polegadas no papel, em uma folha calibrada), se linhas foram acrescentadas ou removidas, quantas marcações estão ali e quais palavras apareceram ou desapareceram. {{ui:Copiar a lista}} coloca a lista na área de transferência, e {{ui:CSV}} grava uma linha por alteração. Veja [Listar o que mudou entre revisões](topic:what-changed-in-words).
+
+**Notas de voz e decisões**
+
+- **Notas de voz.** Na guia {{ui:Notas}}, escolha {{ui:Gravar uma nota de voz}}, depois {{ui:Parar gravação}}; as gravações param sozinhas após dois minutos. A nota fica fixada no centro da folha; você a arrasta para o lugar certo e digita um texto de legenda em {{ui:Propriedades}}, e {{ui:Reproduzir}} na lista a reproduz. A gravação é salva dentro do PDF.
+- **Decisões.** {{ui:Fixar uma decisão}} escreve uma ou duas frases na folha. Se ela substitui uma decisão anterior, escolha essa em {{ui:Ela substitui}}: a antiga permanece, marcada como Substituída, e aponta para a nova. Uma etapa de desfazer a retira. Veja [Fixar notas de voz e decisões em uma folha](topic:voice-notes-and-decisions).
+
+**Redline para revisão**
+
+- **Enviar e responder.** Na guia {{ui:Tarefas}}, abra {{ui:Redline para revisão}}, digite a revisão com a qual as marcações são comparadas e escolha {{ui:Exportar arquivo redline}}. Você recebe um arquivo `.redline.json` com um item por marcação aberta: folha, posição (como frações da folha, para que uma nova replotagem em outro tamanho ainda se alinhe), palavras, autor, conversa e sua tarefa. Quem desenha as alterações responde Aceito, Rejeitado ou Concluído em um arquivo `.redline-answers.json`; {{ui:Carregar arquivo de respostas…}} dá a cada marcação esse status e a nota do desenhista, como uma única etapa de desfazer. Veja [Enviar marcações ao desenhista como redline](topic:redline-to-revision).
+
+**Assistentes de IA**
+
+- **Mais ferramentas.** Um assistente que você conectou pelo CadCraft Studio pode listar tarefas (`tasks_list`), criar ou alterar uma (`task_set`), retirar a tarefa (`task_clear`), verificar uma em relação a uma revisão mais nova ou a um elemento (`tasks_check`) e ler a lista simples de alterações entre dois conjuntos de plantas abertos (`revisions_changes`). Ele só recebe as ferramentas que você marcou no interruptor Assistentes, e cada alteração é uma única etapa de desfazer. Veja [Usar o MarkupCraft com um assistente de IA](topic:use-with-ai-assistants).
+
+### Em todos os aplicativos
+
+- **Idiomas.** O CadCraft Studio agora tem 54 idiomas. Dez são novos: lituano, letão, bósnio, marata, télugo, albanês, africâner, filipino, suaíli e uzbeque. Todos os que não são inglês são rascunhos de máquina até que um falante nativo os leia.
+- **Dispositivos de entrada.** {{ui:Configurações}} › {{ui:Global}} › {{ui:Dispositivos de entrada}} define o que fazem um trackpad, os botões laterais do mouse, uma caneta, toques com o dedo, um mouse 3D, um controle de jogo ou um controlador MIDI, para todos os aplicativos ou só para este. Até você alterar algo, todo dispositivo funciona como antes. Veja [Usar trackpad, mouse 3D ou controle](common:input-devices).
+- **Linhas da barra de ferramentas.** {{ui:Configurações}} › {{ui:Geral}} › {{ui:Linhas da barra de ferramentas}} tem {{ui:Quebrar}} (o padrão), {{ui:2 linhas}} e {{ui:1 linha}}, para que o desenho ganhe mais espaço. Veja [Organizar os painéis](common:arrange-panels).
 - **Grade de propriedades.** Os campos de Estilo de uma marcação usam a grade compartilhada, com categorias recolhíveis e colunas de rótulo e valor.
 - **Painel Problemas.** Avisos do aplicativo, como uma tarefa atrasada, se reúnem em um só painel Problemas.
-- **Live e complementos.** As sessões Live são descritas em [Trabalhar junto em Live](common:work-together-live); a lista de complementos que acompanha a sua conta está em [Complementos e a lista da sua conta](common:addons-basics).
-- **Conecte a sua IA.** O CadCraft Studio é o centro do seu próprio assistente: conecte uma vez para todos os oito aplicativos. Os aplicativos não têm IA própria.
+- **Live e complementos.** As sessões Live são descritas em [Trabalhar em conjunto ao vivo](common:work-together-live); a lista de complementos que segue sua conta está em [Complementos e sua lista de conta](common:addons-basics).
+- **Conecte sua IA.** O CadCraft Studio é o hub do seu próprio assistente: conecte uma vez para os oito aplicativos. Os aplicativos não contêm IA própria.
 
-## Corrigido na 0.8.1
+### Corrigido na 0.8.1
 
-- **O Studio pode trocar de idioma enquanto está em execução.** Antes, o aplicativo de desktop e as edições empacotadas ficavam em inglês. Isso ainda não foi testado em todas as plataformas: avise-nos se o idioma não mudar.
-- Instalações do Studio 0.8 recebem a oferta da 0.8.1 por {{ui:Configurações}} › {{ui:Atualizações}}.
+- **O Studio pode trocar de idioma enquanto roda.** Antes, o aplicativo de desktop e as edições empacotadas continuavam em inglês. Isso ainda não foi testado em todas as plataformas: avise-nos se o idioma não mudar.
+- As instalações do Studio 0.8 recebem a oferta da 0.8.1 em {{ui:Configurações}} › {{ui:Atualizações}}.
 
-## Ainda não nesta versão
+### Ainda não nesta versão
 
-- **Sem assinatura de código.** Os instaladores do Windows e o .dmg do macOS ainda não têm assinatura. No Windows, se o SmartScreen impedir o instalador, escolha {{ui:Mais informações}} e depois {{ui:Executar mesmo assim}}. No Mac, clique com o botão direito no CadCraft Studio e escolha {{ui:Abrir}}. As versões para a loja estão em espera.
-- **Conectar a sua IA ainda está incompleto em alguns pontos.** A conexão com um clique dentro do Studio, o conector hospedado para assistentes de navegador e a sua própria chave de API dentro do Studio não estão garantidos nesta versão. O ciclo de tarefas foi testado, mas ainda não com um assistente real.
-- **As verificações de tarefas exigem o mesmo tamanho de página.** Uma folha plotada em outro tamanho não vai coincidir, então as tarefas dela não se fecham. As folhas são pareadas pelo número da folha ou, na falta dele, pela posição na página.
-- **As notas de voz são apenas gravações.** Não há transcrição, e um assistente vê a duração da nota, o autor e a legenda, não o som. A gravação foi testada com um microfone falso em um navegador sem interface; um microfone real em celular, tablet ou notebook ainda precisa ser verificado.
-- **Planilhas de cálculo e motivos em um PDF** ficam guardados em uma entrada privada do arquivo. Uma MarkupCraft mais antiga ignora essa entrada e a descarta na próxima vez que salvar o arquivo, então abra e salve esse tipo de arquivo com a 0.8 ou posterior.
-- **O lado do desenhista nos redlines.** O CadCraft ler o arquivo redline e respondê-lo ainda não está implementado.
-- **Outros idiomas.** A barra de aplicativo em tâmil ultrapassa em 528 px.
+- **Sem assinatura de código.** Os instaladores do Windows e o .dmg do macOS ainda não têm assinatura. No Windows, se o SmartScreen impedir o instalador, escolha {{ui:Mais informações}}, depois {{ui:Executar mesmo assim}}. No Mac, clique com o botão direito em CadCraft Studio e escolha {{ui:Abrir}}. As versões para loja estão em espera.
+- **Conectar sua IA ainda está incompleto em alguns pontos.** A conexão com um clique dentro do Studio, o conector hospedado para assistentes de navegador e sua própria chave de API dentro do Studio não estão prometidos para esta versão. O ciclo de tarefas foi testado, mas ainda não com um assistente real.
+- **As verificações de tarefas precisam do mesmo tamanho de página.** Uma folha replotada em outro tamanho não vai coincidir, então suas tarefas não se fecham. As folhas são pareadas pelo número da folha, senão pela posição na página.
+- **Notas de voz são apenas gravações.** Não há transcrição, e um assistente vê a duração, o autor e o texto de legenda da nota, não o som. A gravação foi testada com um microfone falso em um navegador sem interface; um microfone real em celular, tablet ou notebook ainda precisa ser verificado.
+- **Planilhas de cálculo e motivos em um PDF** ficam em uma entrada privada do arquivo. Um MarkupCraft mais antigo ignora essa entrada e a descarta na próxima vez que salvar o arquivo; por isso, abra e salve esse arquivo com a 0.8 ou posterior.
+- **O lado do desenhista nos redlines.** A leitura do arquivo redline pelo CadCraft e a resposta a ele ainda não foram implementadas.
+- **Outros idiomas.** A barra de aplicativo em tâmil transborda em 528 px.
 
-Todo o resto está em [O que ainda não foi implementado](topic:not-built-yet). Para a versão anterior, veja [Novidades na 0.7](topic:whats-new-0-7).
+Todo o resto está em [O que ainda não foi implementado](topic:not-built-yet). Para a versão anterior a esta, veja [Novidades na 0.7](topic:whats-new-0-7).

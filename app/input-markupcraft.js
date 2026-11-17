@@ -33,6 +33,7 @@ export const COMMANDS = [
   C('file.save-clean', 'file', 'bi-file-earmark-check', A('save-clean')),   // 0.9 NOTES.1
   C('pages.slip-sheet', 'pages', 'bi-layers', A('slip-sheet')),
   C('pages.batch-links', 'pages', 'bi-link-45deg', A('batch-links')),   // 0.9 SU.1085: batch links
+  C('pages.client-review', 'pages', 'bi-people', A('client-review')),   // 0.10 SU.1812: the client review link
   C('pages.rotate-cw', 'pages', 'bi-arrow-clockwise', A('page-rotate-cw')),
   C('pages.rotate-ccw', 'pages', 'bi-arrow-counterclockwise', A('page-rotate-ccw')),
   C('pages.move-up', 'pages', 'bi-arrow-up', A('page-move-up')),
@@ -165,7 +166,7 @@ const RIBBON_TABS = [
     ['r-compare', [lg('panel.compare'), sm('compare.start'), sm('compare.stop')]],
   ]),
   rtab('r-pages', [
-    ['r-output', [lg('file.print'), sm('file.save-flat'), sm('file.save-clean'), sm('pages.slip-sheet'), sm('pages.batch-links')]],
+    ['r-output', [lg('file.print'), sm('file.save-flat'), sm('file.save-clean'), sm('pages.slip-sheet'), sm('pages.batch-links'), sm('pages.client-review')]],
     ['r-arrange', [sm('pages.rotate-cw'), sm('pages.rotate-ccw'), sm('pages.move-up'), sm('pages.move-down')]],
     ['r-insert', [sm('pages.insert-pdf'), sm('pages.insert-blank'), sm('pages.delete'), sm('pages.extract'), sm('pages.ocr')]],
     ['r-handoff', [lg('view.takeoff')]],
@@ -190,7 +191,7 @@ const RIBBON_LABELS = {
   'markups.csv': 'list.csv', 'markups.xlsx': 'list.xlsx', 'markups.summary': L('summary'), 'markups.legend': 'legend.add', 'markups.bcf': L('bcf'), 'markups.bcf-import': 'bcfin.button',
   'punch.add': L('punch-add'), 'punch.csv': 'punch.csv', 'chest.save': L('chest-save'), 'chest.import': 'chest.import', 'chest.export': 'chest.export',
   'compare.start': 'compare.start', 'compare.stop': L('compare-stop'),
-  'file.print': 'tool.print', 'file.save-flat': L('flatten'), 'file.save-clean': L('clean'), 'view.notes-toggle': L('notes-toggle'), 'pages.slip-sheet': L('slip'), 'pages.batch-links': L('batch-links'), 'pages.rotate-cw': L('rotate-cw'), 'pages.rotate-ccw': L('rotate-ccw'),
+  'file.print': 'tool.print', 'file.save-flat': L('flatten'), 'file.save-clean': L('clean'), 'view.notes-toggle': L('notes-toggle'), 'pages.slip-sheet': L('slip'), 'pages.batch-links': L('batch-links'), 'pages.client-review': L('client-review'), 'pages.rotate-cw': L('rotate-cw'), 'pages.rotate-ccw': L('rotate-ccw'),
   'pages.move-up': L('move-up'), 'pages.move-down': L('move-down'), 'pages.insert-pdf': L('insert-pdf'), 'pages.insert-blank': L('insert-blank'),
   'pages.delete': L('delete'), 'pages.extract': L('extract'), 'pages.ocr': L('ocr'), 'view.takeoff': L('takeoff'),
   'view.prev': L('prev'), 'view.next': L('next'), 'view.zoom-in': 'nav.zoom_in', 'view.zoom-out': 'nav.zoom_out', 'view.fit-page': 'nav.fit_page', 'view.fit-width': 'nav.fit_width', 'view.page-mode': 'nav.page_mode',
@@ -209,7 +210,7 @@ export const STYLES = {
       m('file', ['file.new', 'file.open', '-', 'file.save', 'file.save-flat', 'file.save-clean', 'file.print', '-', 'file.close', '-', 'app.settings', 'app.palette', 'app.help']),
       m('edit', ['edit.undo', 'edit.redo', '-', 'edit.cut', 'edit.copy', 'edit.paste', 'edit.paste-in-place', 'edit.paste-picture', 'edit.insert-picture', 'edit.copy-area', 'edit.line-up', 'edit.duplicate', 'edit.delete', '-', 'edit.save-stamp', 'edit.clean-pen', '-', 'edit.select-all', 'edit.select-none', '-', 'edit.find']),
       m('view', ['view.prev', 'view.next', 'view.page-mode', 'view.notes-toggle', '-', 'view.zoom-in', 'view.zoom-out', 'view.fit-page', 'view.fit-width', '-', 'view.turn-ccw', 'view.turn-cw', '-', 'tool.pan']),
-      m('document', ['pages.rotate-cw', 'pages.rotate-ccw', 'pages.move-up', 'pages.move-down', '-', 'pages.insert-pdf', 'pages.insert-blank', 'pages.delete', 'pages.extract', '-', 'pages.ocr', 'pages.slip-sheet', 'pages.batch-links', 'view.takeoff']),
+      m('document', ['pages.rotate-cw', 'pages.rotate-ccw', 'pages.move-up', 'pages.move-down', '-', 'pages.insert-pdf', 'pages.insert-blank', 'pages.delete', 'pages.extract', '-', 'pages.ocr', 'pages.slip-sheet', 'pages.batch-links', 'pages.client-review', 'view.takeoff']),
       m('markup', ['tool.select', 'tool.content', 'tool.seltext', 'tool.fill', '-', 'tool.pen', 'tool.highlight', 'tool.line', 'tool.arrow', 'tool.arc', 'tool.rect', 'tool.ellipse', 'tool.polyline', 'tool.polygon', '-', 'tool.cloudrect', 'tool.cloud', '-', 'tool.callout', 'tool.text', 'tool.note', 'tool.stamp']),
       m('measure', ['tool.calibrate', '-', 'tool.measure', 'tool.angle', 'tool.area', 'tool.count']),
       m('review', REVIEW_MENU),

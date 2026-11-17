@@ -34,7 +34,7 @@ $__tabs = ['props', 'list', 'punch', 'tasks', 'notes', 'field', 'chest', 'compar
 $__menu = [['cut', 'Ctrl+X'], ['copy', 'Ctrl+C'], ['paste', 'Ctrl+V'], ['paste-in-place', 'Ctrl+Shift+V'], ['paste-picture', 'Ctrl+V'], ['insert-picture', ''], ['duplicate', 'Ctrl+D'],
            ['delete', 'Delete'], ['clean-pen', ''], null, ['save-stamp', ''], null, ['select-all', 'Ctrl+A'], ['select-none', 'Esc'], null, ['seltext', ''], ['copy-area', ''], ['line-up', '']];   // i18n-ignore (key names; 0.7.1 71.7 insert-picture, 71.9 save-stamp, 71.10 seltext; 0.8 D8.15 copy-area, line-up)
 /* File › Pages (0.4 K1): on the PDF the open sheet belongs to. */
-$__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['save-clean', 'file-earmark-check'], ['slip-sheet', 'layers'], ['batch-links', 'link-45deg'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],
+$__pagesMenu = [['print-pages', 'printer'], ['save-flat', 'file-earmark-lock'], ['save-clean', 'file-earmark-check'], ['slip-sheet', 'layers'], ['batch-links', 'link-45deg'], ['client-review', 'people'], null, ['page-rotate-cw', 'arrow-clockwise'], ['page-rotate-ccw', 'arrow-counterclockwise'],
                 ['page-move-up', 'arrow-up'], ['page-move-down', 'arrow-down'], null, ['page-insert-pdf', 'file-earmark-plus'],
                 ['page-insert-blank', 'file-earmark'], ['page-delete', 'trash'], null, ['page-extract', 'box-arrow-up-right'], null, ['ocr', 'text-paragraph']];   // i18n-ignore (keys)
 /* "Open in TakeoffCraft" on the sheet bar (0.4 item 1.5): only when TakeoffCraft is open in this area and the build it runs
@@ -157,6 +157,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <div class="mc-sec-head">
         <h2 class="mc-h"><?= Lang::e('sheets.h') ?></h2>
         <span class="mc-muted mc-count" data-sheet-count></span>
+        <button type="button" class="btn-line btn-sm-cc" data-sheets-by-size aria-pressed="false" title="<?= Lang::e('psize.by.title') ?>"><i class="bi bi-rulers" aria-hidden="true"></i> <?= Lang::e('psize.by') ?></button>
       </div>
       <label class="visually-hidden" for="mc-sheet-search"><?= Lang::e('sheets.search') ?></label>
       <input type="search" id="mc-sheet-search" class="mc-input" placeholder="<?= Lang::e('sheets.search') ?>" autocomplete="off" data-sheet-search>
@@ -185,6 +186,9 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <div class="mc-hint-btns">
         <button type="button" class="btn-plot btn-sm-cc mc-hint-btn" data-act="open"><i class="bi bi-folder2-open" aria-hidden="true"></i> <?= Lang::e('hint.button') ?></button>
         <button type="button" class="btn-line btn-sm-cc mc-hint-btn" data-act="new"><i class="bi bi-file-plus" aria-hidden="true"></i> <?= Lang::e('hint.button.new') ?></button>
+      </div>
+      <div class="mc-hint-btns mc-hint-btns-2">
+        <button type="button" class="btn-line btn-sm-cc mc-hint-btn" data-hint-sample><i class="bi bi-lightning-charge" aria-hidden="true"></i> <?= Lang::e('hint.trysample') ?></button>
       </div>
     </div>
     <div class="mc-drop" data-drop hidden><span><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('stage.drop') ?></span></div>
@@ -234,7 +238,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
         <span class="mc-links">
           <button type="button" class="mc-linkbtn" data-act="legend-add" title="<?= Lang::e('legend.add.title') ?>"><i class="bi bi-list-ul" aria-hidden="true"></i> <?= Lang::e('legend.add') ?></button>
           <button type="button" class="mc-linkbtn" data-act="list-columns" title="<?= Lang::e('col.button.title') ?>"><i class="bi bi-layout-three-columns" aria-hidden="true"></i> <?= Lang::e('col.button') ?></button>
-          <button type="button" class="mc-linkbtn" data-act="list-csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('list.csv') ?></button>
+          <button type="button" class="mc-linkbtn" data-act="list-csv" title="<?= Lang::e('list.csv') ?>"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('list.csv') ?></button>
           <button type="button" class="mc-linkbtn" data-act="list-xlsx" title="<?= Lang::e('list.xlsx.title') ?>"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> <?= Lang::e('list.xlsx') ?></button>
           <button type="button" class="mc-linkbtn" data-act="list-pdf" title="<?= Lang::e('list.pdf.title') ?>"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> <?= Lang::e('list.pdf') ?></button>
           <button type="button" class="mc-linkbtn" data-act="list-bcf-import" title="<?= Lang::e('bcfin.title') ?>"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('bcfin.button') ?></button>
@@ -266,7 +270,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
     <section class="mc-pane" role="tabpanel" id="mc-pane-punch" aria-labelledby="mc-tab-punch" data-pane="punch" hidden>
       <div class="mc-sec-head">
         <h2 class="mc-h"><?= Lang::e('tab.punch') ?></h2>
-        <button type="button" class="mc-linkbtn" data-act="punch-csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('punch.csv') ?></button>
+        <button type="button" class="mc-linkbtn" data-act="punch-csv" title="<?= Lang::e('punch.csv') ?>"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('punch.csv') ?></button>
       </div>
       <p class="mc-note"><?= Lang::e('punch.note') ?></p>
       <div class="mc-actions"><button type="button" class="btn-plot btn-sm-cc" data-act="punch-add"><i class="bi bi-list-check" aria-hidden="true"></i> <?= Lang::e('punch.add') ?></button></div>
@@ -277,7 +281,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <div class="mc-sec-head">
         <h2 class="mc-h"><?= Lang::e('tab.tasks') ?></h2>
         <span class="mc-links">
-          <button type="button" class="mc-linkbtn" data-act="tasks-csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('tasks.csv') ?></button>
+          <button type="button" class="mc-linkbtn" data-act="tasks-csv" title="<?= Lang::e('tasks.csv') ?>"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('tasks.csv') ?></button>
           <button type="button" class="mc-linkbtn" data-act="tasks-file-save" title="<?= Lang::e('tasks.file.save.title') ?>"><i class="bi bi-filetype-json" aria-hidden="true"></i> <?= Lang::e('tasks.file.save') ?></button>
           <button type="button" class="mc-linkbtn" data-act="tasks-file-open" title="<?= Lang::e('tasks.file.open.title') ?>"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('tasks.file.open') ?></button>
         </span>
@@ -308,6 +312,11 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
           <button type="button" class="btn-line btn-sm-cc" data-act="redline-answers"><i class="bi bi-box-arrow-in-down" aria-hidden="true"></i> <?= Lang::e('redline.answers') ?></button>
         </div>
         <p class="mc-muted" data-redline-status role="status"></p>
+      </details>
+      <?php /* 0.10 BK.48 issues and revisions (session bk-r3-stages-10): issues-markup.js fills it with the shared issue panel. */ ?>
+      <details class="mc-find" data-issues-details>
+        <summary class="mc-find-sum"><?= Lang::e('issues.title') ?></summary>
+        <div data-issues></div>
       </details>
       <details class="mc-find">
         <summary class="mc-find-sum"><?= Lang::e('permit.h') ?></summary>
@@ -363,7 +372,7 @@ $__k = static fn (string $s): string => str_replace([':', '-'], ['_', '_'], $s);
       <div class="mc-sec-head">
         <h2 class="mc-h"><?= Lang::e('tab.field') ?></h2>
         <span class="mc-links">
-          <button type="button" class="mc-linkbtn" data-field-act="csv"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('rec.csv') ?></button>
+          <button type="button" class="mc-linkbtn" data-field-act="csv" title="<?= Lang::e('rec.csv') ?>"><i class="bi bi-filetype-csv" aria-hidden="true"></i> <?= Lang::e('rec.csv') ?></button>
           <button type="button" class="mc-linkbtn" data-field-act="bcf" title="<?= Lang::e('rec.bcf.title') ?>"><i class="bi bi-box-arrow-up" aria-hidden="true"></i> <?= Lang::e('rec.bcf') ?></button>
           <button type="button" class="mc-linkbtn" data-field-act="merge" title="<?= Lang::e('rec.merge.title') ?>"><i class="bi bi-union" aria-hidden="true"></i> <?= Lang::e('rec.merge') ?></button>
         </span>

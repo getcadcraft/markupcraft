@@ -21,7 +21,7 @@ import { t } from './i18n.js';
 
 const CLOSED = new Set(['Accepted', 'Rejected', 'Completed']);   // i18n-ignore (stored values)
 
-export function summarySheets(markups, { sheetOf, measureOf = () => '', spaceOf = null, columns = [] } = {}) {
+export function summarySheets(markups, { sheetOf, measureOf = () => '', spaceOf = null, columns = [], pages = null } = {}) {
   const rows = markupRows(markups, sheetOf, measureOf, spaceOf, columns);
   const head = rows[0].map((h) => ({ v: h, s: 'head' }));
   const body = rows.slice(1).map((r) => r.map((v, i) => (typeof v === 'number' ? (i === 13 || i === 3 || i === 0 ? { v, s: 'int' } : v) : v === '' ? null : String(v))));
@@ -38,12 +38,18 @@ export function summarySheets(markups, { sheetOf, measureOf = () => '', spaceOf 
     if (CLOSED.has(m.status)) e.closed++; else e.open++;
     e.by[m.type] = (e.by[m.type] || 0) + 1;
   }
-  const h2 = [t('csv.sheet'), t('csv.file'), t('csv.page'), t('sum.col.markups'), t('sum.col.open'), t('sum.col.closed'), ...types.map((ty) => TYPES[ty]?.name || ty)].map((v) => ({ v, s: 'head' }));
-  const r2 = [...per.values()].map((e) => [e.s.title || '', e.s.file || '', e.s.page ?? null, { v: e.n, s: 'int' }, { v: e.open, s: 'int' }, { v: e.closed, s: 'int' }, ...types.map((ty) => (e.by[ty] ? { v: e.by[ty], s: 'int' } : null))]);
+  const h2 = [t('csv.sheet'), t('csv.file'), t('csv.page'), t('sum.col.markups'), t('sum.col.open'), t('sum.col.closed'), ...types.map((ty) => TYPES[ty]?.name || ty), t('sum.col.size')].map((v) => ({ v, s: 'head' }));
+  const r2 = [...per.values()].map((e) => [e.s.title || '', e.s.file || '', e.s.page ?? null, { v: e.n, s: 'int' }, { v: e.open, s: 'int' }, { v: e.closed, s: 'int' }, ...types.map((ty) => (e.by[ty] ? { v: e.by[ty], s: 'int' } : null)), e.s.size || '']);
   const n = r2.length;
   const tot = n ? [{ v: t('sum.total'), s: 'bold' }, null, null, ...[3, 4, 5].map((c) => ({ v: r2.reduce((a, r) => a + (r[c]?.v || 0), 0), f: 'SUM(' + col(c) + '2:' + col(c) + (n + 1) + ')', s: 'int' })),
     ...types.map((_, i) => { const c = 6 + i; return { v: r2.reduce((a, r) => a + (r[c]?.v || 0), 0), f: 'SUM(' + col(c) + '2:' + col(c) + (n + 1) + ')', s: 'int' }; })] : null;
-  sheets.push({ name: t('sum.sheet.by_sheet'), cols: [24, 24, 6, 9, 9, 9, ...types.map(() => 12)], rows: [h2, ...r2, ...(tot ? [tot] : [])], freeze: 1 });
+  sheets.push({ name: t('sum.sheet.by_sheet'), cols: [24, 24, 6, 9, 9, 9, ...types.map(() => 12), 11], rows: [h2, ...r2, ...(tot ? [tot] : [])], freeze: 1 });
+  // every page of the set with its size, the odd sizes marked (0.10 SU.1805)
+  if (pages?.length) {
+    const ph = [t('csv.sheet'), t('csv.file'), t('csv.page'), t('sum.col.size'), t('sum.col.width_mm'), t('sum.col.height_mm'), t('sum.col.size_mm'), t('sum.col.orient'), t('sum.col.odd')].map((v) => ({ v, s: 'head' }));
+    const pb = pages.map((p) => [p.title || '', p.file || '', p.page ?? null, p.size || '', p.wMm, p.hMm, p.mm || '', p.orient || '', p.odd ? t('sum.odd.yes') : '']);
+    sheets.push({ name: t('sum.sheet.sizes'), cols: [24, 24, 6, 10, 10, 10, 30, 11, 14], rows: [ph, ...pb], freeze: 1 });
+  }
   const pr = punchRows(markups, sheetOf);
   if (pr.length > 1) sheets.push({ name: t('sum.sheet.punch'), cols: [6, 22, 22, 6, 18, 40, 18, 12, 14, 14, 18, 12], rows: [pr[0].map((v) => ({ v, s: 'head' })), ...pr.slice(1).map((r) => r.map((v, i) => (i === 0 ? { v, s: 'int' } : v === '' ? null : v)))], freeze: 1 });
   return sheets;
@@ -60,7 +66,7 @@ function safe(font, text, count) {
   return out;
 }
 
-export async function summaryPdf(lib, markups, { sheetOf, measureOf = () => '', title = '', date = new Date() } = {}) {
+export async function summaryPdf(lib, markups, { sheetOf, measureOf = () => '', title = '', date = new Date(), pages: setPages = null } = {}) {
   const { PDFDocument, StandardFonts, rgb } = lib;
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -93,6 +99,14 @@ export async function summaryPdf(lib, markups, { sheetOf, measureOf = () => '', 
       const meta = t('sum.meta', { date: date.toISOString().slice(0, 10), n: markups.length });
       page.drawText(safe(font, meta, count), { x: M, y: y - 10, size: 9, font, color: soft });
       y -= 22;
+      // the set's page sizes, e.g. "Page sizes: A1 x 12, ANSI D x 2" (0.10 SU.1805)
+      if (setPages?.length) {
+        const by = new Map();
+        for (const p of setPages) by.set(p.size, (by.get(p.size) || 0) + 1);
+        const line = safe(font, t('sum.sizes', { list: [...by].sort((a, b) => b[1] - a[1]).map(([k, n]) => k + ' \u00d7 ' + n).join(', ') }), count);
+        page.drawText(line.length > 150 ? line.slice(0, 149) + '\u2026' : line, { x: M, y: y - 10, size: 9, font, color: soft });
+        y -= 16;
+      }
     }
     let x = M;
     for (const [h, w] of cols) { page.drawText(safe(bold, h, count), { x: x + 2, y: y - size, size, font: bold, color: ink }); x += w; }

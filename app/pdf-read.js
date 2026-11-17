@@ -4,7 +4,7 @@
  *
  * `openPdf(env, bytes, { fileId, name })` → a file record:
  *   { id, name, size, bytes (the original, untouched), doc (pdf.js document used for drawing),
- *     pages: [{ index, key, label, sheetNo, title, view, rotate, width, height, annotMode }], hasForm (fillable fields: form-ui.js),
+ *     pages: [{ index, key, label, sheetNo, title, view, rotate, width, height, userUnit, annotMode }], hasForm (fillable fields: form-ui.js),
  *     markups (editable, from annotations), calibrations {sheetKey: cal}, removeRefs (ids to drop on save), layers (K3),
  *     notes: [...] }
  * env = { pdfjs, pdfLib, docOptions } — the libraries are passed in (the page uses the vendored builds,
@@ -330,7 +330,7 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
   try { const raw = custom instanceof Map ? custom.get(PRIVATE_RECORDS_KEY) : custom?.[PRIVATE_RECORDS_KEY]; records = unpackRecords(raw ? String(raw) : '', doc.numPages); } catch { records = []; }
   // the shell's calc sheets and design reasons (0.8 round 3): untrusted JSON, the modules clean it
   let shell = null;
-  try { const raw = custom instanceof Map ? custom.get(PRIVATE_SHELL_KEY) : custom?.[PRIVATE_SHELL_KEY]; const v = raw ? JSON.parse(String(raw)) : null; if (v && typeof v === 'object' && !Array.isArray(v)) shell = { calcs: v.calcs ?? null, reasons: v.reasons ?? null, docinfo: v.docinfo ?? null }; } catch { shell = null; }
+  try { const raw = custom instanceof Map ? custom.get(PRIVATE_SHELL_KEY) : custom?.[PRIVATE_SHELL_KEY]; const v = raw ? JSON.parse(String(raw)) : null; if (v && typeof v === 'object' && !Array.isArray(v)) shell = { calcs: v.calcs ?? null, reasons: v.reasons ?? null, docinfo: v.docinfo ?? null, issues: v.issues && typeof v.issues === 'object' ? v.issues : null }; } catch { shell = null; }
   // File › New (blank.js): the paper and grid of a blank set, so "Add a blank page" matches it
   const blank = blankInfo(custom instanceof Map ? custom.get(BLANK_KEY) : custom?.[BLANK_KEY]);
   const pages = [];
@@ -345,7 +345,7 @@ export async function openPdf(env, bytes, { fileId, name, onProgress, readText =
     const info = sheetInfo(labels?.[i], name, i, tb);
     const [x0, y0, x1, y1] = page.view;
     const rotate = ((page.rotate % 360) + 360) % 360;
-    pages.push({ index: i, key: fileId + ':' + i, ...info, tb, view: [x0, y0, x1, y1], rotate, width: x1 - x0, height: y1 - y0, annotMode: 'enable' });
+    pages.push({ index: i, key: fileId + ':' + i, ...info, tb, view: [x0, y0, x1, y1], rotate, width: x1 - x0, height: y1 - y0, userUnit: page.userUnit || 1, annotMode: 'enable' });
     // 'any': hidden review-state replies are needed too (hidden annotations never become markups)
     raw.push(await page.getAnnotations({ intent: 'any' }).catch(() => []));
     onProgress?.(i + 1, doc.numPages);
