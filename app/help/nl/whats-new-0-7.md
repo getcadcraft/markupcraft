@@ -2,7 +2,7 @@
 title: Wat is er nieuw in 0.7 (eerder)
 summary: RFI's, submittals en dagrapporten in een nieuw tabblad Veld, met vervaldatums, te late items in rood, CSV en BCF, offline werken en samenvoegen; assistenten die statussen instellen, reageren en de lijst exporteren; eenhedenlijsten die de Instellingen volgen; panelen die zich opruimen en dialoogvensters die verschuiven.
 keywords: wat is er nieuw 0.7, eerdere uitgave, releasenotities, changelog, wijzigingen, 0.7, versie, nieuwe functies, veld, veldrecords, rfi, request for information, submittal, dagrapport, bouwdagboek, te laat, vervaldatum, aan mij toegewezen, pin, samenvoegen, offline, tablet, bcf, csv, assistent, mcp, markupstatus, reactie, exporteren, eenheden, eenhedenlijsten, ster, kalibreren, compact, panelen, dialoogvensters, portugees
-from: f8578677
+from: ca5ba1f0
 ---
 
 Dit is wat er is veranderd in MarkupCraft 0.7, vergeleken met 0.6. Het grote nieuwe is veldrecords: RFI's, submittals en dagrapporten die in de pdf naast uw markups worden bewaard.

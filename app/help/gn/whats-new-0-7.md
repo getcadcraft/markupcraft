@@ -2,7 +2,7 @@
 title: Mba'épa oñemoambue 0.7 (anterior)
 summary: RFI, submittals ha registro diario pyahu Campo pestaña-pe, fecha límite, vencido en rojo, CSV ha BCF, trabajo sin conexión ha Combinar; asistentes oñemoĩva estado, ohai respuesta ha omoĩ lista; listas de unidades oñeñeʼẽva Configuración-gui; paneles oñeñeʼẽva ha diálogos oñemoambuéva.
 keywords: novedades 0.7, versión anterior, notas de versión, registro de cambios, cambios, 0.7, versión, nuevas funciones, campo, registros de campo, rfi, solicitud de información, submittal, registro diario, bitácora, vencido, fecha límite, asignado a mí, chincheta, combinar, sin conexión, tableta, bcf, csv, asistente, mcp, estado de anotación, respuesta, exportar, unidades, listas de unidades, estrella, calibrar, compacta, paneles, diálogos, portugués
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ko'ã mba'e oñemoambue MarkupCraft 0.7-pe, 0.6 rehe. Tuicha mba'e pyahu ha'e registros de campo: RFI, submittals ha registro diario oñemboguara PDF-pe anotaciones ndive.

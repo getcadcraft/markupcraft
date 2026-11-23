@@ -2,7 +2,7 @@
 title: 0.7-də yeniliklər (əvvəlki)
 summary: Yeni Sahə nişanında RFI-lər, təqdimatlar və gündəlik jurnallar, son tarixlər, müddəti keçənlər qırmızı rənglə, CSV və BCF, oflayn iş və Birləşdir; statusları quran, cavab verən və siyahını ixrac edən köməkçilər; Parametrləri izləyən ölçü siyahıları; yığılıb gizlənən panellər və yerini dəyişən dialoqlar.
 keywords: 0.7 yenilikləri, əvvəlki buraxılış, buraxılış qeydləri, dəyişikliklər jurnalı, dəyişikliklər, 0.7, versiya, yeni xüsusiyyətlər, sahə, sahə qeydləri, rfi, məlumat sorğusu, təqdimat, gündəlik jurnal, sahə gündəliyi, müddəti keçmiş, son tarix, mənə təyin edilib, sancaq, birləşdir, oflayn, planşet, bcf, csv, köməkçi, mcp, markup statusu, cavab, ixrac, ölçü vahidləri, ölçü siyahıları, ulduz, kalibrləmə, yığcam, panellər, dialoqlar, portuqal dili
-from: f8578677
+from: ca5ba1f0
 ---
 
 Bu, 0.6 ilə müqayisədə MarkupCraft 0.7-də nələrin dəyişdiyidir. Əsas yenilik sahə qeydləridir: markup-larınızın yanında PDF-in içində saxlanılan RFI-lər, təqdimatlar və gündəlik jurnallar.

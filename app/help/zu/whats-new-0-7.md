@@ -2,7 +2,7 @@
 title: Okusha ku-0.7 (kwangaphambili)
 summary: Ama-RFI, izinikezo nezincwadi zansuku zonke ethebhini elisha le-Inkundla, ngezinsuku zokuphela, okuphuzile kubomvu, i-CSV ne-BCF, umsebenzi ongaxhunyiwe nokuHlanganisa; abasizi abasetha izimo, abaphendula nabakhipha uhlu; uhlu lwezinyunithi olulandela Izilungiselelo; amaphaneli angalungiswa afihleke namadayalogi anyakazayo.
 keywords: okusha 0.7, inguqulo edlule, amanothi okukhishwa, izinguquko, uhlu lwezinguquko, 0.7, inguqulo, izici ezintsha, inkundla, amarekhodi enkundla, rfi, isicelo solwazi, isinikezo, incwadi yansuku zonke, idayari yesayithi, ephuzile, usuku lokuphela, ekunikezwe mina, ipini, hlanganisa, ongaxhunyiwe, ithebulethi, bcf, csv, umsizi, mcp, isimo sokumaka, impendulo, khipha, izinyunithi, uhlu lwezinyunithi, inkanyezi, linganisa, ukuhlanganisa, amaphaneli, idayalogi, isiputukezi
-from: f8578677
+from: ca5ba1f0
 ---
 
 Lokhu kushintshe ku-MarkupCraft 0.7, uma kuqhathaniswa no-0.6. Okukhulu okusha amarekhodi enkundla: ama-RFI, izinikezo nezincwadi zansuku zonke agcinwa ngaphakathi kwe-PDF ecaleni kokumakiwe kwakho.

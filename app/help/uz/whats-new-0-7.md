@@ -2,7 +2,7 @@
 title: 0.7 da nimalar yangi (oldingi)
 summary: Maydon yorligʻidagi yangi jadvalda RFI lar, taqdim etish hujjatlari va kunlik jurnallar, muddatlar, muddati oʻtganlari qizil rangda, CSV va BCF, oflayn ish va birlashtirish; holatlarni oʻrnatadigan, javob beradigan va roʻyxatni eksport qiladigan yordamchilar; Sozlamalarga amal qiladigan birlik roʻyxatlari; yigʻiladigan panellar va siljiydigan dialoglar.
 keywords: 0.7 da yangi, oldingi reliz, reliz eslatmalari, oʻzgarishlar jurnali, oʻzgarishlar, 0.7, versiya, yangi imkoniyatlar, maydon, maydon yozuvlari, RFI, soʻrov, taqdim etish hujjati, kunlik jurnal, kunlik kundalik, kechikkan, muddat, menga biriktirilgan, belgi, birlashtirish, oflayn, planshet, bcf, csv, yordamchi, mcp, belgi holati, javob, eksport, birliklar, birlik roʻyxatlari, yulduzcha, masshtablash, ixcham, panellar, dialoglar, portugal
-from: f8578677
+from: ca5ba1f0
 ---
 
 Bu MarkupCraft 0.7 da 0.6 bilan solishtirganda nimalar oʻzgarganini koʻrsatadi. Asosiy yangilik maydon yozuvlari: RFI lar, taqdim etish hujjatlari va kunlik jurnallar belgilaringiz yonida PDF ichida saqlanadi.

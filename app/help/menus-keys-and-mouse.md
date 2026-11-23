@@ -47,7 +47,7 @@ These settings stay in this browser. {{ui:Use this style in every app}} under th
 :::
 
 :::tip
-The workspace layouts in {{ui:Settings}} › {{ui:Global}} › {{ui:Layout}} ({{ui:Ribbon and project browser}}, {{ui:Toolbox and info box}}) build their ribbon from the {{ui:Ribbon}} style's tabs and their toolbox from MarkupCraft's toolbar, so every tool runs the same way in them.
+The interface styles in {{ui:Settings}} › {{ui:Global}} › {{ui:Interface style}} ({{ui:Ribbon and project browser}}, {{ui:Toolbox and info box}}) build their ribbon from the {{ui:Ribbon}} style's tabs and their toolbox from MarkupCraft's toolbar, so every tool runs the same way in them.
 :::
 
 Related: [Keyboard and mouse](topic:keyboard) · [MarkupCraft settings](topic:settings) · [Coming from other markup software](topic:coming-from)

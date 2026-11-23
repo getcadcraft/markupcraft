@@ -2,7 +2,7 @@
 title: Noutăți în 0.7 (anterior)
 summary: RFI-uri, documente de aprobare și jurnale zilnice într-o filă nouă Teren, cu termene, întârzieri în roșu, CSV și BCF, lucru offline și Îmbinare; asistenți care setează stări, răspund și exportă lista; liste de unități care urmează Setările; panouri care se ascund și casete de dialog care se mută.
 keywords: noutăți 0.7, versiune anterioară, note de lansare, jurnal de modificări, modificări, 0.7, versiune, funcții noi, teren, înregistrări de teren, rfi, cerere de informații, document de aprobare, jurnal zilnic, jurnal de șantier, întârziat, termen, atribuite mie, pin, îmbinare, offline, tabletă, bcf, csv, asistent, mcp, stare adnotare, răspuns, export, unități, liste de unități, stea, calibrare, compact, panouri, casete de dialog, portugheză
-from: f8578677
+from: ca5ba1f0
 ---
 
 Acestea sunt modificările din MarkupCraft 0.7, comparativ cu 0.6. Noutatea mare sunt înregistrările de teren: RFI-uri, documente de aprobare și jurnale zilnice păstrate în PDF, lângă adnotările tale.

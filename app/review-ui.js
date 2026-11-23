@@ -4,15 +4,27 @@
  * client's comments in as notes, turn a link off) and a new link (label, stage, how long, which sheets, a note). Makes nothing until a button is pressed;
  * nothing is mailed: the person copies the address and hands it over. Words: review.* in the language file.
  *
- * Where it works: Studio and the desktop apps (cadcraftDesktop.cloud.request carries the sign-in). A browser tab has no token for review links yet (it needs a
- * connect page like bids-connect); it says so and sends nothing. The site side is .env REVIEW_LINKS (staff and lab testers can make links while it is off).
+ * Where it works: Studio and the desktop apps (cadcraftDesktop.cloud.request carries the sign-in). A browser tab connects through /account/review-connect
+ * (site-inbox-11, .env REVIEW_CONNECT, off = that page is a 404): it opens in a new tab and posts {type: 'cadcraft-review-token', token, expires_at} back to this one
+ * (same origin only), kept in sessionStorage `cc-review-token`. Without a token it says so and sends nothing. The site side is .env REVIEW_LINKS (staff and lab testers can make links while it is off).
  */
 import { ReviewClient, ReviewError, buildPack, planSheets, commentNotes, sha256Hex, desktopTransport, browserTransport, STAGES, CONNECT_AGAIN } from './review-link.js';
 import { makeMarkup } from './model.js';
 
 export function mountClientReview({ el, t, dialog, status, busy, files, curSheet, bake, pdfLib, extractPages, setName, store, getAuthor, win = globalThis.window, transport = null }) {
   const desktop = () => (win?.cadcraftDesktop?.cloud && typeof win.cadcraftDesktop.cloud.request === 'function' ? win.cadcraftDesktop.cloud : null);
-  const readToken = () => { try { const j = JSON.parse(win?.sessionStorage?.getItem('cc-review-token') || 'null'); return j && /^ccu_[A-Za-z0-9]{40}$/.test(j.token || '') && Date.parse(j.exp) > Date.now() ? j.token : null; } catch { return null; } };
+  const readToken = () => { try { const j = JSON.parse(win?.sessionStorage?.getItem(KEY) || 'null'); return j && /^ccu_[A-Za-z0-9]{40}$/.test(j.token || '') && Date.parse(j.exp) > Date.now() ? j.token : null; } catch { return null; } };
+  const KEY = 'cc-review-token', CONNECT_PATH = '/account/review-connect';
+  // the connect tab posts {type, token, expires_at} to this one (same origin only)
+  if (win?.addEventListener) {
+    win.addEventListener('message', (ev) => {
+      const d = ev.data;
+      if (!win.location || ev.origin !== win.location.origin || !d || d.type !== 'cadcraft-review-token') return;
+      if (typeof d.token !== 'string' || !/^ccu_[A-Za-z0-9]{40}$/.test(d.token) || !(Date.parse(d.expires_at) > Date.now())) return;
+      try { win.sessionStorage.setItem(KEY, JSON.stringify({ token: d.token, exp: d.expires_at })); } catch { /* the tab keeps nothing */ }
+      status(t('review.connected'));
+    });
+  }
   const client = () => {
     const tr = transport || (desktop() ? desktopTransport(desktop()) : readToken() ? browserTransport({ token: readToken() }) : null);
     return tr ? new ReviewClient(tr) : null;
@@ -65,7 +77,11 @@ export function mountClientReview({ el, t, dialog, status, busy, files, curSheet
     const s = curSheet();
     if (!s) { status(t('need.pdf')); return; }
     const c = client();
-    if (!c) { await dialog({ title: t('review.title'), text: t('review.nologin'), buttons: [['cancel', t('dlg.ok'), 'btn-plot']] }); return; }
+    if (!c) {
+      const r = await dialog({ title: t('review.title'), text: t('review.nologin'), buttons: [['connect', t('review.connect'), 'btn-plot'], ['cancel', t('dlg.ok')]] });
+      if (r.key === 'connect' && win?.open) { win.open(CONNECT_PATH, '_blank'); status(t('review.connect.opened')); }
+      return;
+    }
     let links = [];
     try { links = (await c.links()).filter((l) => !l.revoked_at && l.expires_at > Date.now()); } catch (e) { await dialog({ title: t('review.title'), text: sayWhy(e), buttons: [['cancel', t('dlg.ok'), 'btn-plot']] }); return; }
     const label = el('input', { type: 'text', className: 'mc-input', id: 'mc-rv-label', maxlength: '120', value: setName() });

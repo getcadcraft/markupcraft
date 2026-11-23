@@ -349,118 +349,9 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
       d.Contents = txt(contents || '');
       const ic = s.fill && s.fill !== 'paper' ? rgb(s.fill) : null;
       const half = (s.width || 0) / 2;
-      switch (m.type) {
-        case 'rect': case 'cloudrect': case 'ellipse': {
-          d.Subtype = m.type === 'ellipse' ? 'Circle' : 'Square';
-          const r = m.rect;
-          d.RD = [r[0] - half - rect[0], rect[3] - (r[3] + half), rect[2] - (r[2] + half), r[1] - half - rect[1]].map((v) => Math.max(0, v));
-          if (ic) d.IC = ic;
-          if (m.type === 'cloudrect') d.BE = { S: 'C', I: 1 };
-          break;
-        }
-        case 'polygon': case 'cloud':
-          d.Subtype = 'Polygon';
-          d.Vertices = m.pts.flat();
-          if (ic) d.IC = ic;
-          if (m.type === 'cloud') d.BE = { S: 'C', I: 1 };
-          break;
-        case 'area': {
-          d.Subtype = 'Polygon';
-          d.Vertices = m.pts.flat();
-          if (ic) d.IC = ic;
-          d.IT = 'PolygonDimension';
-          const spec = measureSpec(pg.cal);
-          if (spec) d.Measure = measureObj(spec);
-          break;
-        }
-        case 'count': {
-          // one annotation per group: each mark a small ring in the ink list (the appearance draws the numbers)
-          d.Subtype = 'Ink';
-          d.IT = 'CountMarks';
-          const r = Math.max(3, s.fontSize * 0.8);
-          d.InkList = m.pts.map(([x, y]) => { const ring = []; for (let k = 0; k <= 12; k++) { const a = (k / 12) * Math.PI * 2; ring.push(x + Math.cos(a) * r, y + Math.sin(a) * r); } return ring; });
-          break;
-        }
-        case 'polyline':
-          d.Subtype = 'PolyLine';
-          d.Vertices = m.pts.flat();
-          break;
-        case 'arc': {
-          // no PDF arc annotation: a PolyLine along the arc (our private data keeps the three points)
-          d.Subtype = 'PolyLine';
-          const arc = m.pts.length === 3 ? arcThrough(m.pts[0], m.pts[1], m.pts[2]) : null;
-          const n = arc ? Math.max(8, Math.ceil(Math.abs(arc.sweep) / (Math.PI / 32))) : 0;
-          d.Vertices = arc ? Array.from({ length: n + 1 }, (_, k) => { const a = arc.a0 + (arc.sweep * k) / n; return [arc.c[0] + arc.r * Math.cos(a), arc.c[1] + arc.r * Math.sin(a)]; }).flat() : [m.pts[0], m.pts.at(-1)].flat();
-          break;
-        }
-        case 'angle':
-          d.Subtype = 'PolyLine';
-          d.Vertices = m.pts.flat();
-          break;
-        case 'line': case 'arrow': case 'measure':
-          d.Subtype = 'Line';
-          d.L = [...m.pts[0], ...m.pts[1]];
-          d.LE = m.type === 'measure' ? [N('Butt'), N('Butt')] : [N('None'), N(m.type === 'arrow' ? 'ClosedArrow' : 'None')];
-          if (m.type === 'arrow') d.IC = color;
-          if (m.type === 'measure') {
-            d.IT = 'LineDimension';
-            d.Cap = true;
-            const spec = measureSpec(pg.cal);
-            if (spec) d.Measure = measureObj(spec);
-          }
-          break;
-        case 'pen': case 'highlight':
-          d.Subtype = 'Ink';
-          d.InkList = [m.pts.flat()];
-          if (m.type === 'highlight') d.IT = 'InkHighlight';
-          break;
-        case 'text': case 'callout': {
-          d.Subtype = 'FreeText';
-          // the text's colour (a text box from another program may have its own, apart from the border: 71.4)
-          const tc = s.textColor || s.color;
-          d.DA = PDFString.of('/Helv ' + n(s.fontSize) + ' Tf ' + rgb(tc).map(n).join(' ') + ' rg');
-          d.DS = PDFString.of('font: ' + (s.bold ? 'bold ' : '') + 'Helvetica ' + n(s.fontSize) + 'pt; color: ' + tc);   // i18n-ignore (CSS)
-          d.Q = 0;
-          const r = m.rect;
-          d.RD = [r[0] - rect[0], rect[3] - r[3], rect[2] - r[2], r[1] - rect[1]].map((v) => Math.max(0, v));
-          if (m.type === 'callout' && m.pts?.length) {
-            const lead = list.find((i) => i.k === 'path' && i.stroke && !i.fill);
-            const cl = lead ? lead.d.filter((c) => c[0] === 'M' || c[0] === 'L').map((c) => [c[1], c[2]]) : [];
-            d.IT = 'FreeTextCallout';
-            d.CL = [m.pts[0], ...(cl.length === 3 ? [cl[1], cl[2]] : cl.slice(1))].flat();
-            d.LE = N('ClosedArrow');
-          }
-          if (ic) d.IC = ic;
-          break;
-        }
-        case 'note':
-          d.Subtype = 'Text';
-          d.Name = 'Comment';
-          d.Open = false;
-          d.Contents = txt([m.text, m.comment].filter(Boolean).join('\n'));
-          break;
-        case 'legend':
-          d.Subtype = 'Square';
-          d.Contents = txt([m.label || t('legend.title'), ...(legendRows || []).map((r) => r.label + ': ' + r.n)].join('\n'));
-          break;
-        case 'space':
-          d.Subtype = 'Polygon';
-          d.Vertices = m.pts.flat();
-          d.BS = { Type: 'Border', W: Math.max(0, s.width || 0), S: 'D', D: [6, 4] };
-          d.Contents = txt([m.label, m.comment].filter(Boolean).join('\n'));
-          break;
-        case 'image':
-          d.Subtype = 'Stamp';
-          d.Name = camel(m.label || 'Image');   // i18n-ignore (a PDF name)
-          d.Contents = txt([m.label, m.comment].filter(Boolean).join('\n'));
-          break;
-        case 'stamp':
-          d.Subtype = 'Stamp';
-          d.Name = STANDARD_STAMP_NAMES[String(m.label).toLowerCase()] || camel(m.label);
-          break;
-        default:
-          continue;
-      }
+      const kind = ANNOT_KIND[m.type];
+      if (!kind) continue;
+      kind(d, m, { s, rect, half, ic, color, list, legendRows, cal: pg.cal, N, txt, PDFString, measureObj });
       if (d.Subtype !== 'Line' && d.Subtype !== 'FreeText' && d.LE) delete d.LE;
       if (flat(m)) {
         // drawn into the page: its appearance (BBox in user space, identity matrix) painted where the annotation would be
@@ -556,6 +447,131 @@ export async function writeMarkedUp(lib, bytes, { pages = [], removeRefs = new S
   const out = await doc.save({ useObjectStreams: false, addDefaultPage: false, updateFieldAppearances: false });
   return { bytes: out, report };
 }
+
+/*
+ * PERF.78 (perf-finish-11 r2): the PDF annotation each markup kind is written as, one writer per kind (this was a 21-case switch
+ * inside writeMarkedUp). A writer fills the annotation dictionary `d` for markup `m`; `k` carries what the switch read from
+ * writeMarkedUp: { s: m.style, rect, half, ic, color, list, legendRows, cal, N, txt, PDFString, measureObj }. A kind with no writer
+ * is not written (the switch's `default: continue`).
+ */
+function boxAnnot(d, m, k) {
+  d.Subtype = m.type === 'ellipse' ? 'Circle' : 'Square';
+  const r = m.rect;
+  d.RD = [r[0] - k.half - k.rect[0], k.rect[3] - (r[3] + k.half), k.rect[2] - (r[2] + k.half), r[1] - k.half - k.rect[1]].map((v) => Math.max(0, v));
+  if (k.ic) d.IC = k.ic;
+  if (m.type === 'cloudrect') d.BE = { S: 'C', I: 1 };
+}
+function polygonAnnot(d, m, k) {
+  d.Subtype = 'Polygon';
+  d.Vertices = m.pts.flat();
+  if (k.ic) d.IC = k.ic;
+  if (m.type === 'cloud') d.BE = { S: 'C', I: 1 };
+}
+function areaAnnot(d, m, k) {
+  d.Subtype = 'Polygon';
+  d.Vertices = m.pts.flat();
+  if (k.ic) d.IC = k.ic;
+  d.IT = 'PolygonDimension';
+  const spec = measureSpec(k.cal);
+  if (spec) d.Measure = k.measureObj(spec);
+}
+function countAnnot(d, m, k) {
+  // one annotation per group: each mark a small ring in the ink list (the appearance draws the numbers)
+  d.Subtype = 'Ink';
+  d.IT = 'CountMarks';
+  const r = Math.max(3, k.s.fontSize * 0.8);
+  d.InkList = m.pts.map(([x, y]) => { const ring = []; for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; ring.push(x + Math.cos(a) * r, y + Math.sin(a) * r); } return ring; });
+}
+function polylineAnnot(d, m) {
+  d.Subtype = 'PolyLine';
+  d.Vertices = m.pts.flat();
+}
+function arcAnnot(d, m) {
+  // no PDF arc annotation: a PolyLine along the arc (our private data keeps the three points)
+  d.Subtype = 'PolyLine';
+  const arc = m.pts.length === 3 ? arcThrough(m.pts[0], m.pts[1], m.pts[2]) : null;
+  const n = arc ? Math.max(8, Math.ceil(Math.abs(arc.sweep) / (Math.PI / 32))) : 0;
+  d.Vertices = arc ? Array.from({ length: n + 1 }, (_, k) => { const a = arc.a0 + (arc.sweep * k) / n; return [arc.c[0] + arc.r * Math.cos(a), arc.c[1] + arc.r * Math.sin(a)]; }).flat() : [m.pts[0], m.pts.at(-1)].flat();
+}
+function lineAnnot(d, m, k) {
+  const N = k.N;
+  d.Subtype = 'Line';
+  d.L = [...m.pts[0], ...m.pts[1]];
+  d.LE = m.type === 'measure' ? [N('Butt'), N('Butt')] : [N('None'), N(m.type === 'arrow' ? 'ClosedArrow' : 'None')];
+  if (m.type === 'arrow') d.IC = k.color;
+  if (m.type === 'measure') {
+    d.IT = 'LineDimension';
+    d.Cap = true;
+    const spec = measureSpec(k.cal);
+    if (spec) d.Measure = k.measureObj(spec);
+  }
+}
+function inkAnnot(d, m) {
+  d.Subtype = 'Ink';
+  d.InkList = [m.pts.flat()];
+  if (m.type === 'highlight') d.IT = 'InkHighlight';
+}
+function freeTextAnnot(d, m, k) {
+  const { s, rect, PDFString } = k;
+  d.Subtype = 'FreeText';
+  // the text's colour (a text box from another program may have its own, apart from the border: 71.4)
+  const tc = s.textColor || s.color;
+  d.DA = PDFString.of('/Helv ' + n(s.fontSize) + ' Tf ' + rgb(tc).map(n).join(' ') + ' rg');
+  d.DS = PDFString.of('font: ' + (s.bold ? 'bold ' : '') + 'Helvetica ' + n(s.fontSize) + 'pt; color: ' + tc);   // i18n-ignore (CSS)
+  d.Q = 0;
+  const r = m.rect;
+  d.RD = [r[0] - rect[0], rect[3] - r[3], rect[2] - r[2], r[1] - rect[1]].map((v) => Math.max(0, v));
+  if (m.type === 'callout' && m.pts?.length) {
+    const lead = k.list.find((i) => i.k === 'path' && i.stroke && !i.fill);
+    const cl = lead ? lead.d.filter((c) => c[0] === 'M' || c[0] === 'L').map((c) => [c[1], c[2]]) : [];
+    d.IT = 'FreeTextCallout';
+    d.CL = [m.pts[0], ...(cl.length === 3 ? [cl[1], cl[2]] : cl.slice(1))].flat();
+    d.LE = k.N('ClosedArrow');
+  }
+  if (k.ic) d.IC = k.ic;
+}
+function noteAnnot(d, m, k) {
+  d.Subtype = 'Text';
+  d.Name = 'Comment';
+  d.Open = false;
+  d.Contents = k.txt([m.text, m.comment].filter(Boolean).join('\n'));
+}
+function legendAnnot(d, m, k) {
+  d.Subtype = 'Square';
+  d.Contents = k.txt([m.label || t('legend.title'), ...(k.legendRows || []).map((r) => r.label + ': ' + r.n)].join('\n'));
+}
+function spaceAnnot(d, m, k) {
+  d.Subtype = 'Polygon';
+  d.Vertices = m.pts.flat();
+  d.BS = { Type: 'Border', W: Math.max(0, k.s.width || 0), S: 'D', D: [6, 4] };
+  d.Contents = k.txt([m.label, m.comment].filter(Boolean).join('\n'));
+}
+function imageAnnot(d, m, k) {
+  d.Subtype = 'Stamp';
+  d.Name = camel(m.label || 'Image');   // i18n-ignore (a PDF name)
+  d.Contents = k.txt([m.label, m.comment].filter(Boolean).join('\n'));
+}
+function stampAnnot(d, m) {
+  d.Subtype = 'Stamp';
+  d.Name = STANDARD_STAMP_NAMES[String(m.label).toLowerCase()] || camel(m.label);
+}
+const ANNOT_KIND = {
+  __proto__: null,
+  rect: boxAnnot, cloudrect: boxAnnot, ellipse: boxAnnot,
+  polygon: polygonAnnot, cloud: polygonAnnot,
+  area: areaAnnot,
+  count: countAnnot,
+  polyline: polylineAnnot, angle: polylineAnnot,
+  arc: arcAnnot,
+  line: lineAnnot, arrow: lineAnnot, measure: lineAnnot,
+  pen: inkAnnot, highlight: inkAnnot,
+  text: freeTextAnnot, callout: freeTextAnnot,
+  note: noteAnnot,
+  legend: legendAnnot,
+  space: spaceAnnot,
+  image: imageAnnot,
+  stamp: stampAnnot,
+};
 
 function boundsOfList(list, m) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;

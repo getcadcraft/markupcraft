@@ -2,7 +2,7 @@
 title: 0.7 میں کیا نیا ہے (پہلے)
 summary: نئے Field ٹیب میں RFIs، submittals اور daily logs، due dates، سرخ رنگ میں overdue، CSV اور BCF، آف لائن کام اور Merge؛ اسسٹنٹس جو حالتیں متعین کرتے، جواب دیتے اور فہرست برآمد کرتے ہیں؛ یونٹ فہرستیں جو Settings کے ساتھ چلتی ہیں؛ پینلز جو سمٹ جاتے ہیں اور ڈائیلاگز جو منتقل ہوتے ہیں۔
 keywords: whats new 0.7, پچھلی ریلیز, ریلیز نوٹس, تبدیلیوں کا لاگ, تبدیلیاں, 0.7, ورژن, نئی خصوصیات, field, فیلڈ ریکارڈز, rfi, request for information, submittal, daily log, site diary, overdue, due date, assigned to me, pin, merge, offline, tablet, bcf, csv, assistant, mcp, markup status, reply, export, units, unit lists, star, calibrate, compact, panels, dialogs, پرتگالی
-from: f8578677
+from: ca5ba1f0
 ---
 
 یہ MarkupCraft 0.6 کے مقابلے میں 0.7 میں کیا بدلا ہے۔ سب سے بڑی نئی چیز فیلڈ ریکارڈز ہیں: RFIs، submittals اور daily logs جو آپ کے مارک اپس کے ساتھ PDF کے اندر رکھے جاتے ہیں۔

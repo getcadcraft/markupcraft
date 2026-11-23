@@ -2,7 +2,7 @@
 title: Novità in 0.7 (precedente)
 summary: RFI, documenti da approvare e giornali di cantiere in una nuova scheda Cantiere, con date di scadenza, ritardi in rosso, CSV e BCF, lavoro offline e Unisci; assistenti che impostano stati, rispondono ed esportano l'elenco; elenchi di unità che seguono le Impostazioni; pannelli che si riordinano e finestre di dialogo che si spostano.
 keywords: novità 0.7, versione precedente, note di rilascio, registro modifiche, modifiche, 0.7, versione, nuove funzioni, cantiere, record di cantiere, rfi, richiesta di informazioni, documento da approvare, giornale di cantiere, diario di cantiere, in ritardo, data di scadenza, assegnati a me, puntina, unisci, offline, tablet, bcf, csv, assistente, mcp, stato dell'annotazione, risposta, esporta, unità, elenchi di unità, stellina, calibra, compatta, pannelli, finestre di dialogo, portoghese
-from: f8578677
+from: ca5ba1f0
 ---
 
 Questo è ciò che è cambiato in MarkupCraft 0.7, rispetto alla 0.6. La novità principale sono i record di cantiere: RFI, documenti da approvare e giornali di cantiere conservati nel PDF accanto alle annotazioni.

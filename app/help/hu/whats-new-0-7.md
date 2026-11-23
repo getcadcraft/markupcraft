@@ -2,7 +2,7 @@
 title: Újdonságok a 0.7-ben (korábbi)
 summary: RFI-k, beadványok és építési naplók új Terepi lapon, határidőkkel, a lejártak pirossal, CSV és BCF, offline munka és egyesítés; asszisztensek, amelyek állapotot állítanak be, válaszolnak és exportálják a listát; mértékegység-listák, amelyek a Beállításokat követik; panelek, amelyek elrendezhetően elrejthetők, és párbeszédpanelek, amelyek mozgathatók.
 keywords: újdonságok 0.7, korábbi kiadás, kiadási jegyzetek, változásnapló, változások, 0.7, verzió, új funkciók, terepi, terepi rekordok, rfi, információkérés, beadvány, építési napló, helyszíni napló, lejárt, határidő, nekem kiosztva, kitűző, egyesítés, offline, táblagép, bcf, csv, asszisztens, mcp, jelölés állapota, válasz, exportálás, mértékegységek, mértékegység-listák, csillag, kalibrálás, kompakt, panelek, párbeszédpanelek, portugál
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ez változott a MarkupCraft 0.7-ben, a 0.6-hoz képest. A nagy újdonság a terepi rekord: RFI-k, beadványok és építési naplók, amelyek a PDF-en belül, a jelölések mellett tárolódnak.

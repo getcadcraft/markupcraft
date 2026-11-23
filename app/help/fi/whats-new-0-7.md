@@ -2,7 +2,7 @@
 title: Uutta versiossa 0.7 (aiemmin)
 summary: RFI:t, toimitusasiakirjat ja päiväkirjat uudessa Työmaa-välilehdessä, eräpäivät, myöhässä oleva punaisella, CSV ja BCF, offline-työ ja Yhdistä; avustajat, jotka asettavat tiloja, vastaavat ja vievät luettelon; yksikköluettelot, jotka seuraavat Asetuksia; paneelit, jotka siistiytyvät, ja valintaikkunat, jotka siirtyvät.
 keywords: uutta 0.7, aiempi julkaisu, julkaisutiedot, muutosloki, muutokset, 0.7, versio, uudet ominaisuudet, työmaa, työmaatietueet, rfi, tietopyyntö, toimitusasiakirja, päiväkirja, työmaapäiväkirja, myöhässä, eräpäivä, minulle osoitetut, nasta, yhdistä, offline, tabletti, bcf, csv, avustaja, mcp, merkinnän tila, vastaus, vienti, yksiköt, yksikköluettelot, tähti, kalibroi, tiivis, paneelit, valintaikkunat, portugali
-from: f8578677
+from: ca5ba1f0
 ---
 
 Tämä on, mitä muuttui versiossa MarkupCraft 0.7 verrattuna versioon 0.6. Suurin uusi asia on työmaatietueet: RFI:t, toimitusasiakirjat ja päiväkirjat, jotka säilytetään PDF:n sisällä merkintöjesi vieressä.

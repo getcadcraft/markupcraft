@@ -17,6 +17,8 @@ import { wrapText, textWidth } from './font.js';
 import { measure, measureArea } from './units.js';
 import { t, locale } from './i18n.js';
 import { arcThrough, arcBeziers, angleAt, angleArc, formatAngle } from './arcs.js';
+import { ringArea as area } from './geom2d.js';   // shared helpers (0.11 PERF.74; tools/perf/util-copies.mjs)
+export { area };
 
 const K = 0.5522847498;   // circle → cubic Bézier
 export const NOTE_SIZE = 18;
@@ -77,11 +79,6 @@ const P = {
 export const paths = P;
 
 /** Signed area (y up: > 0 = counter-clockwise). */
-export function area(pts) {
-  let a = 0;
-  for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; }
-  return a / 2;
-}
 
 /**
  * A revision cloud round a closed outline: each edge split into scallops of about `arc` points,

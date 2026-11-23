@@ -2,7 +2,7 @@
 title: Kipya katika 0.7 (cha awali)
 summary: RFI, wasilisho na kumbukumbu za kila siku katika kichupo kipya cha Uwanja, zenye tarehe za kutekelezwa, zilizochelewa kwa rangi nyekundu, CSV na BCF, kazi nje ya mtandao na Unganisha; wasaidizi wanaoweka hali, kujibu na kuhamisha orodha; orodha za vitengo zinazofuata Mipangilio; paneli zinazojificha na madirisha yanayosogezwa.
 keywords: mpya 0.7, toleo la awali, maelezo ya toleo, rekodi ya mabadiliko, mabadiliko, 0.7, toleo, vipengele vipya, uwanja, rekodi za uwanja, rfi, ombi la taarifa, wasilisho, kumbukumbu ya kila siku, shajara ya eneo, imechelewa, tarehe ya kutekelezwa, nimepewa mimi, pini, unganisha, nje ya mtandao, kompyuta kibao, bcf, csv, msaidizi, mcp, hali ya alama, jibu, hamisha, vitengo, orodha za vitengo, nyota, urekebishaji, kubana, paneli, madirisha ya mazungumzo, kireno
-from: f8578677
+from: ca5ba1f0
 ---
 
 Haya ndiyo yaliyobadilika katika MarkupCraft 0.7, ikilinganishwa na 0.6. Jambo kubwa jipya ni rekodi za uwanja: RFI, wasilisho na kumbukumbu za kila siku zilizohifadhiwa ndani ya PDF pamoja na alama zako.

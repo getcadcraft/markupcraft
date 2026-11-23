@@ -2,7 +2,7 @@
 title: Perkara baharu dalam 0.7 (terdahulu)
 summary: RFI, penyerahan dan log harian dalam tab Medan baharu, dengan tarikh akhir, lewat tempoh dalam merah, CSV dan BCF, kerja luar talian dan Gabung; pembantu yang menetapkan status, membalas dan mengeksport senarai; senarai unit yang mengikut Tetapan; panel yang boleh dikemas dan kotak dialog yang boleh dialihkan.
 keywords: perkara baharu 0.7, keluaran terdahulu, nota keluaran, log perubahan, perubahan, 0.7, versi, ciri baharu, medan, rekod medan, rfi, permintaan maklumat, penyerahan, log harian, diari tapak, lewat tempoh, tarikh akhir, ditugaskan kepada saya, pin, gabung, luar talian, tablet, bcf, csv, pembantu, mcp, status markup, balasan, eksport, unit, senarai unit, bintang, tentukur, padat, panel, kotak dialog, portugis
-from: f8578677
+from: ca5ba1f0
 ---
 
 Inilah yang berubah dalam MarkupCraft 0.7, berbanding 0.6. Perkara baharu yang paling besar ialah rekod medan: RFI, penyerahan dan log harian yang disimpan dalam PDF, bersebelahan markup anda.

@@ -2,7 +2,7 @@
 title: Neuerungen in 0.7 (früher)
 summary: RFIs, Einreichungen und Bautagebücher in einer neuen Registerkarte Baustelle, mit Fälligkeitsdaten, überfällig in Rot, CSV und BCF, Offline-Arbeit und Zusammenführen; Assistenten, die Status setzen, antworten und die Liste exportieren; Einheitenlisten, die den Einstellungen folgen; Bereiche, die sich ausblenden lassen, und Dialoge, die sich verschieben lassen.
 keywords: Neuerungen 0.7, frühere Version, Versionshinweise, Änderungsprotokoll, Änderungen, 0.7, Version, neue Funktionen, Baustelle, Felddatensätze, RFI, Bauherrenanfrage, Request for Information, Einreichung, Bautagebuch, Baustellentagebuch, überfällig, Fälligkeitsdatum, mir zugewiesen, Pin, zusammenführen, offline, Tablet, BCF, CSV, Assistent, MCP, Markierungsstatus, Antwort, exportieren, Einheiten, Einheitenlisten, Stern, kalibrieren, kompakt, Bereiche, Dialoge, Portugiesisch
-from: f8578677
+from: ca5ba1f0
 ---
 
 Das hat sich in MarkupCraft 0.7 gegenüber 0.6 geändert. Das große Neue sind Felddatensätze: RFIs, Einreichungen und Bautagebücher, die neben Ihren Markierungen in der PDF gespeichert werden.

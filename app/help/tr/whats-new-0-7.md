@@ -2,7 +2,7 @@
 title: 0.7 sürümündeki yenilikler (önceki)
 summary: Saha sekmesinde yeni RFI'lar, onay dosyaları ve günlük raporlar; son tarihleri olan, geciken kayıtları kırmızıyla gösteren, CSV ve BCF, çevrimdışı çalışma ve Birleştir; durum ayarlayan, yanıtlayan ve listeyi dışa aktaran asistanlar; Ayarlar'ı izleyen birim listeleri; kendini toplayan paneller ve taşınabilen iletişim kutuları.
 keywords: 0.7 yenilikleri, önceki sürüm, sürüm notları, değişiklik günlüğü, değişiklikler, 0.7, sürüm, yeni özellikler, saha, saha kayıtları, rfi, bilgi isteği, onay dosyası, günlük rapor, şantiye günlüğü, gecikmiş, son tarih, bana atananlar, iğne, birleştir, çevrimdışı, tablet, bcf, csv, asistan, mcp, işaretleme durumu, yanıt, dışa aktar, birimler, birim listeleri, yıldız, kalibre et, sıkı, paneller, iletişim kutuları, portekizce
-from: f8578677
+from: ca5ba1f0
 ---
 
 Bu, MarkupCraft 0.6 ile karşılaştırıldığında 0.7 sürümünde neyin değiştiğidir. En büyük yenilik, işaretlemelerinizin yanında PDF'in içinde tutulan saha kayıtlarıdır: RFI'lar, onay dosyaları ve günlük raporlar.

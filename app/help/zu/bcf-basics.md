@@ -1,43 +1,56 @@
 ---
-title: Okuyisisekelo be-BCF
-summary: Okuqukethwe ukuthunyelwa kwe-BCF kwe-MarkupCraft, indlela yokusisebenzisa namathuluzi okuhlanganisa i-BIM, nemikhawulo yakho.
-keywords: bcf, bcfzip, ifomethi yokusebenzisana ye-bim, izinkinga, ukuhlanganiswa, ukungqubuzana, izihloko, indawo yokubuka, isithombe-sikhashana, openbim, buildingsmart, thumela izinkinga
-from: 446f38c1
+title: Izisekelo ze-BCF
+summary: Okuqukethwe ukuthunyelwa kwe-BCF okuvela ku-MarkupCraft, indlela yokusisebenzisa namathuluzi okuhlanganisa i-BIM, nemikhawulo yakho.
+keywords: bcf, bcfzip, bim collaboration format, izinkinga, ukuhlelwa, ukuphikisana, izihloko, indawo yokubuka, isithombe, openbim, buildingsmart, thumela izinkinga
+from: 0de26175
 ---
 
-I-BCF (BIM Collaboration Format) iyifomethi yefayela evulekile yokudlulisa izinkinga phakathi kwamathuluzi e-BIM. Izinhlelo eziningi zokuhlanganisa imodeli nokudweba zingangenisa ifayela le-`.bcfzip` njengohlu lwezinkinga. I-MarkupCraft ibhala i-**BCF 2.1**.
+I-BCF (BIM Collaboration Format) iyifomethi evulekile yefayela yokudlulisa izinkinga phakathi kwamathuluzi e-BIM. Amaprogramu amaningi okuhlanganisa imodeli nokudala angangenisa ifayela le-`.bcfzip` njengohlu lwezinkinga. I-MarkupCraft ibhala **BCF 2.1**.
 
-## Yenza eyodwa
+## Yenza ifayela le-BCF
 
-1. Vula ithebhu {{ui:Okumakiwe}}.
-2. Hlunga uhlu ukuze kube yilokho ofuna ukukuthumela, isibonelo {{ui:Isimo}} "Vuliwe". Kuphela okumakiwe okudweliwe kuthunyelwa.
+1. Vula ithebhu ethi {{ui:Okumakiwe}}.
+2. Hlunga uhlu ukuze kube yilokho ofuna ukukuthumela, isibonelo {{ui:Isimo}} "Vula". Kuphela okumakiwe okuluhlu kuzothunyelwa.
 3. Khetha {{ui:BCF}}.
-4. Linda ngenkathi kwenziwa isithombe-sikhashana somakiwe ngamunye ("Kwenziwa izithombe-sikhashana ze-BCF (5 kwangu-20)…").
+4. Linda kuze kwenziwe isithombe sokumaka ngakunye ("Kwenziwa izithombe ze-BCF (5 kwabangu-20)…").
 
-Umphumela: "<name> markups.bcfzip" iyalandwa, futhi ibha yesimo ikhombisa ukuthi ibamba izihloko ezingaki nosayizi wefayela.
+Umphumela: "<name> markups.bcfzip" uyalandwa, futhi ibha yesimo itshela ukuthi iqukethe izihloko ezingaki nosayizi wefayela.
 
 ## Okuqukethwe
 
-Umakiwe ngamunye uba yi-**isihloko** eyodwa:
+Ukumaka ngakunye kuba yisihloko esisodwa, **isihloko**.
 
-| Insimu yesihloko | Igcwaliswa ngo |
+| Inkambu yesihloko | Igcwaliswa ngo |
 |---|---|
-| Isihloko | Isibalo sokubhoboza, isihloko kanye neshidi, isibonelo "#4 Ifu phezu kwe-A-101 — Ipulani yomgangatho" |
-| Uhlobo | Uhlobo lomakiwe (Ifu, Isichazi, Ubude…) |
-| Isimo | Vuliwe, Samukelwe, Alamukelwe noma Kuqediwe |
-| Amalebula | Uhlobo lomakiwe kanye neshidi |
-| Umbhali namasuku | Umbhali womakiwe, izinsuku zokudalwa nokuguqulwa |
-| Owabelwe, usuku lokuphela | Kusuka endaweni yakhe kuhlu lokulungisa, uma inayo |
-| Incazelo | Umbhalo wakhe noma umbhalo wesitembu, inani elilinganisiwe, amazwana, neshidi nefayela |
+| Igama | Inombolo yokuhlola, isihloko nedwala, isibonelo "#4 Ifu ku-A-101 — Ipulani yomgangatho" |
+| Uhlobo | Uhlobo lokumaka (Ifu, Isimemezelo, Ubude…) |
+| Isimo | Vula, Yamukelwe, Yenqatshiwe noma Iqedile |
+| Amalebula | Uhlobo lokumaka nedwala |
+| Umbhali nezinsuku | Umbhali wokumaka, nezinsuku zokudalwa nokushintshwa |
+| Obekwe kuye, usuku lokufika | Kusuka ku-inkinga yokuhlola, uma inayo |
+| Incazelo | Umbhalo wayo noma izwi lesitembu, inani elilinganisiwe, amazwana, nedwala nefayela |
 | Amazwana | Eyodwa ngempendulo ngayinye, nombhali nosuku |
-| Isithombe-sikhashana | Isithombe somakiwe endaweni yawo yeshidi |
-| Indawo yokubuka | Ukubuka okuvela phezulu kwendawo yomakiwe eshidini |
+| Isithombe | Isithombe sokumaka endaweni yaso kuleli shidi |
+| Indawo yokubuka | Ukubuka ngaphezulu kwendawo yokumaka kwishidi |
 
-Ukuthumela umakiwe ofanayo futhi kunikeza i-ID yesihloko efanayo, ngakho ithuluzi elingenisa i-BCF lingawubona njengaleyo nkinga.
+Ukuthumela okumakiwe okufanayo futhi kunikeza i-ID yesihloko efanayo, ngakho ithuluzi elingenisa i-BCF lingakuqaphela njengenkinga efanayo.
+
+## Okubuyela ngaphakathi uma ungenisa
+
+{{ui:Ngenisa i-BCF}} ifunda amafayela e-BCF 2.0, 2.1 kanye ne-3.0 (ahlolwe kumafayela amathestu asemthethweni ayi-19 e-buildingSMART 3.0: ifunde wonke amasihloko, namazwana ayi-3 anombhalo). Ngesihloko esingesakho (inombolo yesihloko efanayo) yengeza amazwana amasha njengezimpendulo futhi ithatha isimo esisha. Esinye isihloko siba yinothi edwaleni elibizwa ngelebula yaso noma igama lefayela, uma kungenjalo edwaleni elivulekile, ngegama, incazelo, umuntu obekiwe nosuku lokufika njengombhalo wenothi, namazwana njengezimpendulo.
+
+| Esihlokweni se-BCF | Ku-MarkupCraft |
+|---|---|
+| Igama, incazelo, umuntu obekiwe, usuku lokufika | Umbhalo wenothi |
+| Amazwana anombhalo | Izimpendulo |
+| Isimo Open, Accepted, Rejected, Completed (Closed, Resolved, Done zibalwa njenge-Completed) | Isimo sokumaka |
+| Umbhali nosuku lokudalwa | Umbhali nosuku lwenothi |
+| Indawo yekhamera | Indawo ishidini, kuphela kwesihloko esixhunyiwe kwishidi ngelebula noma igama lefayela |
+| Ukukhethwa kwemodeli, izingxenye ezifihliwe, izindiza zokusika, izithombe | Akugcinwa: ishidi alinayo imodeli okungabonisa kuyo |
 
 ## Imikhawulo okufanele uyazi
 
-- **Ishidi akuyona imodeli.** Indawo yokubuka ikhomba endaweni yomakiwe ephepheni, ekalwe ngamamitha ephepha. Ayiphathi ithuluzi le-BIM endaweni ethile emodelini. Sebenzisa isithombe-sikhashana kanye negama leshidi ukuthola indawo.
-- **Izimo nezinhlobo zingezeMarkupCraft.** Ifayela liyazimemezela, njengoba i-BCF ivumela, kodwa ithuluzi elinezinhlu zalo ezisobala lingazihlela noma lizinake.
-- **Ukungenisa kulethe amazwana, hhayi izibuko zemodeli.** {{ui:Ngenisa i-BCF}} yengeza izimpendulo nezimo emakiwe owathumelile, futhi yenza amanothi ezinye izinkinga; ayikwazi ukubonisa ikhamera yemodeli. Bona [Uhlu lomakiwe nokuthumela](topic:markups-list-and-export#import-bcf).
-- Ukuthumela izimakiwe njenge-PDF kuvame ukulula ekubuyekezweni kwemidwebo. I-BCF ingeyokuthola amazwana emidwebo endleleni yokuhlanganisa imodeli.
+- **Ishidi akuyona imodeli.** Indawo yokubuka ikhomba indawo yokumaka ephepheni, ilinganiswa ngamamitha ephepha. Ayidingi ithuluzi le-BIM ukuthi lifike endaweni emodelini. Sebenzisa isithombe negama leshidi ukuze uthole indawo.
+- **Izimo nezinhlobo ziyezakhiwo ze-MarkupCraft** (Vula, Yamukelwe, Yenqatshiwe, Iqedile; Ifu, Isimemezelo…). Ifayela liyazichaza, njengoba i-BCF ivumela, kodwa ithuluzi elinohlu lwalo oluqinile lingazihlanganisa noma lizinake.
+- **Ukungenisa kuletha amazwana, hhayi ukubuka kwemodeli.** {{ui:Ngenisa i-BCF}} yengeza izimpendulo nezimo kumakhasi owathumele, futhi yenza amanothi kwezinye izinkinga; ayikwazi ukubonisa ikhamera yemodeli. Bona [{{ui:Uhlu lokumaka}} nokuthumela](topic:markups-list-and-export#import-bcf).
+- Ukuthumela okumakiwe njenge-PDF kuvame ukulula ekubuyekezweni kwemizobo. I-BCF yokuthola amazwana emizobo ohlelweni lokuhlanganisa imodeli.

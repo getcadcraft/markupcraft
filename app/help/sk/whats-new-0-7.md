@@ -2,7 +2,7 @@
 title: Novinky vo verzii 0.7 (staršie)
 summary: RFI, predkladané podklady a denníky v novej karte Terén, so termínmi, premeškaním označeným červenou farbou, CSV a BCF, práca offline a zlúčenie; asistenti, ktorí nastavujú stavy, odpovedajú a exportujú zoznam; zoznamy jednotiek, ktoré nasledujú Nastavenia; panely, ktoré sa dajú zbaliť, a dialógy, ktoré sa dajú presúvať.
 keywords: novinky 0.7, staršie vydanie, poznámky k vydaniu, zoznam zmien, zmeny, 0.7, verzia, nové funkcie, terén, záznamy terénu, rfi, žiadosť o informácie, predkladaný podklad, denník, denník stavby, po termíne, termín, pridelené mne, ihla, zlúčiť, offline, tablet, bcf, csv, asistent, mcp, stav značky, odpoveď, export, jednotky, zoznamy jednotiek, hviezdička, kalibrovať, kompaktné, panely, dialógy, portugalčina
-from: f8578677
+from: ca5ba1f0
 ---
 
 Toto je zmena vo verzii MarkupCraft 0.7 oproti 0.6. Hlavnou novinkou sú záznamy terénu: RFI, predkladané podklady a denníky uložené v PDF vedľa vašich poznámok.

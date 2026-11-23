@@ -16,6 +16,7 @@
 
 import { t } from './i18n.js';
 import { el } from './ui-util.js';
+import { presencePump } from './presence-pump.js';
 
 // one palette for every app's Live: the shared presence layer's (0.9 SU.1112, live-presence.js)
 import { PEOPLE, personColour } from './live-presence.js';
@@ -68,8 +69,12 @@ export function attachUi(app, adapter, client) {
     client.setPresence({ ...(client.lastPresence || {}), ...p });   // keep what live-follow.js adds (vw, ld)
   }
   let seenSheet = '';
-  const timer = setInterval(() => { push(); const k = app.sheets[app.cur] ? app.sheets[app.cur].page.key : ''; if (k !== seenSheet) { seenSheet = k; renderStrip(); } }, 33);
-  offs.push(() => clearInterval(timer));
+  const pump = presencePump(push, { tick: () => { const k = app.sheets[app.cur] ? app.sheets[app.cur].page.key : ''; if (k !== seenSheet) { seenSheet = k; renderStrip(); } } });   // 0.11 PERF.75: on events and a 250 ms safety net, not a 33 ms timer
+  offs.push(() => pump.stop());
+  const prevInvalidate = view.invalidate;
+  const pokingInvalidate = function (...a) { pump.poke(); return prevInvalidate.apply(this, a); };
+  view.invalidate = pokingInvalidate;
+  offs.push(() => { if (view.invalidate === pokingInvalidate) view.invalidate = prevInvalidate; });
 
   // ---- what you see ----------------------------------------------------------------------------------------------------
   adapter.drawPresence = (peers) => { others = new Map(peers); view.invalidate(); renderStrip(); };

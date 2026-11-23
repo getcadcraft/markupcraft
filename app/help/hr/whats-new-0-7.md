@@ -2,7 +2,7 @@
 title: Što je novo u 0.7 (ranije)
 summary: RFI-jevi, submittali i dnevnici rada u novoj kartici Teren, s rokovima, prekoračenim rokovima u crvenom, CSV i BCF, rad van mreže i spajanje; pomoćnici koji postavljaju statuse, odgovaraju i izvoze popis; popisi jedinica koji prate postavke; ploče koje se sklanjaju i dijalozi koji se pomiču.
 keywords: što je novo 0.7, ranije izdanje, bilješke o izdanju, dnevnik promjena, promjene, 0.7, verzija, nove značajke, teren, zapisi terena, rfi, zahtjev za informacijama, submittal, dnevnik rada, prekoračen rok, rok, zaduženo meni, pribadača, spajanje, izvan mreže, tablet, bcf, csv, pomoćnik, mcp, status oznake, odgovor, izvoz, jedinice, popisi jedinica, zvjezdica, kalibriraj, zbijeno, ploče, dijalozi, portugalski
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ovo je što se promijenilo u MarkupCraftu 0.7 u odnosu na 0.6. Najveća novost su zapisi terena: RFI-jevi, submittali i dnevnici rada koji se čuvaju unutar PDF-a uz vaše markupe.

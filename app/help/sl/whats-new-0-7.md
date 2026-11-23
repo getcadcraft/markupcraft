@@ -2,7 +2,7 @@
 title: Kaj je novega v 0.7 (prej)
 summary: RFI-ji, predložitve in dnevniki del v novem zavihku Teren, z roki, zamudami v rdeči barvi, CSV in BCF, delo brez povezave in združevanje; pomočniki, ki nastavljajo stanja, odgovarjajo in izvozijo seznam; seznami enot, ki sledijo Nastavitvam; podokna, ki se lahko skrijejo, in pogovorna okna, ki se premikajo.
 keywords: kaj je novega 0.7, prejšnja izdaja, opombe o izdaji, dnevnik sprememb, spremembe, 0.7, različica, nove funkcije, teren, zapisi na terenu, rfi, zahteva za informacije, predložitev, dnevnik del, gradbiščni dnevnik, zamuda, rok, dodeljeno meni, pritrditev, združi, brez povezave, tablični računalnik, bcf, csv, pomočnik, mcp, stanje označbe, odgovor, izvoz, enote, seznami enot, zvezdica, kalibriraj, strnjeno, podokna, pogovorna okna, portugalščina
-from: f8578677
+from: ca5ba1f0
 ---
 
 To je, kaj se je spremenilo v MarkupCraft 0.7 v primerjavi z 0.6. Največja novost so zapisi na terenu: RFI-ji, predložitve in dnevniki del, shranjeni v PDF poleg vaših označb.

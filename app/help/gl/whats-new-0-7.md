@@ -2,7 +2,7 @@
 title: Novidades da 0.7 (anterior)
 summary: RFIs, achegas e diarios de obra nunha nova lapela Campo, con datas de vencemento, atrasos en vermello, CSV e BCF, traballo sen conexión e Combinar; asistentes que fixan estados, responden e exportan a lista; listas de unidades que seguen a Configuración; paneis que se ordenan e diálogos que se moven.
 keywords: novidades 0.7, versión anterior, notas de versión, rexistro de cambios, cambios, 0.7, versión, novas funcións, campo, rexistros de campo, rfi, solicitude de información, achega, diario de obra, diario de campo, vencido, data de vencemento, asignado a min, marca, combinar, sen conexión, tableta, bcf, csv, asistente, mcp, estado de anotación, resposta, exportar, unidades, listas de unidades, estrela, calibrar, compacto, paneis, diálogos, portugués
-from: f8578677
+from: ca5ba1f0
 ---
 
 Isto é o que cambiou en MarkupCraft 0.7, comparado coa 0.6. A gran novidade son os rexistros de campo: RFIs, achegas e diarios de obra gardados dentro do PDF, xunto ás súas anotacións.

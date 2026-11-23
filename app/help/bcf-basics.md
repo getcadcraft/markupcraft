@@ -36,6 +36,19 @@ Each markup becomes one **topic**:
 
 Exporting the same markup again gives the same topic ID, so a tool that imports BCF can recognize it as the same issue.
 
+## What comes back in when you import
+
+{{ui:Import BCF}} reads BCF 2.0, 2.1 and 3.0 files (checked on the 19 official buildingSMART 3.0 test files: every topic read, and the comments of the three that have text). For a topic that is one of yours (same topic ID) it adds the new comments as replies and takes the new status. Any other topic becomes a note on the sheet its label or file name names, else on the open sheet, with its title, description, assignee and due date as the note's text and its comments as replies.
+
+| In the BCF topic | In MarkupCraft |
+|---|---|
+| Title, description, assignee, due date | The note's text |
+| Comments with text | Replies |
+| Status Open, Accepted, Rejected, Completed (Closed, Resolved, Done count as Completed) | The markup's status |
+| Author and creation date | The note's author and date |
+| Camera position | A place on the sheet, only for a topic tied to a sheet by label or file name |
+| Model selection, hidden parts, clipping planes, snapshots | Not kept: a sheet has no model to show them in |
+
 ## Limits to know
 
 - **A sheet is not a model.** The viewpoint points at the markup's position on the paper, measured in meters of paper. It does not take a BIM tool to a place in the model. Use the snapshot and the sheet name to find the spot.

@@ -2,7 +2,7 @@
 title: Nýtt í 0.7 (eldra)
 summary: RFI-ar, samþykktarbeiðnir og dagbækur í nýjum flipa Vettvangs, með skiladögum, útrunnið í rauðu, CSV og BCF, vinna án nettengingar og Sameina; aðstoðarmenn sem stilla stöður, svara og flytja út listann; einingalistar sem fylgja Stillingum; spjöld sem fela sig og gluggar sem færast til.
 keywords: nýtt í 0.7, eldri útgáfa, útgáfuskýringar, breytingaskrá, breytingar, 0.7, útgáfa, nýir eiginleikar, vettvangur, vettvangsfærslur, rfi, beiðni um upplýsingar, samþykktarbeiðni, dagbók, skiladagur, úthlutað mér, nál, sameina, án nettengingar, spjaldtölva, bcf, csv, aðstoðarmaður, mcp, staða merkingar, svar, útflutningur, einingar, einingalistar, stjarna, kvörðun, þétt, spjöld, gluggar, portúgalska
-from: f8578677
+from: ca5ba1f0
 ---
 
 Þetta er það sem breyttist í MarkupCraft 0.7 miðað við 0.6. Stóra nýjungin eru vettvangsfærslur: RFI-ar, samþykktarbeiðnir og dagbækur sem eru geymdar inni í PDF-skránni við hliðina á merkingunum.

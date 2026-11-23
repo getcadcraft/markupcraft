@@ -16,11 +16,11 @@ The pages of the PDF are one under the other, like a document.
 - The page in the middle of the screen is the open sheet: the sheet bar, {{ui:Properties}}, the sheets list and the markups list follow it as you scroll.
 - Click or start drawing on any page you see, and you mark up that page. Markups on the other pages show as you scroll.
 - {{key:PageDown}} and {{key:PageUp}} scroll to the next and previous page.
-- In a workspace layout with tabs, each PDF gets one tab, and its pages scroll inside it.
+- In an interface style with tabs, each PDF gets one tab, and its pages scroll inside it.
 
 ## One page at a time
 
-Only the open page is on screen. {{key:PageDown}}, {{key:PageUp}} and the sheets list go from page to page, and each page keeps its own zoom. In a workspace layout with tabs, each page you open gets a tab.
+Only the open page is on screen. {{key:PageDown}}, {{key:PageUp}} and the sheets list go from page to page, and each page keeps its own zoom. In an interface style with tabs, each page you open gets a tab.
 
 ## Good to know
 

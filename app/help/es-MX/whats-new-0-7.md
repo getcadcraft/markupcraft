@@ -2,7 +2,7 @@
 title: Novedades de la versión 0.7 (anterior)
 summary: RFI, entregas y bitácoras diarias en una nueva pestaña Obra, con fechas límite, vencidos en rojo, CSV y BCF, trabajo sin conexión y Combinar; asistentes que fijan estados, responden y exportan la lista; listas de unidades que siguen a Configuración; paneles que se ocultan y diálogos que se mueven.
 keywords: novedades 0.7, versión anterior, notas de la versión, registro de cambios, cambios, 0.7, versión, nuevas funciones, obra, registros de obra, RFI, solicitud de información, entrega, bitácora diaria, diario de obra, vencido, fecha límite, asignados a mí, marcador, combinar, sin conexión, tableta, BCF, CSV, asistente, MCP, estado de marca, respuesta, exportar, unidades, listas de unidades, estrella, calibrar, compacta, paneles, diálogos, portugués
-from: f8578677
+from: ca5ba1f0
 ---
 
 Esto es lo que cambió en MarkupCraft 0.7, comparado con 0.6. Lo más importante es la nueva función de registros de obra: RFI, entregas y bitácoras diarias guardadas dentro del PDF, junto a sus marcas.

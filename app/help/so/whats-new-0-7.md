@@ -2,7 +2,7 @@
 title: Waxa cusub ee 0.7 (horey)
 summary: RFI, soo-gudbin iyo diiwaannada maalinta oo ku jira tab cusub oo Goobta ah, leh taariikhaha dhammaadka, dib u dhacay oo midab cas, CSV iyo BCF, shaqo khadka ka baxsan iyo Isku dar; caawiyayaasha oo dejiya xaaladaha, jawaabaya oo dhoofiya liiska; liisaska cutubyada oo raacaya Dejinta; panels-ka oo nadiifa iyo dialogs-ka oo dhaqaaqa.
 keywords: waxa cusub 0.7, nooca hore, qoraallada nooca, isbeddelada, isbeddel, 0.7, nooca, astaamo cusub, goobta, diiwaannada goobta, rfi, codsiga macluumaadka, soo-gudbin, diiwaanka maalinta, diiwaanka goobta, dib u dhacay, taariikhda dhammaadka, igu magacaabay, pin, isku dar, khadka ka baxsan, taableet, bcf, csv, caawiye, mcp, xaaladda calaamadda, jawaab, dhoofin, cutubyada, liisaska cutubyada, xiddig, cabbiri, kooban, panels, dialogs, portuguese
-from: f8578677
+from: ca5ba1f0
 ---
 
 Kani waa wixii isbeddelay MarkupCraft 0.7, marka la barbar dhigo 0.6. Waxa ugu weyn ee cusub waa diiwaannada goobta: RFI-yada, soo-gudbinta iyo diiwaannada maalinta oo lagu kaydiyo PDF-ka xagga calaamadahaaga.

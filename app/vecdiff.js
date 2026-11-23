@@ -14,8 +14,8 @@
  *                                       (for clouding the changes); groups with less than `minLen` points of change are dropped
  */
 
+import { affineMul as mul } from './geom-vec.js';   // shared helpers (0.11 PERF.74; tools/perf/util-copies.mjs)
 const DRAW = { moveTo: 0, lineTo: 1, curveTo: 2, quadTo: 3, close: 4 };
-const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
 const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 
 export function pageSegments(opList, OPS, { max = 400000 } = {}) {

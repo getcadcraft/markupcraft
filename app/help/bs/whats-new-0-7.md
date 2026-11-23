@@ -2,7 +2,7 @@
 title: Šta je novo u 0.7 (ranije)
 summary: RFI-jevi, podnesci i dnevni zapisnici u novoj kartici Polje, s rokovima, zakašnjenjem označenim crvenom bojom, CSV i BCF, rad van mreže i Spoji; asistenti koji postavljaju statuse, odgovaraju i izvoze spisak; liste jedinica koje prate Postavke; paneli koji se sklanjaju i dijalozi koji se pomjeraju.
 keywords: šta je novo 0.7, ranije izdanje, bilješke o izdanju, dnevnik promjena, promjene, 0.7, verzija, nove funkcije, polje, zapisi polja, rfi, zahtjev za informacijama, podnesak, dnevni zapisnik, dnevnik gradilišta, prekoračen rok, rok, dodijeljeno meni, pin, spoji, van mreže, tablet, bcf, csv, asistent, mcp, status označavanja, odgovor, izvoz, jedinice, liste jedinica, zvjezdica, kalibriraj, zbijeno, paneli, dijalozi, portugalski
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ovo je šta se promijenilo u MarkupCraft 0.7, u odnosu na 0.6. Velika novina su zapisi polja: RFI-jevi, podnesci i dnevni zapisnici čuvani unutar PDF-a uz tvoja označavanja.

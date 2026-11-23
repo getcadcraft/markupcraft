@@ -2,7 +2,7 @@
 title: Nyheter i 0.7 (tidigare)
 summary: RFI:er, inlämningar och dagböcker i en ny Fält-flik, med förfallodatum, försenade i rött, CSV och BCF, offlinearbete och Slå ihop; assistenter som sätter status, svarar och exporterar listan; enhetslistor som följer Inställningar; paneler som döljs undan och dialogrutor som flyttas.
 keywords: nyheter 0.7, tidigare version, versionsinformation, ändringslogg, ändringar, 0.7, version, nya funktioner, fält, fältposter, rfi, begäran om information, inlämning, dagbok, byggdagbok, försenad, förfallodatum, tilldelade mig, nål, slå ihop, offline, surfplatta, bcf, csv, assistent, mcp, markeringsstatus, svar, export, enheter, enhetslistor, stjärna, kalibrera, kompakt, paneler, dialogrutor, portugisiska
-from: f8578677
+from: ca5ba1f0
 ---
 
 Det här är vad som ändrats i MarkupCraft 0.7, jämfört med 0.6. Det stora nya är fältposter: RFI:er, inlämningar och dagböcker som sparas i PDF-filen bredvid dina markeringar.

@@ -580,11 +580,17 @@
   "psize.orient.landscape": "landscape",
   "psize.orient.square": "square",
   "psize.near": "nearest is {name}, {mm} mm off",
-  "psize.group.n": {"one": "{n} page", "other": "{n} pages"},
+  "psize.group.n": {
+    "one": "{n} page",
+    "other": "{n} pages"
+  },
   "psize.odd": "odd one out",
   "psize.by": "By size",
   "psize.by.title": "Group the pages by paper size; sizes other than the most common one are marked",
-  "psize.by.on": {"one": "Grouped by size: 1 size.", "other": "Grouped by size: {n} sizes."},
+  "psize.by.on": {
+    "one": "Grouped by size: 1 size.",
+    "other": "Grouped by size: {n} sizes."
+  },
   "psize.by.off": "Back to the set's order.",
   "props.paper.mm": "Size",
   "props.paper.near": "Nearest named size",
@@ -1303,13 +1309,19 @@
   "pages.client_review": "Client review link…",
   "review.title": "Client review link",
   "review.text": "One link your client opens to see the sheets you publish and to comment, at any stage. The link stays the same; each time you publish again it shows the new sheets. The client can read and comment, nothing else. Nothing is emailed: you copy the address and hand it over.",
-  "review.nologin": "Client review links are made from Studio, signed in to your account. This browser tab has no sign-in for them yet.",
+  "review.nologin": "Client review links are made from your account. This browser tab is not connected to it yet: choose Connect, sign in on the page that opens, then come back and open this again.",
+  "review.connect": "Connect",
+  "review.connect.opened": "The connect page is open in a new tab. When it says you are connected, open Client review link again.",
+  "review.connected": "Connected for client review links.",
   "review.err.closed": "Review links are not open for this account yet.",
   "review.err.connect": "Sign in again, then try once more.",
   "review.err.other": "The site said no: {why}",
   "review.err.offline": "Could not reach the site. Check the connection and try again.",
   "review.links": "Your links",
-  "review.link.meta": {"one": "opens until {date}, {n} comment, {sheets} sheets", "other": "opens until {date}, {n} comments, {sheets} sheets"},
+  "review.link.meta": {
+    "one": "opens until {date}, {n} comment, {sheets} sheets",
+    "other": "opens until {date}, {n} comments, {sheets} sheets"
+  },
   "review.new": "A new link",
   "review.label": "Name",
   "review.stage": "Stage",
@@ -1332,9 +1344,18 @@
   "review.pull": "Bring in comments",
   "review.revoke": "Turn off",
   "review.working": "Talking to the site…",
-  "review.none": {"one": "Nothing to publish: the sheet is over 3 MB or not a PDF.", "other": "Nothing to publish: {n} sheets are over 3 MB each or not PDFs."},
-  "review.made": {"one": "Link made with {n} sheet ({skipped} left out: over 3 MB or past 20).", "other": "Link made with {n} sheets ({skipped} left out: over 3 MB or past 20)."},
-  "review.published": {"one": "Published {n} sheet to the link ({skipped} left out).", "other": "Published {n} sheets to the link ({skipped} left out)."},
+  "review.none": {
+    "one": "Nothing to publish: the sheet is over 3 MB or not a PDF.",
+    "other": "Nothing to publish: {n} sheets are over 3 MB each or not PDFs."
+  },
+  "review.made": {
+    "one": "Link made with {n} sheet ({skipped} left out: over 3 MB or past 20).",
+    "other": "Link made with {n} sheets ({skipped} left out: over 3 MB or past 20)."
+  },
+  "review.published": {
+    "one": "Published {n} sheet to the link ({skipped} left out).",
+    "other": "Published {n} sheets to the link ({skipped} left out)."
+  },
   "review.url": "The client's address",
   "review.copy": "Copy the address",
   "review.copied": "Address copied.",
@@ -1342,8 +1363,14 @@
   "review.revoked": "That link no longer opens.",
   "review.subject": "Client comment",
   "review.undo": "Add the client's comments",
-  "review.pulled": {"one": "Brought in {n} new comment ({total} on the link).", "other": "Brought in {n} new comments ({total} on the link)."},
-  "review.pulled.none": {"one": "No new comments ({total} on the link).", "other": "No new comments ({total} on the link)."},
+  "review.pulled": {
+    "one": "Brought in {n} new comment ({total} on the link).",
+    "other": "Brought in {n} new comments ({total} on the link)."
+  },
+  "review.pulled.none": {
+    "one": "No new comments ({total} on the link).",
+    "other": "No new comments ({total} on the link)."
+  },
   "input.cmd.pages.batch-links": "Batch links: link sheet callouts to their sheets and views…",
   "input.cmd.pages.client-review": "Client review link…",
   "input.lbl.ribbon.batch-links": "Batch links",
@@ -2711,5 +2738,39 @@
   "issues.act.marks": "Record the selected markups",
   "issues.act.marks.none": "Select the markups first, and record an issue to put them against.",
   "issues.act.marks.done": "{n} markups recorded against issue {code}.",
-  "issues.own.note": "Sheets are issued from Drawings. Those issues are listed here with everything recorded against them."
+  "issues.own.note": "Sheets are issued from Drawings. Those issues are listed here with everything recorded against them.",
+  "live.cr.button": "Class room",
+  "live.cr.title": "Class room",
+  "live.cr.count": "{n} of {m} working",
+  "live.cr.start": "Start a class room",
+  "live.cr.start.note": "Each student works in their own file. You see when they last edited and a small picture of their work, and can look in or help. Start it before anyone joins.",
+  "live.cr.start.busy": "Someone has already joined this session. End it and start a new one, then start the class room before anyone joins.",
+  "live.cr.privacy.teacher": "Students are told, before they join and all the time, that you can look in. A student's file stays in this window's memory; nothing is saved unless you save it.",
+  "live.cr.end": "End the class room",
+  "live.cr.none": "Nobody has joined yet.",
+  "live.cr.student.joined": "Joined, has not accepted yet",
+  "live.cr.student.big": "File too large to look in; picture and edit time only",
+  "live.cr.student.nocopy": "Waiting for the file",
+  "live.cr.last": "last edit {ago}",
+  "live.cr.noedit": "no edits yet",
+  "live.cr.edits": "{n} edits",
+  "live.cr.lookin": "Look in",
+  "live.cr.help.stop": "Stop helping",
+  "live.cr.back": "Back to class",
+  "live.cr.looking": "Looking in on {name}'s work. This is a read-only copy; your own file is set aside until you go back.",
+  "live.cr.helping": "Helping {name}: your edits go into their file, and they can see you are there.",
+  "live.cr.nosave": "Do not save while looking in: it would write over your own file. Go back to class first.",
+  "live.cr.readonly": "Read-only: you are looking in. Choose Help to edit with {name}.",
+  "live.cr.ago.s": "{n} s ago",
+  "live.cr.ago.m": "{n} min ago",
+  "live.cr.ago.h": "{n} h ago",
+  "live.cr.notice.title": "Join {name}'s class room?",
+  "live.cr.notice.body": "Your teacher can look in at your work while you are in the class room, and can join your file to help; you will see when they do. They see when you last edited and a small picture of your work. Your file stays yours: it is sent, encrypted, only to your teacher's computer, and other students cannot read it. Nothing is sent until you join. You can leave at any time.",
+  "live.cr.notice.join": "Join the class room",
+  "live.cr.banner": "Class room: {name} can look in at your work.",
+  "live.cr.banner.leave": "Leave the class room",
+  "live.cr.helper": "{name} is helping in your file.",
+  "live.cr.someone": "Your teacher",
+  "live.cr.how.title": "How the class room works",
+  "live.cr.how.body": "Students keep their own files. Their edits come to your window as a read-only copy kept in memory. Look in opens a copy and follows the student's view; Help lets you edit with them. Over an invite link a room holds up to 20 people; a class on one network can be larger."
 }

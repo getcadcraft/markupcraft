@@ -2,7 +2,7 @@
 title: Ano ang bago sa 0.7 (mas maaga)
 summary: RFI, submittal at daily log sa bagong Field tab, may due date, overdue sa pula, CSV at BCF, offline na trabaho at Merge; mga assistant na nagtatakda ng status, sumasagot at nag-e-export ng listahan; unit list na sumusunod sa Settings; mga panel na nagtatago at mga dialog na gumagalaw.
 keywords: ano ang bago 0.7, naunang release, release notes, changelog, mga pagbabago, 0.7, bersyon, bagong feature, field, field record, rfi, request for information, submittal, daily log, site diary, overdue, due date, nakatalaga sa akin, pin, merge, offline, tablet, bcf, csv, assistant, mcp, markup status, reply, export, units, unit list, star, calibrate, compact, panel, dialog, portuges
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ito ang mga nagbago sa MarkupCraft 0.7, kumpara sa 0.6. Ang pinakamalaking bagong feature ay ang field record: mga RFI, submittal at daily log na nakalagay sa loob ng PDF, katabi ng iyong mga markup.

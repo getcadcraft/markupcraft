@@ -1,43 +1,56 @@
 ---
 title: Základy BCF
-summary: Co obsahuje export BCF z MarkupCraftu, jak ho použít s nástroji pro koordinaci BIM a jaká má omezení.
-keywords: bcf, bcfzip, formát pro spolupráci BIM, problémy, koordinace, kolize, témata, pohled, snímek, openbim, buildingsmart, export problémů
-from: 446f38c1
+summary: Co obsahuje export BCF z aplikace MarkupCraft, jak ho používat s nástroji pro koordinaci BIM a jeho omezení.
+keywords: bcf, bcfzip, bim collaboration format, problémy, koordinace, kolize, témata, pohled, snímek, openbim, buildingsmart, export problémů
+from: 0de26175
 ---
 
-BCF (BIM Collaboration Format) je otevřený souborový formát pro předávání problémů mezi nástroji BIM. Mnoho programů pro koordinaci a tvorbu modelů umí importovat soubor `.bcfzip` jako seznam problémů. MarkupCraft zapisuje **BCF 2.1**.
+BCF (BIM Collaboration Format) je otevřený formát souboru pro předávání problémů mezi nástroji BIM. Mnoho programů pro koordinaci modelů a tvorbu modelů umí importovat soubor `.bcfzip` jako seznam problémů. MarkupCraft zapisuje **BCF 2.1**.
 
 ## Vytvoření souboru
 
 1. Otevřete kartu {{ui:Poznámky}}.
-2. Filtrujte seznam na to, co chcete odeslat, například {{ui:Stav}} "Otevřeno". Exportují se jen uvedené poznámky.
+2. Filtrujte seznam podle toho, co chcete odeslat, například {{ui:Stav}} "Otevřeno". Exportují se pouze uvedené poznámky.
 3. Zvolte {{ui:BCF}}.
 4. Počkejte, dokud se pro každou poznámku nevytvoří snímek ("Vytváření snímků pro BCF (5 z 20)…").
 
-Výsledek: soubor "<name> markups.bcfzip" se stáhne a stavový řádek uvede, kolik témat obsahuje a jakou má velikost.
+Výsledek: soubor "<name> markups.bcfzip" se stáhne a stavový řádek uvede, kolik témat obsahuje a jak je velký.
 
-## Co je v souboru
+## Co soubor obsahuje
 
 Každá poznámka se stane jedním **tématem**:
 
 | Pole tématu | Vyplněno |
 |---|---|
-| Název | Číslo položky, předmět a list, například "#4 Oblak na A-101 — Půdorys" |
-| Typ | Druh poznámky (Oblak, Vynášecí text, Délka…) |
-| Stav | Otevřeno, Přijato, Zamítnuto nebo Dokončeno |
-| Štítky | Druh poznámky a list |
-| Autor a data | Autor poznámky, datum vytvoření a datum poslední změny |
-| Přiřazeno, termín | Z její položky závady, pokud ji má |
-| Popis | Její text nebo znění razítka, naměřená hodnota, komentář, list a soubor |
-| Komentáře | Jeden za každou odpověď, s autorem a datem |
-| Snímek | Obrázek poznámky na její části listu |
-| Pohled | Pohled shora na místo poznámky na listu |
+| Title | Číslo položky závady, předmět a list, například "#4 Oblak na A-101 — Půdorys" |
+| Type | Druh poznámky (Oblak, Výnoska, Délka…) |
+| Status | Otevřeno, Přijato, Zamítnuto nebo Dokončeno |
+| Labels | Druh poznámky a list |
+| Author and dates | Autor poznámky, datum vytvoření a datum úpravy |
+| Assigned to, due date | Z její položky závady, pokud ji má |
+| Description | Její text nebo znění razítka, naměřená hodnota, komentář a list a soubor |
+| Comments | Jeden na každou odpověď, s autorem a datem |
+| Snapshot | Obrázek poznámky na její části listu |
+| Viewpoint | Pohled shora na místo poznámky na listu |
 
-Opětovný export stejné poznámky dá stejné ID tématu, takže nástroj, který importuje BCF, ji pozná jako tentýž problém.
+Opětovný export téže poznámky dá stejné ID tématu, takže nástroj, který importuje BCF, ji pozná jako stejný problém.
 
-## Omezení, o kterých je dobré vědět
+## Co se naimportuje
 
-- **List není model.** Pohled ukazuje na místo poznámky na papíře, měřeno v metrech papíru. Nedostanete se jím na místo v modelu. K nalezení místa použijte snímek a název listu.
-- **Stavy a typy jsou vlastní MarkupCraftu** (Otevřeno, Přijato, Zamítnuto, Dokončeno; Oblak, Vynášecí text…). Soubor je deklaruje, jak BCF umožňuje, ale nástroj s vlastními pevnými seznamy je může převést nebo ignorovat.
-- **Import přinese komentáře, ne pohledy na model.** {{ui:Importovat BCF}} přidá odpovědi a stavy k poznámkám, které jste exportovali, a u ostatních problémů vytvoří poznámky. Pohled kamery modelu nezobrazí. Viz [Seznam poznámek a export](topic:markups-list-and-export#import-bcf).
-- Odeslání poznámek zpět jako PDF bývá u revizí výkresů jednodušší. BCF slouží k tomu, aby se komentáře k výkresům dostaly do pracovního postupu koordinace modelu.
+{{ui:Importovat BCF}} čte soubory BCF 2.0, 2.1 a 3.0 (ověřeno na 19 oficiálních testovacích souborech buildingSMART 3.0: načetla se všechna témata a komentáře u tří z nich, které mají text). U tématu, které je vaše (stejné ID tématu), přidá nové komentáře jako odpovědi a převezme nový stav. Každé jiné téma se stane poznámkou na listu, který uvádí jeho štítek nebo název souboru, jinak na otevřeném listu. Jejím textem jsou název, popis, přiřazení a termín, komentáře se stanou odpověďmi.
+
+| V tématu BCF | V aplikaci MarkupCraft |
+|---|---|
+| Title, description, assignee, due date | Text poznámky |
+| Comments with text | Odpovědi |
+| Status Open, Accepted, Rejected, Completed (Closed, Resolved, Done count as Completed) | Stav poznámky |
+| Author and creation date | Autor a datum poznámky |
+| Camera position | Místo na listu, jen u tématu svázaného s listem štítkem nebo názvem souboru |
+| Model selection, hidden parts, clipping planes, snapshots | Neukládá se: list nemá model, ve kterém by se zobrazily |
+
+## Omezení, která je dobré znát
+
+- **List není model.** Pohled ukazuje na pozici poznámky na papíru, měřenou v metrech papíru. Nástroj BIM tak nepřenese do místa v modelu. K nalezení místa použijte snímek a název listu.
+- **Stavy a typy jsou vlastní pro MarkupCraft** (Open, Accepted, Rejected, Completed; Cloud, Callout…). Soubor je deklaruje, jak to BCF umožňuje, ale nástroj s vlastními pevnými seznamy je může přiřadit jinak nebo ignorovat.
+- **Import přináší komentáře, ne pohledy na model.** {{ui:Importovat BCF}} přidá odpovědi a stavy k exportovaným poznámkám a z ostatních problémů vytvoří poznámky; pohled kamery modelu zobrazit nedokáže. Viz [Seznam poznámek a export](topic:markups-list-and-export#import-bcf).
+- Vracet poznámky jako PDF bývá u revizí výkresů často jednodušší. BCF slouží k tomu, aby se připomínky k výkresům dostaly do postupu koordinace modelu.

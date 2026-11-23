@@ -2,7 +2,7 @@
 title: Yang baru di 0.7 (sebelumnya)
 summary: RFI, submittal, dan laporan harian di tab Lapangan yang baru, dengan tanggal jatuh tempo, lewat batas waktu dalam merah, CSV dan BCF, kerja offline dan Gabungkan; asisten yang mengatur status, membalas, dan mengekspor daftar; daftar satuan yang mengikuti Pengaturan; panel yang merapikan diri dan dialog yang dapat dipindah.
 keywords: yang baru 0.7, rilis sebelumnya, catatan rilis, changelog, perubahan, 0.7, versi, fitur baru, lapangan, catatan lapangan, rfi, permintaan informasi, submittal, laporan harian, buku harian lokasi, lewat batas waktu, tanggal jatuh tempo, ditugaskan kepada saya, pin, gabungkan, offline, tablet, bcf, csv, asisten, mcp, status markup, balasan, ekspor, satuan, daftar satuan, bintang, kalibrasi, padat, panel, dialog, portugis
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ini yang berubah di MarkupCraft 0.7, dibandingkan dengan 0.6. Hal baru yang besar adalah catatan lapangan: RFI, submittal, dan laporan harian yang disimpan di dalam PDF, di samping markup Anda.

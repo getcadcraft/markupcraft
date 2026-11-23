@@ -20,10 +20,10 @@
 
 import { el, download } from './ui-util.js';
 import { makeAreaClip, AREA_KEY, AREA_MAX_BYTES, ellipsePoints, shapeBox, overlayPixels, pixelsFor, TINTS } from './areaclip.js';
+import { affineMul as mul } from './geom-vec.js';   // shared helpers (0.11 PERF.74; tools/perf/util-copies.mjs)
 
 const LS = 'markupcraft.areacopy';
 const DEFAULTS = { shape: 'rect', markups: true, dpi: 150, tint: '#d0312d', opacity: 0.5 };
-const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
 const ap = (m, [x, y]) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
 
 export function installAreaCopy({ root, view, curSheet, markupLists, calibration, status, t, tab = '', onCopied = null, onToBoard = null }) {
@@ -50,8 +50,8 @@ export function installAreaCopy({ root, view, curSheet, markupLists, calibration
   const opOut = el('output', { for: 'mc-area-opacity' }, Math.round(opts.opacity * 100) + '%');
   const copyBtn = el('button', { type: 'button', className: 'btn-plot btn-sm-cc', dataset: { areaAct: 'copy' }, disabled: true, onclick: () => copy(false) }, el('i', { className: 'bi bi-copy', 'aria-hidden': 'true' }), ' ', t('area.copy'));
   const overBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'overlay' }, disabled: true, onclick: () => copy(true) }, el('i', { className: 'bi bi-layers', 'aria-hidden': 'true' }), ' ', t('area.overlay'));
-  const pngBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'png' }, disabled: true, onclick: () => savePng() }, el('i', { className: 'bi bi-download', 'aria-hidden': 'true' }), ' ', t('area.png'));
-  const boardBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'board' }, disabled: true, onclick: () => toBoard() }, el('i', { className: 'bi bi-camera', 'aria-hidden': 'true' }), ' ', t('pnotes.snapshot.bar'));
+  const pngBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'png' }, disabled: true, onclick: savePng }, el('i', { className: 'bi bi-download', 'aria-hidden': 'true' }), ' ', t('area.png'));
+  const boardBtn = el('button', { type: 'button', className: 'btn-line btn-sm-cc', dataset: { areaAct: 'board' }, disabled: true, onclick: toBoard }, el('i', { className: 'bi bi-camera', 'aria-hidden': 'true' }), ' ', t('pnotes.snapshot.bar'));
   const bar = el('div', { className: 'mc-areabar', role: 'toolbar', 'aria-label': t('area.bar'), hidden: true },
     el('div', { className: 'mc-areabar-row', role: 'group', 'aria-label': t('area.shape') }, shapeBtn('rect', 'square'), shapeBtn('ellipse', 'circle'), shapeBtn('free', 'bezier')),
     el('div', { className: 'mc-areabar-row' },

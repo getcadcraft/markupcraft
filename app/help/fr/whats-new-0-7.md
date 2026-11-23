@@ -2,7 +2,7 @@
 title: Nouveautés de la version 0.7 (précédente)
 summary: DDR, soumissions et journaux de chantier dans un nouvel onglet Chantier, avec échéances, retards en rouge, CSV et BCF, travail hors ligne et Fusionner ; assistants qui fixent les états, répondent et exportent la liste ; listes d'unités qui suivent les Paramètres ; panneaux qui se rangent et boîtes de dialogue qu'on déplace.
 keywords: nouveautés 0.7, version précédente, notes de version, journal des modifications, modifications, 0.7, version, nouvelles fonctions, chantier, enregistrements de chantier, DDR, demande de renseignements, soumission, journal de chantier, carnet de chantier, en retard, date d'échéance, qui me sont attribués, épingle, fusionner, hors ligne, tablette, bcf, csv, assistant, mcp, état d'annotation, réponse, exporter, unités, listes d'unités, étoile, calibrer, compacte, panneaux, boîtes de dialogue, portugais
-from: f8578677
+from: ca5ba1f0
 ---
 
 Voici ce qui a changé dans MarkupCraft 0.7, par rapport à 0.6. La grande nouveauté est les enregistrements de chantier : DDR, soumissions et journaux de chantier, conservés dans le PDF à côté de vos annotations.

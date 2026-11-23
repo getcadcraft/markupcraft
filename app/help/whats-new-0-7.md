@@ -2,7 +2,7 @@
 title: What's new in 0.7 (earlier)
 summary: RFIs, submittals and daily logs in a new Field tab, with due dates, overdue in red, CSV and BCF, offline work and Merge; assistants that set statuses, reply and export the list; unit lists that follow Settings; panels that tidy away and dialogs that move.
 section: start
-order: 6
+order: 7
 keywords: whats new 0.7, earlier release, release notes, changelog, changes, 0.7, version, new features, field, field records, rfi, request for information, submittal, daily log, site diary, overdue, due date, assigned to me, pin, merge, offline, tablet, bcf, csv, assistant, mcp, markup status, reply, export, units, unit lists, star, calibrate, compact, panels, dialogs, portuguese
 ---
 

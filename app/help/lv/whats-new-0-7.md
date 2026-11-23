@@ -2,7 +2,7 @@
 title: Jaunumi 0.7 versijā (iepriekšējā)
 summary: RFI, iesniegumi un dienas žurnāli jaunā Lauks cilnē, ar izpildes datumiem, nokavētiem ierakstiem sarkanā krāsā, CSV un BCF, darbs bezsaistē un apvienošana; palīgi, kas iestata statusus, atbild un eksportē sarakstu; mērvienību saraksti, kas seko Iestatījumiem; paneļi, kas paslēpjas, un dialogi, ko var pārvietot.
 keywords: jaunumi 0.7, iepriekšējā versija, versijas piezīmes, izmaiņu žurnāls, izmaiņas, 0.7, versija, jaunas funkcijas, lauks, lauka ieraksti, rfi, informācijas pieprasījums, iesniegums, dienas žurnāls, objekta dienasgrāmata, nokavēts, izpildes datums, piešķirti man, tapa, apvienot, bezsaistē, planšetdators, bcf, csv, palīgs, mcp, atzīmes statuss, atbilde, eksportēt, mērvienības, mērvienību saraksti, zvaigznīte, kalibrēt, kompakts, paneļi, dialogi, portugāļu
-from: f8578677
+from: ca5ba1f0
 ---
 
 Šeit ir, kas mainījās MarkupCraft 0.7 salīdzinājumā ar 0.6. Galvenā jaunā lieta ir lauka ieraksti: RFI, iesniegumi un dienas žurnāli, kas glabājas PDF failā blakus jūsu atzīmēm.

@@ -2,7 +2,7 @@
 title: Novetats de la 0.7 (anterior)
 summary: RFI, aprovacions de materials i diaris d'obra en una nova pestanya Obra, amb dates límit, fora de termini en vermell, CSV i BCF, treball fora de línia i Combina; assistents que fixen estats, responen i exporten la llista; llistes d'unitats que segueixen Configuració; taulers que es recullen i diàlegs que es mouen.
 keywords: novetats 0.7, versió anterior, notes de la versió, registre de canvis, canvis, 0.7, versió, noves funcions, obra, registres d'obra, rfi, sol·licitud d'informació, aprovació de materials, diari d'obra, fora de termini, data límit, assignats a mi, marcador, combina, fora de línia, tauleta, bcf, csv, assistent, mcp, estat de la marca, resposta, exporta, unitats, llistes d'unitats, estrella, calibra, compacte, taulers, diàlegs, portuguès
-from: f8578677
+from: ca5ba1f0
 ---
 
 Això és el que ha canviat a MarkupCraft 0.7, en comparació amb la 0.6. La gran novetat són els registres d'obra: RFI, aprovacions de materials i diaris d'obra guardats dins del PDF, al costat de les marques.

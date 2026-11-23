@@ -2,7 +2,7 @@
 title: Novidades na 0.7 (anterior)
 summary: RFI, submissões e diários de obra num novo separador Obra, com datas limite, atrasos a vermelho, CSV e BCF, trabalho offline e Juntar; assistentes que definem estados, respondem e exportam a lista; listas de unidades que seguem as Definições; painéis que se arrumam e caixas de diálogo que se deslocam.
 keywords: novidades 0.7, versão anterior, notas de versão, registo de alterações, alterações, 0.7, versão, novas funcionalidades, obra, registos de obra, rfi, pedido de informação, submissão, diário de obra, diário, em atraso, data limite, atribuídos a mim, marcador, juntar, offline, tablet, bcf, csv, assistente, mcp, estado de anotação, resposta, exportar, unidades, listas de unidades, estrela, calibrar, compacto, painéis, caixas de diálogo, português
-from: f8578677
+from: ca5ba1f0
 ---
 
 Eis o que mudou no MarkupCraft 0.7, em comparação com a 0.6. A grande novidade são os registos de obra: RFI, submissões e diários de obra guardados dentro do PDF, junto às suas anotações.

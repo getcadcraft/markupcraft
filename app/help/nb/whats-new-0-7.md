@@ -2,7 +2,7 @@
 title: Nytt i 0.7 (tidligere)
 summary: RFI-er, innleveringer og dagslogger i en ny Byggeplass-fane, med forfallsdatoer, forfalt i rødt, CSV og BCF, frakoblet arbeid og Slå sammen; assistenter som setter statuser, svarer og eksporterer listen; enhetslister som følger Innstillinger; paneler som ryddes bort og dialogbokser som flyttes.
 keywords: hva er nytt 0.7, tidligere utgivelse, utgivelsesnotater, endringslogg, endringer, 0.7, versjon, nye funksjoner, byggeplass, byggeplassposter, RFI, forespørsel om informasjon, innlevering, dagslogg, byggedagbok, forfalt, forfallsdato, tildelt meg, nål, slå sammen, frakoblet, nettbrett, BCF, CSV, assistent, MCP, markeringsstatus, svar, eksport, enheter, enhetslister, stjerne, kalibrer, kompakt, paneler, dialogbokser, portugisisk
-from: f8578677
+from: ca5ba1f0
 ---
 
 Dette er det som endret seg i MarkupCraft 0.7, sammenlignet med 0.6. Det store nye er byggeplassposter: RFI-er, innleveringer og dagslogger som holdes inne i PDF-en, ved siden av markeringene dine.

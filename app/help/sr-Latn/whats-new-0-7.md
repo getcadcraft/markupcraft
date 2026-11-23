@@ -2,7 +2,7 @@
 title: Šta je novo u 0.7 (ranije)
 summary: RFI, dokumentacija za odobrenje i dnevni izveštaji u novoj kartici Polje, sa rokovima, prekoračenim rokovima u crvenoj boji, CSV i BCF, rad van mreže i Spajanje; asistenti koji postavljaju statuse, odgovaraju i izvoze spisak; liste jedinica koje prate Podešavanja; paneli koji se sklanjaju i dijalozi koji se pomeraju.
 keywords: šta je novo 0.7, ranije izdanje, beleške o izdanju, dnevnik promena, promene, 0.7, verzija, nove funkcije, polje, zapisi polja, rfi, zahtev za informacijama, dokumentacija za odobrenje, dnevni izveštaj, dnevnik gradilišta, prekoračeno, rok, dodeljeno meni, pribadača, spajanje, van mreže, tablet, bcf, csv, asistent, mcp, status označavanja, odgovor, izvoz, jedinice, liste jedinica, zvezdica, kalibracija, zbijeno, paneli, dijalozi, portugalski
-from: f8578677
+from: ca5ba1f0
 ---
 
 Ovo je šta se promenilo u MarkupCraft 0.7, u odnosu na 0.6. Velika novina su zapisi polja: RFI, dokumentacija za odobrenje i dnevni izveštaji koji se čuvaju unutar PDF-a, uz vaša označavanja.

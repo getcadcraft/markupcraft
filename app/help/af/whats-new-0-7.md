@@ -2,7 +2,7 @@
 title: Wat is nuut in 0.7 (vroeër)
 summary: RFI's, insendings en daaglikse logboeke in 'n nuwe Veld-oortjie, met vervaldatums, agterstallig in rooi, CSV en BCF, aflyn werk en Samevoeg; assistente wat statusse stel, antwoord en die lys uitvoer; eenheidslyste wat Instellings volg; paneele wat wegraak en dialoë wat beweeg.
 keywords: wat is nuut 0.7, vroeëre vrystelling, vrystellingsnotas, veranderingslog, veranderinge, 0.7, weergawe, nuwe kenmerke, veld, veldrekords, rfi, versoek om inligting, insending, daaglikse logboek, werfdagboek, agterstallig, vervaldatum, aan my toegewys, speld, samevoeg, aflyn, tablet, bcf, csv, assistent, mcp, opmerkingstatus, antwoord, uitvoer, eenhede, eenheidslyste, ster, kalibreer, kompak, paneele, dialoë, portugees
-from: f8578677
+from: ca5ba1f0
 ---
 
 Dit is wat in MarkupCraft 0.7 verander het, vergeleke met 0.6. Die groot nuwe ding is veldrekords: RFI's, insendings en daaglikse logboeke wat binne die PDF langs jou opmerkings gehou word.

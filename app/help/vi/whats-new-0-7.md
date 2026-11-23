@@ -2,7 +2,7 @@
 title: Có gì mới trong 0.7 (cũ hơn)
 summary: RFI, hồ sơ trình duyệt và nhật ký hằng ngày trong thẻ Hiện trường mới, kèm hạn, quá hạn tô đỏ, CSV và BCF, làm việc ngoại tuyến và Gộp; trợ lý đặt trạng thái, phản hồi và xuất danh sách; danh sách đơn vị theo Cài đặt; bảng tự gọn gàng và hộp thoại di chuyển được.
 keywords: có gì mới 0.7, phát hành trước, ghi chú phát hành, nhật ký thay đổi, thay đổi, 0.7, phiên bản, tính năng mới, hiện trường, bản ghi hiện trường, rfi, yêu cầu thông tin, hồ sơ trình duyệt, nhật ký hằng ngày, nhật ký công trường, quá hạn, hạn, giao cho tôi, ghim, gộp, ngoại tuyến, máy tính bảng, bcf, csv, trợ lý, mcp, trạng thái đánh dấu, phản hồi, xuất, đơn vị, danh sách đơn vị, ngôi sao, hiệu chuẩn, gọn, bảng, hộp thoại, tiếng Bồ Đào Nha
-from: f8578677
+from: ca5ba1f0
 ---
 
 Đây là những gì thay đổi trong MarkupCraft 0.7 so với 0.6. Điểm mới lớn nhất là bản ghi hiện trường: RFI, hồ sơ trình duyệt và nhật ký hằng ngày được giữ trong PDF bên cạnh các đánh dấu của bạn.

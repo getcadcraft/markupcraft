@@ -2,7 +2,7 @@
 title: Mis on uut versioonis 0.7 (varasem)
 summary: RFI-d, esitused ja päevaraamatud uuel Väli-kaardil, tähtajad, tähtaeg ületatud punasega, CSV ja BCF, võrguta töö ja Ühenda; abilised, kes määravad olekuid, vastavad ja ekspordivad loendi; ühikuloendid, mis järgivad Sätteid; paneelid, mis end korrastavad, ja dialoogid, mida saab liigutada.
 keywords: mis on uut 0.7, varasem väljalase, väljalaskemärkmed, muudatuste logi, muudatused, 0.7, versioon, uued funktsioonid, väli, väljakirjed, rfi, teabepäring, esitus, päevaraamat, tähtaeg ületatud, tähtaeg, määratud mulle, naast, ühenda, võrguta, tahvel, bcf, csv, abiline, mcp, märgistuse olek, vastus, eksport, ühikud, ühikuloendid, täht, kalibreerimine, tihe, paneelid, dialoogid, portugali keel
-from: f8578677
+from: ca5ba1f0
 ---
 
 Need on muudatused versioonis MarkupCraft 0.7 võrreldes versiooniga 0.6. Suur uus asi on väljakirjed: RFI-d, esitused ja päevaraamatud, mida hoitakse PDF-i sees märgistuste kõrval.

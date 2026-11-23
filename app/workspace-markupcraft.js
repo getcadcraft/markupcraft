@@ -77,6 +77,13 @@ export async function createMarkupcraftWorkspace({ root, app }) {
   const nav = root.querySelector('.mc-nav');
   const one = (n) => () => [n].filter(Boolean);
 
+  function pickRefs(ids, show) {
+    const r = window.ccState?.refs(ids) || [];
+    const sheet = r.find((x) => x.kind === 'sheet'), marks = r.filter((x) => !x.kind || x.kind === 'markup').map((x) => x.id);
+    if (marks.length && app.selectIds) { if (show && marks.length === 1) app.jump(marks[0]); else app.selectIds(marks); return true; }
+    if (sheet && app.sheetIndex) { const i = app.sheetIndex(sheet.id); if (i < 0) return false; if (i !== app.cur()) app.goTo(i); return true; }
+    return false;
+  }
   const toolbarOnly = (id) => { const b = target(id); return !!b && !b.closest('details'); };   // the toolbox: the toolbar's own buttons, not its menus' rows
   const adapter = {
     ...base,
@@ -85,8 +92,11 @@ export async function createMarkupcraftWorkspace({ root, app }) {
     state() {
       const files = app.files(), sel = app.sel(), tool = app.tool() || 'select';
       return { document: files.length ? files : null, name: files.map((f) => f.name).join(', '), dirty: app.dirty(), busy: app.busy(), selection: [...sel],
-        tool, toolLabel: tool !== 'select' ? t('tool.' + tool) : '', other: false };
+        tool, toolLabel: tool !== 'select' ? t('tool.' + tool) : '', other: false,
+        kinds: app.kindOf ? [...sel].map(app.kindOf) : undefined, mode: 'paper' };   // 0.11 UI.25: into ccState (kinds = markup types: cloud, text, arrow …)
     },
+    // 0.11 UI.25: ccState.select / reveal / highlight. Refs: a markup id ({ kind: 'markup', id } or bare) or a sheet ({ kind: 'sheet', id: <page key> }, as a Problems line has it)
+    select: (ids) => pickRefs(ids, false), reveal: (ids) => pickRefs(ids, true), highlight: (ids) => pickRefs(ids, false),
     endTool() { if (app.tool() !== 'select') app.setTool('select'); },
     toolbox: () => base.toolbox().map((g) => ({ ...g, tools: g.tools.filter(toolbarOnly) })).filter((g) => g.tools.length),
     can(id, block, s) {
@@ -157,5 +167,6 @@ export async function createMarkupcraftWorkspace({ root, app }) {
       if (mode() === 'open' && k !== seenKey) { seenKey = k; if (k && c.view()?.id !== k) c.open(k); }
     },
   };
+  window.ccState?.adapt?.(adapter);   // 0.11 UI.25: kinds, mode, view and the Problems counts publish into ccState
   return { adapter, attach(e) { engine = e; }, refresh: soon };
 }

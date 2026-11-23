@@ -2,7 +2,7 @@
 title: Co je nového ve verzi 0.7 (starší)
 summary: RFI, předložené podklady a stavební deníky v nové kartě Terén, s termíny, zpožděním zvýrazněným červeně, CSV a BCF, práce offline a sloučení; asistenti, kteří nastavují stavy, odpovídají a exportují seznam; seznamy jednotek podle Nastavení; panely, které se uklidí, a dialogy, které se dají přesouvat.
 keywords: co je nového 0.7, starší vydání, poznámky k vydání, seznam změn, změny, 0.7, verze, nové funkce, terén, záznamy terénu, rfi, žádost o informace, předložený podklad, stavební deník, deník stavby, po termínu, termín, přiřazeno mně, špendlík, sloučit, offline, tablet, bcf, csv, asistent, mcp, stav poznámky, odpověď, export, jednotky, seznamy jednotek, hvězdička, kalibrovat, kompaktní, panely, dialogy, portugalština
-from: f8578677
+from: ca5ba1f0
 ---
 
 Toto se změnilo v MarkupCraftu 0.7 oproti 0.6. Hlavní novinkou jsou terénní záznamy: RFI, předložené podklady a stavební deníky uložené uvnitř PDF vedle vašich poznámek.

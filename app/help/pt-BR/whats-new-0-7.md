@@ -2,7 +2,7 @@
 title: Novidades na 0.7 (anterior)
 summary: RFIs, submittals e diários de obra em uma nova guia Obra, com datas de vencimento, atrasos em vermelho, CSV e BCF, trabalho offline e Mesclar; assistentes que definem status, respondem e exportam a lista; listas de unidades que seguem Configurações; painéis que se recolhem e caixas de diálogo que se movem.
 keywords: novidades 0.7, versão anterior, notas de versão, registro de alterações, alterações, 0.7, versão, novos recursos, obra, registros de obra, rfi, pedido de informação, submittal, diário de obra, diário de campo, atrasado, data de vencimento, atribuídos a mim, marcador, mesclar, offline, tablet, bcf, csv, assistente, mcp, status da marcação, resposta, exportar, unidades, listas de unidades, estrela, calibrar, compacto, painéis, caixas de diálogo, português
-from: f8578677
+from: ca5ba1f0
 ---
 
 Estas são as mudanças do MarkupCraft 0.7, em comparação com a 0.6. A grande novidade são os registros de obra: RFIs, submittals e diários de obra armazenados dentro do PDF, junto às suas marcações.

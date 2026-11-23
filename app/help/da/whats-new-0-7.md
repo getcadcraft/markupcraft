@@ -2,7 +2,7 @@
 title: Nyheder i 0.7 (tidligere)
 summary: RFI'er, indsendelser og dagbøger i en ny fane Felt, med forfaldsdatoer, forsinkede i rødt, CSV og BCF, arbejde offline og Sammenflet; assistenter der sætter statusser, svarer og eksporterer listen; enhedslister der følger Indstillinger; paneler der ryddes væk og dialogbokse der kan flyttes.
 keywords: nyheder 0.7, tidligere udgivelse, udgivelsesnoter, ændringslog, ændringer, 0.7, version, nye funktioner, felt, feltposter, rfi, anmodning om oplysninger, indsendelse, dagbog, byggepladsdagbog, forsinket, forfaldsdato, tildelt mig, nål, sammenflet, offline, tablet, bcf, csv, assistent, mcp, markeringsstatus, svar, eksport, enheder, enhedslister, stjerne, kalibrér, kompakt, paneler, dialogbokse, portugisisk
-from: f8578677
+from: ca5ba1f0
 ---
 
 Dette er hvad der er ændret i MarkupCraft 0.7, sammenlignet med 0.6. Det store nye er feltposter: RFI'er, indsendelser og dagbøger gemt inde i PDF'en ved siden af dine markeringer.

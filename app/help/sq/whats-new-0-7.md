@@ -2,7 +2,7 @@
 title: Çfarë është e re në 0.7 (më herët)
 summary: RFI-të, dorëzimet dhe ditarët ditorë në një skedë të re Fusha, me data afati, vonesat në të kuqe, CSV dhe BCF, punë pa lidhje dhe Bashko; asistentë që vendosin statuse, përgjigjen dhe eksportojnë listën; lista njësish që ndjekin Cilësimet; panele që fshihen dhe dialoge që lëvizin.
 keywords: çfarë është e re 0.7, version më i hershëm, shënime të publikimit, ndryshime, 0.7, version, veçori të reja, fusha, regjistrime fushe, rfi, kërkesë për informacion, dorëzim, ditar ditor, ditar faqeje, vonesë, data e afatit, caktuar tek unë, shenjë, bashko, pa lidhje, tablet, bcf, csv, asistent, mcp, statusi i shënimit, përgjigje, eksport, njësi, lista njësish, yll, kalibro, kompakt, panele, dialoge, portugalisht
-from: f8578677
+from: ca5ba1f0
 ---
 
 Kjo është ajo që ndryshoi në MarkupCraft 0.7, krahasuar me 0.6. Gjëja e madhe e re janë regjistrimet e fushës: RFI-të, dorëzimet dhe ditarët ditorë të mbajtur brenda PDF-së, pranë shënimeve të tua.

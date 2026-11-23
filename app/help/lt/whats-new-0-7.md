@@ -2,7 +2,7 @@
 title: Kas naujo 0.7 versijoje (ankstesnė)
 summary: RFI, pateikimai ir dienos žurnalai naujame skirtuke Laukas, su terminais, pavėluotais raudonai, CSV ir BCF, darbas neprisijungus ir Sujungti; asistentai, kurie nustato būsenas, atsako ir eksportuoja sąrašą; vienetų sąrašai, kurie seka Parametrus; skydeliai, kurie susitvarko, ir dialogai, kurie juda.
 keywords: kas naujo 0.7, ankstesnė versija, versijos aprašymas, keitimų žurnalas, pakeitimai, 0.7, versija, naujos funkcijos, laukas, lauko įrašai, rfi, informacijos prašymas, pateikimas, dienos žurnalas, statybvietės dienoraštis, pavėluota, terminas, priskirta man, žymeklis, sujungti, neprisijungus, planšetė, bcf, csv, asistentas, mcp, žymėjimo būsena, atsakymas, eksportas, vienetai, vienetų sąrašai, žvaigždutė, kalibruoti, kompaktiškas, skydeliai, dialogai, portugalų
-from: f8578677
+from: ca5ba1f0
 ---
 
 Tai, kas pasikeitė MarkupCraft 0.7 versijoje, palyginti su 0.6. Didžiausias naujas dalykas – lauko įrašai: RFI, pateikimai ir dienos žurnalai, saugomi PDF šalia jūsų žymėjimų.

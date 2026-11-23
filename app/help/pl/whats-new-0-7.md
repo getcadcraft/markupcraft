@@ -2,7 +2,7 @@
 title: Co nowego w 0.7 (wcześniejsze)
 summary: RFI, zgłoszenia do akceptacji i dzienniki dzienne w nowej karcie Teren, z terminami, zaległościami na czerwono, CSV i BCF, praca offline oraz Scal; asystenci ustawiający statusy, odpowiadający i eksportujący listę; listy jednostek, które podążają za Ustawieniami; panele, które się chowają, i okna dialogowe, które można przesuwać.
 keywords: co nowego 0.7, wcześniejsze wydanie, informacje o wydaniu, dziennik zmian, zmiany, 0.7, wersja, nowe funkcje, teren, rekordy terenowe, RFI, zapytanie o informacje, zgłoszenie do akceptacji, dziennik dzienny, dziennik budowy, po terminie, termin, przypisane do mnie, pinezka, scal, offline, tablet, BCF, CSV, asystent, MCP, status adnotacji, odpowiedź, eksport, jednostki, listy jednostek, gwiazdka, kalibracja, zwarty, panele, okna dialogowe, portugalski
-from: f8578677
+from: ca5ba1f0
 ---
 
 To jest lista zmian w MarkupCraft 0.7 w porównaniu z 0.6. Najważniejszą nowością są rekordy terenowe: RFI, zgłoszenia do akceptacji i dzienniki dzienne przechowywane w PDF obok adnotacji.

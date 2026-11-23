@@ -587,7 +587,7 @@ select.mc-ff { padding: 0; }
    engine's, app-workspace.css .tbx-sel) */
 .mc .tbx-info { flex-wrap: nowrap; }
 .mc .tbx-ig { flex-shrink: 1; }
-.mc .tbx-ig-tool .tbx-ig-body { flex-wrap: nowrap; min-width: 0; }
+.mc .tbx-ig-tool .tbx-ig-body { min-width: 0; }   /* one line: the engine's (app-workspace.css .tbx-ig-tool .tbx-ig-body, WS.20); 0.11 UI.17 part 3 */
 .mc .tbx-ig-body > .mc-statbtn { max-width: 14rem; }
 
 /* 0.7.1 (71.6 context menu, 71.7 flatten on save, 71.8 signature list) */
